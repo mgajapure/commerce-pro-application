@@ -1,1 +1,330 @@
-<p>shipping-rules works!</p>
+<div class="min-h-screen bg-gray-50/50 p-4 sm:p-6 lg:p-8">
+  <div class="max-w-[1600px] mx-auto space-y-6">
+
+    <!-- Header -->
+    <div
+      class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center">
+          <i class="bi bi-gear text-white text-lg"></i>
+        </div>
+        <div>
+          <h1 class="text-2xl font-bold text-gray-900">Shipping Configuration</h1>
+          <p class="text-gray-500 text-sm mt-0.5">Manage carriers and shipping rules</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        @if (activeTab() === 'carriers') {
+        <button (click)="openNewCarrier()"
+          class="px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 transition-all flex items-center gap-2 shadow-lg shadow-indigo-200">
+          <i class="bi bi-plus-lg"></i> Add Carrier
+        </button>
+        } @else {
+        <button (click)="openNewRule()"
+          class="px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 transition-all flex items-center gap-2 shadow-lg shadow-indigo-200">
+          <i class="bi bi-plus-lg"></i> Add Rule
+        </button>
+        }
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="bg-white rounded-2xl p-1.5 shadow-sm border border-gray-100 flex gap-1.5 w-fit">
+      <button (click)="activeTab.set('rules')"
+        class="px-5 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-2"
+        [class.bg-indigo-600]="activeTab() === 'rules'" [class.text-white]="activeTab() === 'rules'"
+        [class.text-gray-600]="activeTab() !== 'rules'" [class.hover:bg-gray-50]="activeTab() !== 'rules'">
+        <i class="bi bi-diagram-3"></i> Shipping Rules
+        <span class="px-1.5 py-0.5 rounded text-xs" [class.bg-indigo-500]="activeTab() === 'rules'"
+          [class.text-white]="activeTab() === 'rules'" [class.bg-gray-100]="activeTab() !== 'rules'"
+          [class.text-gray-600]="activeTab() !== 'rules'">{{ rules().length }}</span>
+      </button>
+      <button (click)="activeTab.set('carriers')"
+        class="px-5 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-2"
+        [class.bg-indigo-600]="activeTab() === 'carriers'" [class.text-white]="activeTab() === 'carriers'"
+        [class.text-gray-600]="activeTab() !== 'carriers'" [class.hover:bg-gray-50]="activeTab() !== 'carriers'">
+        <i class="bi bi-truck"></i> Carriers
+        <span class="px-1.5 py-0.5 rounded text-xs" [class.bg-indigo-500]="activeTab() === 'carriers'"
+          [class.text-white]="activeTab() === 'carriers'" [class.bg-gray-100]="activeTab() !== 'carriers'"
+          [class.text-gray-600]="activeTab() !== 'carriers'">{{ carriers().length }}</span>
+      </button>
+    </div>
+
+    <!-- ── SHIPPING RULES TAB ─────────────────────────────────────────────── -->
+    @if (activeTab() === 'rules') {
+      @if (isLoading()) {
+      <div class="bg-white p-12 rounded-2xl text-center border border-gray-100">
+        <div class="animate-spin w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full mx-auto mb-3"></div>
+      </div>
+      } @else if (activeRules().length === 0) {
+      <div class="bg-white p-16 rounded-2xl text-center border border-gray-100 shadow-sm">
+        <div class="w-16 h-16 bg-indigo-100 rounded-2xl flex items-center justify-center mx-auto mb-4"><i
+            class="bi bi-diagram-3 text-indigo-600 text-3xl"></i></div>
+        <h3 class="text-lg font-semibold text-gray-900 mb-1">No shipping rules yet</h3>
+        <p class="text-gray-500 text-sm mb-4">Create rules to automatically determine shipping methods.</p>
+        <button (click)="openNewRule()" class="px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-medium">Add
+          Rule</button>
+      </div>
+      } @else {
+      <div class="space-y-3">
+        @for (rule of activeRules(); track rule.id) {
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex items-center gap-5">
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" [class.bg-green-100]="rule.isActive"
+            [class.bg-gray-100]="!rule.isActive">
+            <i class="bi bi-diagram-3" [class.text-green-600]="rule.isActive" [class.text-gray-400]="!rule.isActive"></i>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 mb-1">
+              <p class="text-sm font-semibold text-gray-900">{{ rule.name }}</p>
+              @if (!rule.isActive) { <span
+                class="px-2 py-0.5 bg-gray-100 text-gray-500 text-xs rounded-full">Inactive</span> }
+              <span class="px-2 py-0.5 bg-indigo-50 text-indigo-700 text-xs rounded-full font-mono">Priority {{
+                rule.priority }}</span>
+            </div>
+            <div class="flex flex-wrap gap-3 text-xs text-gray-500">
+              <span><i class="bi bi-filter"></i> {{ rule.conditionType }}</span>
+              <span><i class="bi bi-truck"></i> {{ rule.shippingMethod }}</span>
+              @if (rule.serviceLevel) { <span><i class="bi bi-clock"></i> {{ rule.serviceLevel }}</span> }
+              @if (rule.carrierName) { <span><i class="bi bi-building"></i> {{ rule.carrierName }}</span> }
+            </div>
+            @if (rule.description) { <p class="text-xs text-gray-400 mt-1 truncate">{{ rule.description }}</p> }
+          </div>
+          <div class="flex items-center gap-2 shrink-0">
+            <button (click)="openEditRule(rule)"
+              class="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"><i
+                class="bi bi-pencil"></i></button>
+            <button (click)="deleteRule(rule.id)"
+              class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"><i
+                class="bi bi-trash"></i></button>
+          </div>
+        </div>
+        }
+      </div>
+      }
+    }
+
+    <!-- ── CARRIERS TAB ───────────────────────────────────────────────────── -->
+    @if (activeTab() === 'carriers') {
+      @if (isLoading()) {
+      <div class="bg-white p-12 rounded-2xl text-center border border-gray-100">
+        <div class="animate-spin w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full mx-auto mb-3"></div>
+      </div>
+      } @else if (carriers().length === 0) {
+      <div class="bg-white p-16 rounded-2xl text-center border border-gray-100 shadow-sm">
+        <div class="w-16 h-16 bg-indigo-100 rounded-2xl flex items-center justify-center mx-auto mb-4"><i
+            class="bi bi-truck text-indigo-600 text-3xl"></i></div>
+        <h3 class="text-lg font-semibold text-gray-900 mb-1">No carriers configured</h3>
+        <p class="text-gray-500 text-sm mb-4">Add at least one carrier to create shipments.</p>
+        <button (click)="openNewCarrier()" class="px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-medium">Add
+          Carrier</button>
+      </div>
+      } @else {
+      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        @for (c of carriers(); track c.id) {
+        <div class="bg-white rounded-2xl border shadow-sm hover:shadow-md transition-all p-5"
+          [class.border-indigo-200]="c.isDefault" [class.border-gray-100]="!c.isDefault">
+          <div class="flex items-start justify-between mb-4">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl flex items-center justify-center"
+                [class.bg-indigo-100]="c.status === 'ACTIVE'" [class.bg-gray-100]="c.status !== 'ACTIVE'">
+                <i class="bi bi-truck" [class.text-indigo-600]="c.status === 'ACTIVE'"
+                  [class.text-gray-400]="c.status !== 'ACTIVE'"></i>
+              </div>
+              <div>
+                <p class="font-semibold text-gray-900">{{ c.name }}</p>
+                <p class="text-xs font-mono text-gray-400">{{ c.code }}</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-1">
+              @if (c.isDefault) { <span
+                class="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-xs rounded-full font-medium">Default</span> }
+              <span class="px-2 py-0.5 text-xs rounded-full" [class.bg-green-100]="c.status === 'ACTIVE'"
+                [class.text-green-700]="c.status === 'ACTIVE'" [class.bg-gray-100]="c.status !== 'ACTIVE'"
+                [class.text-gray-500]="c.status !== 'ACTIVE'">{{ c.status }}</span>
+            </div>
+          </div>
+          @if (c.trackingUrlTemplate) {
+          <p class="text-xs text-gray-400 truncate mb-3"><i class="bi bi-link-45deg"></i> {{ c.trackingUrlTemplate }}</p>
+          }
+          @if (c.notes) { <p class="text-xs text-gray-500 mb-3">{{ c.notes }}</p> }
+          <div class="flex justify-between items-center pt-3 border-t border-gray-50">
+            <span class="text-xs text-gray-400">Added {{ formatDate(c.createdAt) }}</span>
+            <div class="flex gap-1">
+              <button (click)="openEditCarrier(c)"
+                class="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"><i
+                  class="bi bi-pencil"></i></button>
+              <button (click)="deleteCarrier(c.id)"
+                class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"><i
+                  class="bi bi-trash"></i></button>
+            </div>
+          </div>
+        </div>
+        }
+      </div>
+      }
+    }
+  </div>
+</div>
+
+<!-- Carrier Modal -->
+@if (showCarrierModal()) {
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg">
+    <div class="p-6 border-b border-gray-100 flex items-center justify-between">
+      <h2 class="text-lg font-semibold text-gray-900">{{ editCarrier() ? 'Edit Carrier' : 'Add Carrier' }}</h2>
+      <button (click)="closeCarrierModal()"
+        class="w-8 h-8 rounded-xl bg-gray-100 flex items-center justify-center hover:bg-gray-200"><i
+          class="bi bi-x text-gray-600"></i></button>
+    </div>
+    <div class="p-6 space-y-4">
+      @if (carrierError()) { 
+        <div class="p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+          {{ carrierError() }}
+        </div> 
+      }
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-medium text-gray-700 mb-1">Name *</label>
+          <input [ngModel]="carrierForm().name" (ngModelChange)="updateCarrierFormField('name', $event)"
+            class="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-700 mb-1">Code *</label>
+          <input [ngModel]="carrierForm().code" (ngModelChange)="updateCarrierFormField('code', $event)"
+            placeholder="e.g. FEDEX"
+            class="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 uppercase" />
+        </div>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-700 mb-1">Tracking URL Template</label>
+        <input [ngModel]="carrierForm().trackingUrlTemplate"
+          (ngModelChange)="updateCarrierFormField('trackingUrlTemplate', $event)"
+          placeholder="https://track.carrier.com/{trackingNumber}"
+          class="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+        <p class="text-xs text-gray-400 mt-1">Use <code class="bg-gray-100 px-1 rounded">&#123;trackingNumber&#125;</code>
+          as placeholder</p>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-700 mb-1">Notes</label>
+        <textarea [ngModel]="carrierForm().notes" (ngModelChange)="updateCarrierFormField('notes', $event)" rows="2"
+          class="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+      </div>
+      <label class="flex items-center gap-2 cursor-pointer">
+        <input type="checkbox" [ngModel]="carrierForm().isDefault"
+          (ngModelChange)="updateCarrierFormField('isDefault', $event)" class="w-4 h-4 rounded accent-indigo-600" />
+        <span class="text-sm text-gray-700">Set as default carrier</span>
+      </label>
+    </div>
+    <div class="p-6 border-t border-gray-100 flex gap-3 justify-end">
+      <button (click)="closeCarrierModal()"
+        class="px-4 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl">Cancel</button>
+      <button (click)="submitCarrier()" [disabled]="savingCarrier()"
+        class="px-4 py-2.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl disabled:opacity-60 flex items-center gap-2">
+        @if (savingCarrier()) { 
+          <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div> 
+        }
+        {{ editCarrier() ? 'Update' : 'Create' }} Carrier
+      </button>
+    </div>
+  </div>
+</div>
+}
+
+<!-- Rule Modal -->
+@if (showRuleModal()) {
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+    <div class="p-6 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white z-10">
+      <h2 class="text-lg font-semibold text-gray-900">{{ editRule() ? 'Edit Rule' : 'Add Shipping Rule' }}</h2>
+      <button (click)="closeRuleModal()"
+        class="w-8 h-8 rounded-xl bg-gray-100 flex items-center justify-center hover:bg-gray-200"><i
+          class="bi bi-x text-gray-600"></i></button>
+    </div>
+    <div class="p-6 space-y-4">
+      @if (ruleError()) { <div class="p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">{{
+        ruleError() }}</div> }
+      <div>
+        <label class="block text-xs font-medium text-gray-700 mb-1">Rule Name *</label>
+        <input [ngModel]="ruleForm().name" (ngModelChange)="updateRuleFormField('name', $event)"
+          class="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-medium text-gray-700 mb-1">Condition Type *</label>
+          <select [ngModel]="ruleForm().conditionType" (ngModelChange)="updateRuleFormField('conditionType', $event)"
+            class="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            @for (ct of conditionTypes; track ct) { <option [value]="ct">{{ ct }}</option> }
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-700 mb-1">Priority</label>
+          <input type="number" [ngModel]="ruleForm().priority"
+            (ngModelChange)="updateRuleFormField('priority', +$event)"
+            class="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+        </div>
+      </div>
+      @if (ruleForm().conditionType === 'WEIGHT' || ruleForm().conditionType === 'PRICE') {
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-medium text-gray-700 mb-1">Min Value</label>
+          <input type="number" [ngModel]="ruleForm().conditionMin"
+            (ngModelChange)="updateRuleFormField('conditionMin', +$event)"
+            class="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-700 mb-1">Max Value</label>
+          <input type="number" [ngModel]="ruleForm().conditionMax"
+            (ngModelChange)="updateRuleFormField('conditionMax', +$event)"
+            class="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+        </div>
+      </div>
+      }
+      @if (ruleForm().conditionType === 'COUNTRY') {
+      <div>
+        <label class="block text-xs font-medium text-gray-700 mb-1">Country Codes (comma-separated)</label>
+        <input [ngModel]="ruleForm().conditionValue" (ngModelChange)="updateRuleFormField('conditionValue', $event)"
+          placeholder="US, CA, GB"
+          class="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+      </div>
+      }
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-medium text-gray-700 mb-1">Shipping Method *</label>
+          <input [ngModel]="ruleForm().shippingMethod" (ngModelChange)="updateRuleFormField('shippingMethod', $event)"
+            placeholder="e.g. Standard"
+            class="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-700 mb-1">Service Level</label>
+          <input [ngModel]="ruleForm().serviceLevel" (ngModelChange)="updateRuleFormField('serviceLevel', $event)"
+            placeholder="e.g. 3-5 Days"
+            class="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+        </div>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-700 mb-1">Carrier</label>
+        <select [ngModel]="ruleForm().carrierId" (ngModelChange)="updateRuleFormField('carrierId', $event)"
+          class="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <option value="">— Any carrier —</option>
+          @for (c of activeCarriers(); track c.id) { <option [value]="c.id">{{ c.name }}</option> }
+        </select>
+      </div>
+      <label class="flex items-center gap-2 cursor-pointer">
+        <input type="checkbox" [ngModel]="ruleForm().isActive" (ngModelChange)="updateRuleFormField('isActive', $event)"
+          class="w-4 h-4 rounded accent-indigo-600" />
+        <span class="text-sm text-gray-700">Rule is active</span>
+      </label>
+    </div>
+    <div class="p-6 border-t border-gray-100 flex gap-3 justify-end">
+      <button (click)="closeRuleModal()"
+        class="px-4 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl">Cancel</button>
+      <button (click)="submitRule()" [disabled]="savingRule()"
+        class="px-4 py-2.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl disabled:opacity-60 flex items-center gap-2">
+        @if (savingRule()) { <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin">
+        </div> }
+        {{ editRule() ? 'Update' : 'Create' }} Rule
+      </button>
+    </div>
+  </div>
+</div>
+}

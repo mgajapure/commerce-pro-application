@@ -1,1 +1,216 @@
-<p>tracking works!</p>
+<div class="min-h-screen bg-gray-50/50 p-4 sm:p-6 lg:p-8">
+  <div class="max-w-[1600px] mx-auto space-y-6">
+
+    <!-- Header -->
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center">
+          <i class="bi bi-geo-alt text-white text-lg"></i>
+        </div>
+        <div>
+          <h1 class="text-2xl font-bold text-gray-900">Order Tracking</h1>
+          <p class="text-gray-500 text-sm mt-0.5">Live tracking monitor for all active shipments</p>
+        </div>
+        <span class="px-3 py-1 bg-gray-100 text-gray-600 text-sm font-medium rounded-full">{{ filtered().length }}</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <input [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)"
+          placeholder="Search by order, tracking, recipient..."
+          class="px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-72"/>
+        <button (click)="loadActive()" class="p-2.5 border border-gray-200 rounded-xl text-gray-600 hover:border-indigo-300 hover:text-indigo-600 transition-all" title="Refresh">
+          <i class="bi bi-arrow-clockwise"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm cursor-pointer hover:shadow-md transition-all" (click)="applyFilter('IN_TRANSIT')">
+        <div class="flex items-center justify-between mb-3">
+          <div class="w-9 h-9 bg-indigo-100 rounded-xl flex items-center justify-center"><i class="bi bi-truck text-indigo-600"></i></div>
+          <span class="text-2xl font-bold text-gray-900">{{ statusGroups().inTransit }}</span>
+        </div>
+        <p class="text-sm font-medium text-gray-700">In Transit</p>
+        <p class="text-xs text-gray-400 mt-0.5">Moving through network</p>
+      </div>
+      <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm cursor-pointer hover:shadow-md transition-all" (click)="applyFilter('OUT_FOR_DELIVERY')">
+        <div class="flex items-center justify-between mb-3">
+          <div class="w-9 h-9 bg-purple-100 rounded-xl flex items-center justify-center"><i class="bi bi-person-walking text-purple-600"></i></div>
+          <span class="text-2xl font-bold text-gray-900">{{ statusGroups().outForDelivery }}</span>
+        </div>
+        <p class="text-sm font-medium text-gray-700">Out for Delivery</p>
+        <p class="text-xs text-gray-400 mt-0.5">With delivery agent</p>
+      </div>
+      <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm cursor-pointer hover:shadow-md transition-all" (click)="applyFilter('ATTEMPTED_DELIVERY')">
+        <div class="flex items-center justify-between mb-3">
+          <div class="w-9 h-9 bg-yellow-100 rounded-xl flex items-center justify-center"><i class="bi bi-arrow-clockwise text-yellow-600"></i></div>
+          <span class="text-2xl font-bold text-gray-900">{{ statusGroups().attempted }}</span>
+        </div>
+        <p class="text-sm font-medium text-gray-700">Attempted</p>
+        <p class="text-xs text-gray-400 mt-0.5">Needs re-delivery</p>
+      </div>
+      <div class="bg-white p-5 rounded-2xl border border-red-100 shadow-sm cursor-pointer hover:shadow-md transition-all" (click)="applyFilter('EXCEPTION')">
+        <div class="flex items-center justify-between mb-3">
+          <div class="w-9 h-9 bg-red-100 rounded-xl flex items-center justify-center"><i class="bi bi-exclamation-triangle text-red-600"></i></div>
+          <span class="text-2xl font-bold text-red-600">{{ statusGroups().exceptions }}</span>
+        </div>
+        <p class="text-sm font-medium text-gray-700">Exceptions</p>
+        <p class="text-xs text-gray-400 mt-0.5">Requires attention</p>
+      </div>
+    </div>
+
+    <!-- Quick Filters -->
+    <div class="bg-white rounded-2xl p-2 shadow-sm border border-gray-100 overflow-x-auto">
+      <div class="flex gap-1.5 min-w-max">
+        @for (qf of quickFilters; track qf.value) {
+          <button (click)="applyFilter(qf.value)"
+            class="px-3 py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap"
+            [class.bg-indigo-600]="filterStatus() === qf.value" [class.text-white]="filterStatus() === qf.value"
+            [class.bg-gray-50]="filterStatus() !== qf.value" [class.text-gray-700]="filterStatus() !== qf.value">
+            {{ qf.label }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Tracking Grid -->
+    @if (isLoading()) {
+      <div class="bg-white p-12 rounded-2xl text-center border border-gray-100">
+        <div class="animate-spin w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full mx-auto mb-3"></div>
+        <p class="text-gray-500 text-sm">Loading shipments...</p>
+      </div>
+    } @else if (filtered().length === 0) {
+      <div class="bg-white p-16 rounded-2xl text-center border border-gray-100 shadow-sm">
+        <div class="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <i class="bi bi-check-all text-green-600 text-3xl"></i>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-900 mb-1">All clear</h3>
+        <p class="text-gray-500 text-sm">No shipments match the current filter.</p>
+      </div>
+    } @else {
+      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        @for (s of filtered(); track s.id) {
+          <div (click)="openDetail(s.id)"
+            class="bg-white rounded-2xl border shadow-sm hover:shadow-md transition-all cursor-pointer p-5 space-y-4"
+            [class.border-red-200]="isOverdue(s) || s.status === 'EXCEPTION' || s.status === 'LOST'"
+            [class.border-gray-100]="!isOverdue(s) && s.status !== 'EXCEPTION' && s.status !== 'LOST'">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="font-mono text-sm font-semibold text-indigo-600">{{ s.shipmentNumber }}</span>
+                  @if (isOverdue(s)) { <span class="px-2 py-0.5 bg-red-100 text-red-700 text-xs rounded-full font-medium">Overdue</span> }
+                </div>
+                <p class="text-xs text-gray-400 font-mono">Order: {{ s.orderNumber }}</p>
+              </div>
+              <span class="px-2.5 py-1 rounded-full text-xs font-medium flex items-center gap-1.5 shrink-0 {{ getStatusConfig(s.status).badge }}">
+                <span class="w-1.5 h-1.5 rounded-full {{ getStatusConfig(s.status).dot }}"></span>
+                {{ getStatusConfig(s.status).label }}
+              </span>
+            </div>
+            <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+              <i class="bi bi-person-circle text-gray-400 text-xl"></i>
+              <div class="min-w-0">
+                <p class="text-sm font-medium text-gray-900 truncate">{{ s.recipientName }}</p>
+                <p class="text-xs text-gray-400">{{ s.city }}, {{ s.country }}</p>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3 text-xs">
+              <div>
+                <p class="text-gray-400 mb-0.5">Carrier</p>
+                <p class="font-medium text-gray-700">{{ s.carrierName || '—' }}</p>
+              </div>
+              <div>
+                <p class="text-gray-400 mb-0.5">Tracking #</p>
+                <p class="font-mono font-medium text-gray-700 truncate">{{ s.trackingNumber || '—' }}</p>
+              </div>
+              <div>
+                <p class="text-gray-400 mb-0.5">Est. Delivery</p>
+                <p class="font-medium" [class.text-red-600]="isOverdue(s)" [class.text-gray-700]="!isOverdue(s)">
+                  {{ s.estimatedDeliveryDate ? formatDateShort(s.estimatedDeliveryDate) : '—' }}
+                </p>
+              </div>
+              <div>
+                <p class="text-gray-400 mb-0.5">Shipped</p>
+                <p class="font-medium text-gray-700">{{ formatDate(s.createdAt) }}</p>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>
+
+<!-- Detail Drawer -->
+@if (selectedDetail()) {
+  <div class="fixed inset-0 z-50 flex items-start justify-end bg-black/40 backdrop-blur-sm" (click)="closeDetail()">
+    <div class="bg-white h-full w-full max-w-xl shadow-2xl overflow-y-auto" (click)="$event.stopPropagation()">
+      @let s = selectedDetail()!;
+      <div class="p-6 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white z-10">
+        <div>
+          <h2 class="font-mono text-base font-bold text-gray-900">{{ s.shipmentNumber }}</h2>
+          <span class="px-2.5 py-0.5 rounded-full text-xs font-medium {{ getStatusConfig(s.status).badge }}">{{ getStatusConfig(s.status).label }}</span>
+        </div>
+        <div class="flex items-center gap-2">
+          @if (s.trackingUrl) {
+            <a [href]="s.trackingUrl" target="_blank" class="px-3 py-1.5 bg-indigo-50 text-indigo-600 text-xs font-medium rounded-lg hover:bg-indigo-100 flex items-center gap-1">
+              <i class="bi bi-box-arrow-up-right"></i> Track on Carrier
+            </a>
+          }
+          <button (click)="closeDetail()" class="w-8 h-8 rounded-xl bg-gray-100 flex items-center justify-center hover:bg-gray-200"><i class="bi bi-x text-gray-600"></i></button>
+        </div>
+      </div>
+      <div class="p-6 space-y-6">
+        <!-- Info Grid -->
+        <div class="grid grid-cols-2 gap-4 text-sm">
+          <div><p class="text-xs text-gray-400 mb-1">Order</p><a [routerLink]="['/orders/details', s.orderId]" class="text-indigo-600 font-mono font-semibold">{{ s.orderNumber }}</a></div>
+          <div><p class="text-xs text-gray-400 mb-1">Carrier</p><p class="text-gray-900 font-medium">{{ s.carrierName || '—' }}</p></div>
+          <div><p class="text-xs text-gray-400 mb-1">Tracking #</p><p class="font-mono text-xs text-gray-700">{{ s.trackingNumber || '—' }}</p></div>
+          <div><p class="text-xs text-gray-400 mb-1">Method</p><p class="text-gray-700">{{ s.shippingMethod || '—' }}</p></div>
+          <div><p class="text-xs text-gray-400 mb-1">Est. Delivery</p>
+            <p [class.text-red-600]="isOverdue(s)" [class.text-gray-700]="!isOverdue(s)">{{ s.estimatedDeliveryDate ? formatDateShort(s.estimatedDeliveryDate) : '—' }}</p>
+          </div>
+          <div><p class="text-xs text-gray-400 mb-1">Actual Delivery</p><p class="text-gray-700">{{ s.actualDeliveryDate ? formatDateShort(s.actualDeliveryDate) : '—' }}</p></div>
+        </div>
+        <!-- Recipient -->
+        <div class="p-4 bg-gray-50 rounded-xl text-sm">
+          <p class="text-xs font-medium text-gray-500 mb-2">Recipient</p>
+          <p class="font-medium text-gray-900">{{ s.recipientName }}</p>
+          <p class="text-gray-600">{{ s.addressLine1 }}{{ s.addressLine2 ? ', ' + s.addressLine2 : '' }}</p>
+          <p class="text-gray-600">{{ s.city }}, {{ s.state }} {{ s.postalCode }}, {{ s.country }}</p>
+        </div>
+        <!-- Tracking Timeline -->
+        <div>
+          <h3 class="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <i class="bi bi-clock-history text-indigo-600"></i> Tracking Timeline
+          </h3>
+          @if (s.trackingEvents.length === 0) {
+            <div class="p-6 text-center bg-gray-50 rounded-xl">
+              <i class="bi bi-geo-alt text-gray-300 text-3xl mb-2 block"></i>
+              <p class="text-sm text-gray-400">No tracking events yet.</p>
+            </div>
+          } @else {
+            <div class="relative pl-6">
+              <div class="absolute left-2 top-0 bottom-0 w-0.5 bg-gray-200"></div>
+              <div class="space-y-6">
+                @for (ev of s.trackingEvents; track ev.id; let first = $first) {
+                  <div class="relative">
+                    <div class="absolute -left-6 mt-1 w-4 h-4 rounded-full border-2 border-white shadow-sm {{ first ? getStatusConfig(ev.status).dot : 'bg-gray-300' }}"></div>
+                    <div class="bg-white border rounded-xl p-4 shadow-sm" [class.border-indigo-200]="first" [class.border-gray-100]="!first">
+                      <div class="flex items-center justify-between mb-1">
+                        <span class="px-2 py-0.5 rounded text-xs font-medium {{ getStatusConfig(ev.status).badge }}">{{ getStatusConfig(ev.status).label }}</span>
+                        <span class="text-xs text-gray-400">{{ formatDate(ev.eventTime) }}</span>
+                      </div>
+                      <p class="text-sm text-gray-700">{{ ev.description }}</p>
+                      @if (ev.location) { <p class="text-xs text-gray-400 mt-1"><i class="bi bi-geo-alt"></i> {{ ev.location }}</p> }
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+}

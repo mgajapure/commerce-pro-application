@@ -236,10 +236,9 @@ export class Sidebar implements OnInit {
 
       // Fulfillment & Shipping
       'menu.fulfillment': 'Fulfillment',
+      'menu.fulfillment.queue': 'Fulfillment Queue',
       'menu.fulfillment.shipments': 'Shipments',
       'menu.fulfillment.pick_pack': 'Pick & Pack',
-      'menu.fulfillment.dropship': 'Dropshipping',
-      'menu.fulfillment.3pl': '3PL Management',
       'menu.fulfillment.shipping_rules': 'Shipping Rules',
       'menu.fulfillment.labels': 'Shipping Labels',
       'menu.fulfillment.tracking': 'Order Tracking',
@@ -478,13 +477,12 @@ export class Sidebar implements OnInit {
       permissions: ['manage_order_fulfillment'],
       description: 'Shipping and logistics management',
       children: [
-        { id: 'fulfillment-shipments', label: 'menu.fulfillment.shipments', route: '/fulfillment/shipments', permissions: ['manage_order_fulfillment'] },
-        { id: 'fulfillment-pick-pack', label: 'menu.fulfillment.pick_pack', route: '/fulfillment/pick-pack', permissions: ['manage_order_fulfillment'] },
-        { id: 'fulfillment-dropship', label: 'menu.fulfillment.dropship', route: '/fulfillment/dropship', permissions: ['manage_order_fulfillment'] },
-        { id: 'fulfillment-3pl', label: 'menu.fulfillment.3pl', route: '/fulfillment/3pl', permissions: ['manage_order_fulfillment'] },
-        { id: 'fulfillment-rules', label: 'menu.fulfillment.shipping_rules', route: '/fulfillment/shipping-rules', permissions: ['manage_shipping'] },
-        { id: 'fulfillment-labels', label: 'menu.fulfillment.labels', route: '/fulfillment/labels', permissions: ['manage_shipping'] },
-        { id: 'fulfillment-tracking', label: 'menu.fulfillment.tracking', route: '/fulfillment/tracking', permissions: ['manage_order_fulfillment'] }
+        { id: 'fulfillment-queue',    label: 'menu.fulfillment.queue',          route: '/fulfillment/queue',          permissions: ['manage_order_fulfillment'] },
+        { id: 'fulfillment-shipments', label: 'menu.fulfillment.shipments',      route: '/fulfillment/shipments',      permissions: ['manage_order_fulfillment'] },
+        { id: 'fulfillment-pick-pack', label: 'menu.fulfillment.pick_pack',      route: '/fulfillment/pick-pack',      permissions: ['manage_order_fulfillment'] },
+        { id: 'fulfillment-rules',     label: 'menu.fulfillment.shipping_rules', route: '/fulfillment/shipping-rules', permissions: ['manage_shipping'] },
+        { id: 'fulfillment-labels',    label: 'menu.fulfillment.labels',         route: '/fulfillment/labels',         permissions: ['manage_shipping'] },
+        { id: 'fulfillment-tracking',  label: 'menu.fulfillment.tracking',       route: '/fulfillment/tracking',       permissions: ['manage_order_fulfillment'] }
       ]
     },
 

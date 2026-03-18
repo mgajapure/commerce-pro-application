@@ -87,6 +87,21 @@ public class PermissionRegistry {
         register("order:order:view-financials","View Order Financials",        PermissionCategory.ORDER_MANAGEMENT, 2);
         register("order:order:stats",         "View Order Statistics",         PermissionCategory.ORDER_MANAGEMENT, 1);
 
+        // Fulfillment & WMS Permissions
+        register("fulfillment:picklist:read",    "View Fulfillment Queue & Pick Lists", PermissionCategory.FULFILLMENT_MANAGEMENT, 1);
+        register("fulfillment:picklist:create",  "Generate Pick Lists",                 PermissionCategory.FULFILLMENT_MANAGEMENT, 2);
+        register("fulfillment:picklist:manage",  "Manage Pick Lists (assign/complete)",  PermissionCategory.FULFILLMENT_MANAGEMENT, 3);
+        register("fulfillment:shipment:read",    "View Shipments & Tracking",            PermissionCategory.FULFILLMENT_MANAGEMENT, 1);
+        register("fulfillment:shipment:create",  "Create Shipments",                    PermissionCategory.FULFILLMENT_MANAGEMENT, 2);
+        register("fulfillment:shipment:update",  "Update Shipments & Add Tracking",     PermissionCategory.FULFILLMENT_MANAGEMENT, 2);
+        register("fulfillment:shipment:manage",  "Manage Shipment Status",              PermissionCategory.FULFILLMENT_MANAGEMENT, 3);
+        register("fulfillment:shipment:delete",  "Delete Shipments",                    PermissionCategory.FULFILLMENT_MANAGEMENT, 4);
+        register("fulfillment:carrier:read",     "View Carriers",                       PermissionCategory.FULFILLMENT_MANAGEMENT, 1);
+        register("fulfillment:carrier:manage",   "Manage Carriers",                     PermissionCategory.FULFILLMENT_MANAGEMENT, 3);
+        register("fulfillment:rules:read",       "View Shipping Rules",                 PermissionCategory.FULFILLMENT_MANAGEMENT, 1);
+        register("fulfillment:rules:manage",     "Manage Shipping Rules",               PermissionCategory.FULFILLMENT_MANAGEMENT, 3);
+        register("fulfillment:stats",            "View Fulfillment Statistics",         PermissionCategory.FULFILLMENT_MANAGEMENT, 1);
+
         log.info("Registered {} system permissions", systemPermissions.size());
     }
 
