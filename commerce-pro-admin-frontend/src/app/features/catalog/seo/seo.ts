@@ -8,6 +8,7 @@ import { RouterModule } from '@angular/router';
 import { Dropdown, DropdownItem } from '../../../shared/components/dropdown/dropdown';
 import { SeoTemplate, SeoMetadata } from '../../../core/models/seo.model';
 import { SeoService } from '../../../core/services/seo.service';
+import { AlertService } from '../../../shared/services/alert.service';
 
 interface SeoAlert {
   id: string;
@@ -24,8 +25,9 @@ interface SeoAlert {
   styleUrl: './seo.scss'
 })
 export class Seo implements OnInit {
-  private fb = inject(FormBuilder);
+  private fb         = inject(FormBuilder);
   private seoService = inject(SeoService);
+  private alertSvc   = inject(AlertService);
 
   // View State
   showModal = signal(false);
@@ -217,9 +219,18 @@ export class Seo implements OnInit {
   }
 
   bulkDelete() {
-    if (confirm(`Delete ${this.selectedTemplates().length} templates?`)) {
+    const count = this.selectedTemplates().length;
+    if (count === 0) return;
+    this.alertSvc.confirm({
+      title: 'Delete Templates',
+      message: `Are you sure you want to delete ${count} template(s)? This action cannot be undone.`,
+      confirmLabel: `Delete ${count}`,
+      danger: true
+    }).then(ok => {
+      if (!ok) return;
       this.selectedTemplates.set([]);
-    }
+      this.alertSvc.success('Templates deleted', `${count} template(s) removed.`);
+    });
   }
 
   openModal(template?: SeoTemplate) {
@@ -260,27 +271,30 @@ export class Seo implements OnInit {
 
     if (this.editingTemplate()) {
       this.seoService.updateTemplate(this.editingTemplate()!.id, formValue).subscribe({
-        next: () => {
-          this.isSaving.set(false);
-          this.closeModal();
-        },
-        error: () => this.isSaving.set(false)
+        next: () => { this.isSaving.set(false); this.closeModal(); this.alertSvc.success('Template updated'); },
+        error: () => { this.isSaving.set(false); this.alertSvc.error('Failed to update template'); }
       });
     } else {
       this.seoService.createTemplate(formValue).subscribe({
-        next: () => {
-          this.isSaving.set(false);
-          this.closeModal();
-        },
-        error: () => this.isSaving.set(false)
+        next: () => { this.isSaving.set(false); this.closeModal(); this.alertSvc.success('Template created'); },
+        error: () => { this.isSaving.set(false); this.alertSvc.error('Failed to create template'); }
       });
     }
   }
 
   deleteTemplate(template: SeoTemplate) {
-    if (confirm(`Are you sure you want to delete "${template.name}"?`)) {
-      this.seoService.deleteTemplate(template.id).subscribe();
-    }
+    this.alertSvc.confirm({
+      title: 'Delete Template',
+      message: `Are you sure you want to delete "${template.name}"? This action cannot be undone.`,
+      confirmLabel: 'Delete',
+      danger: true
+    }).then(ok => {
+      if (!ok) return;
+      this.seoService.deleteTemplate(template.id).subscribe({
+        next: () => this.alertSvc.success('Template deleted', `"${template.name}" has been removed.`),
+        error: () => this.alertSvc.error('Failed to delete template')
+      });
+    });
   }
 
   // SEO Tools
@@ -309,7 +323,7 @@ export class Seo implements OnInit {
   }
 
   runAudit() {
-    alert('SEO Audit feature coming soon!');
+    this.alertSvc.info('Coming Soon', 'SEO Audit feature will be available in a future release.');
   }
 
   // Dropdown menu
@@ -361,7 +375,7 @@ export class Seo implements OnInit {
       description: 'Browse our extensive collection of high-quality products.'
     };
     const metadata = this.seoService.generateMetadata(template, mockData);
-    alert(`Title: ${metadata.title}\n\nDescription: ${metadata.description}`);
+    this.alertSvc.info('SEO Preview', `Title: ${metadata.title} | Description: ${metadata.description}`);
   }
 
   // Export

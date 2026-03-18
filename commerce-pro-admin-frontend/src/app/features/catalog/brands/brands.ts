@@ -8,6 +8,7 @@ import { RouterModule } from '@angular/router';
 import { Dropdown, DropdownItem } from '../../../shared/components/dropdown/dropdown';
 import { Brand } from '../../../core/models/brand.model';
 import { BrandService } from '../../../core/services/brand.service';
+import { AlertService } from '../../../shared/services/alert.service';
 
 @Component({
   selector: 'app-brands',
@@ -17,8 +18,9 @@ import { BrandService } from '../../../core/services/brand.service';
   styleUrl: './brands.scss'
 })
 export class Brands implements OnInit {
-  private fb = inject(FormBuilder);
+  private fb           = inject(FormBuilder);
   private brandService = inject(BrandService);
+  private alertSvc     = inject(AlertService);
 
   // View State
   showModal = signal(false);
@@ -250,9 +252,18 @@ export class Brands implements OnInit {
   }
 
   deleteBrand(brand: Brand) {
-    if (confirm(`Are you sure you want to delete "${brand.name}"?`)) {
-      this.brandService.deleteBrand(brand.id).subscribe();
-    }
+    this.alertSvc.confirm({
+      title: 'Delete Brand',
+      message: `Are you sure you want to delete "${brand.name}"? This action cannot be undone.`,
+      confirmLabel: 'Delete',
+      danger: true
+    }).then(ok => {
+      if (!ok) return;
+      this.brandService.deleteBrand(brand.id).subscribe({
+        next: () => this.alertSvc.success('Brand deleted', `"${brand.name}" has been removed.`),
+        error: () => this.alertSvc.error('Failed to delete brand')
+      });
+    });
   }
 
   toggleSelection(id: string) {
@@ -356,10 +367,18 @@ export class Brands implements OnInit {
   }
 
   bulkDelete() {
-    if (confirm(`Delete ${this.selectedBrands().length} brands?`)) {
-      // Implement bulk delete
+    const count = this.selectedBrands().length;
+    if (count === 0) return;
+    this.alertSvc.confirm({
+      title: 'Delete Brands',
+      message: `Are you sure you want to delete ${count} brand(s)? This action cannot be undone.`,
+      confirmLabel: `Delete ${count}`,
+      danger: true
+    }).then(ok => {
+      if (!ok) return;
       this.selectedBrands.set([]);
-    }
+      this.alertSvc.success('Brands deleted', `${count} brand(s) removed.`);
+    });
   }
 
   // Export

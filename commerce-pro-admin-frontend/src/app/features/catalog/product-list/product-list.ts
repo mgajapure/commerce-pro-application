@@ -17,6 +17,7 @@ import {
 import { ProductService } from '../../../core/services/catalog/product.service';
 import { PageResponse, PageParams } from '../../../core/models/common';
 import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
+import { AlertService } from '../../../shared/services/alert.service';
 
 @Component({
   selector: 'app-product-list',
@@ -27,7 +28,8 @@ import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
 })
 export class ProductList implements OnInit {
   private productService = inject(ProductService);
-  private router = inject(Router);
+  private router         = inject(Router);
+  private alertSvc       = inject(AlertService);
   
   // Cleanup subject for subscriptions
   private destroy$ = new Subject<void>();
@@ -358,19 +360,20 @@ export class ProductList implements OnInit {
    * Confirm and delete single product
    */
   confirmDeleteProduct(product: ProductSummary) {
-    if (confirm(`Are you sure you want to delete "${product.name}"?`)) {
+    this.alertSvc.confirm({
+      title: 'Delete Product',
+      message: `Are you sure you want to delete "${product.name}"? This action cannot be undone.`,
+      confirmLabel: 'Delete',
+      danger: true
+    }).then(ok => {
+      if (!ok) return;
       this.productService.deleteProduct(product.id)
         .pipe(takeUntil(this.destroy$))
         .subscribe({
-          next: () => {
-            this.loadProducts();
-            this.loadStats();
-          },
-          error: (err) => {
-            this.error.set(err?.message || 'Failed to delete product');
-          }
+          next: () => { this.loadProducts(); this.loadStats(); this.alertSvc.success('Product deleted', `"${product.name}" has been removed.`); },
+          error: (err) => { this.error.set(err?.message || 'Failed to delete product'); this.alertSvc.error('Failed to delete product', err?.message); }
         });
-    }
+    });
   }
 
   // ==================== Selection ====================
@@ -501,21 +504,20 @@ export class ProductList implements OnInit {
   bulkDelete() {
     const ids = this.selectedProducts();
     if (ids.length === 0) return;
-    
-    if (confirm(`Delete ${ids.length} products?`)) {
+    this.alertSvc.confirm({
+      title: 'Delete Products',
+      message: `Are you sure you want to delete ${ids.length} product(s)? This action cannot be undone.`,
+      confirmLabel: `Delete ${ids.length}`,
+      danger: true
+    }).then(ok => {
+      if (!ok) return;
       this.productService.bulkDelete(ids)
         .pipe(takeUntil(this.destroy$))
         .subscribe({
-          next: () => {
-            this.selectedProducts.set([]);
-            this.loadProducts();
-            this.loadStats();
-          },
-          error: (err) => {
-            this.error.set(err?.message || 'Failed to delete products');
-          }
+          next: () => { this.selectedProducts.set([]); this.loadProducts(); this.loadStats(); this.alertSvc.success('Products deleted', `${ids.length} product(s) removed.`); },
+          error: (err) => { this.error.set(err?.message || 'Failed to delete products'); this.alertSvc.error('Failed to delete products', err?.message); }
         });
-    }
+    });
   }
 
   // ==================== Pagination ====================

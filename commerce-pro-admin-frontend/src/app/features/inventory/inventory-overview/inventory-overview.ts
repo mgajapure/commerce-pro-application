@@ -17,6 +17,7 @@ import {
 } from '../../../core/models/inventory';
 
 import { PageParams } from '../../../core/models/common';
+import { AlertService } from '../../../shared/services/alert.service';
 
 interface InventoryAlert {
   id: string;
@@ -45,6 +46,7 @@ interface InventoryStatCard {
 export class InventoryOverview implements OnInit {
   // Services
   private inventoryService = inject(InventoryService);
+  private alertSvc         = inject(AlertService);
 
   // Loading states
   isLoadingStats = signal(false);
@@ -539,14 +541,8 @@ export class InventoryOverview implements OnInit {
       reason: this.adjustmentReason(),
       notes: this.adjustmentNotes()
     }).subscribe({
-      next: () => {
-        this.closeAdjustmentModal();
-        this.loadAllData();
-      },
-      error: (err) => {
-        console.error('Failed to adjust stock:', err);
-        alert('Failed to adjust stock. Please try again.');
-      }
+      next: () => { this.closeAdjustmentModal(); this.loadAllData(); this.alertSvc.success('Stock adjusted successfully'); },
+      error: (err) => { console.error('Failed to adjust stock:', err); this.alertSvc.error('Failed to adjust stock', 'Please try again.'); }
     });
   }
 
@@ -576,14 +572,8 @@ export class InventoryOverview implements OnInit {
       quantity: this.transferQuantity()!,
       notes: this.transferNotes()
     }).subscribe({
-      next: () => {
-        this.closeTransferModal();
-        this.loadAllData();
-      },
-      error: (err) => {
-        console.error('Failed to transfer stock:', err);
-        alert('Failed to transfer stock. Please try again.');
-      }
+      next: () => { this.closeTransferModal(); this.loadAllData(); this.alertSvc.success('Stock transferred successfully'); },
+      error: (err) => { console.error('Failed to transfer stock:', err); this.alertSvc.error('Failed to transfer stock', 'Please try again.'); }
     });
   }
 

@@ -9,6 +9,7 @@ import {
   AttributeType 
 } from '../../../core/models/attribute.model';
 import { AttributeService } from '../../../core/services/attribute.service';
+import { AlertService } from '../../../shared/services/alert.service';
 
 @Component({
   selector: 'app-attributes',
@@ -18,8 +19,9 @@ import { AttributeService } from '../../../core/services/attribute.service';
   styleUrl: './attributes.scss'
 })
 export class Attributes implements OnInit {
-  private fb = inject(FormBuilder);
+  private fb               = inject(FormBuilder);
   private attributeService = inject(AttributeService);
+  private alertSvc         = inject(AlertService);
 
   // expose global Math for template
   readonly Math: typeof Math = Math;
@@ -448,9 +450,18 @@ export class Attributes implements OnInit {
   }
 
   deleteAttribute(attribute: Attribute) {
-    if (confirm(`Are you sure you want to delete "${attribute.name}"? This will remove it from all products.`)) {
-      this.attributeService.deleteAttribute(attribute.id).subscribe();
-    }
+    this.alertSvc.confirm({
+      title: 'Delete Attribute',
+      message: `Are you sure you want to delete "${attribute.name}"? This will remove it from all products.`,
+      confirmLabel: 'Delete',
+      danger: true
+    }).then(ok => {
+      if (!ok) return;
+      this.attributeService.deleteAttribute(attribute.id).subscribe({
+        next: () => this.alertSvc.success('Attribute deleted', `"${attribute.name}" has been removed.`),
+        error: () => this.alertSvc.error('Failed to delete attribute')
+      });
+    });
   }
 
   // Selection
@@ -627,11 +638,20 @@ export class Attributes implements OnInit {
   }
 
   bulkDelete() {
-    if (confirm(`Delete ${this.selectedAttributes().length} attributes? This action cannot be undone.`)) {
-      this.attributeService.bulkDelete(this.selectedAttributes()).subscribe(() => {
-        this.selectedAttributes.set([]);
+    const count = this.selectedAttributes().length;
+    if (count === 0) return;
+    this.alertSvc.confirm({
+      title: 'Delete Attributes',
+      message: `Are you sure you want to delete ${count} attribute(s)? This action cannot be undone.`,
+      confirmLabel: `Delete ${count}`,
+      danger: true
+    }).then(ok => {
+      if (!ok) return;
+      this.attributeService.bulkDelete(this.selectedAttributes()).subscribe({
+        next: () => { this.selectedAttributes.set([]); this.alertSvc.success('Attributes deleted', `${count} attribute(s) removed.`); },
+        error: () => this.alertSvc.error('Failed to delete attributes')
       });
-    }
+    });
   }
 
   // Export

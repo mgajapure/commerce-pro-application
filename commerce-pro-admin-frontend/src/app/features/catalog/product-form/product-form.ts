@@ -28,6 +28,7 @@ import { CategoryService } from '../../../core/services/catalog/category.service
 import { BrandService } from '../../../core/services/brand.service';
 import { CollectionService } from '../../../core/services/collection.service';
 import { AttributeService } from '../../../core/services/attribute.service';
+import { AlertService } from '../../../shared/services/alert.service';
 
 @Component({
   selector: 'app-product-form',
@@ -37,14 +38,15 @@ import { AttributeService } from '../../../core/services/attribute.service';
   styleUrl: './product-form.scss'
 })
 export class ProductForm implements OnInit, OnDestroy {
-  private fb = inject(FormBuilder);
-  private router = inject(Router);
-  private route = inject(ActivatedRoute);
-  private productService = inject(ProductService);
-  private categoryService = inject(CategoryService);
-  private brandService = inject(BrandService);
-  private collectionService = inject(CollectionService);
+  private fb               = inject(FormBuilder);
+  private router           = inject(Router);
+  private route            = inject(ActivatedRoute);
+  private productService   = inject(ProductService);
+  private categoryService  = inject(CategoryService);
+  private brandService     = inject(BrandService);
+  private collectionService= inject(CollectionService);
   private attributeService = inject(AttributeService);
+  private alertSvc         = inject(AlertService);
 
   // Cleanup subject
   private destroy$ = new Subject<void>();
@@ -694,19 +696,17 @@ export class ProductForm implements OnInit, OnDestroy {
 
   deleteProduct() {
     if (!this.isEditMode()) return;
-    
-    if (confirm('Are you sure you want to delete this product? This action cannot be undone.')) {
-      this.productService.deleteProduct(this.productId()!).pipe(
-        takeUntil(this.destroy$)
-      ).subscribe({
-        next: () => {
-          this.router.navigate(['/catalog/products']);
-        },
-        error: (err) => {
-          console.error('Failed to delete product:', err);
-          // TODO: Show error notification
-        }
+    this.alertSvc.confirm({
+      title: 'Delete Product',
+      message: 'Are you sure you want to delete this product? This action cannot be undone.',
+      confirmLabel: 'Delete Product',
+      danger: true
+    }).then(ok => {
+      if (!ok) return;
+      this.productService.deleteProduct(this.productId()!).pipe(takeUntil(this.destroy$)).subscribe({
+        next: () => { this.router.navigate(['/catalog/products']); this.alertSvc.success('Product deleted'); },
+        error: (err) => { console.error('Failed to delete product:', err); this.alertSvc.error('Failed to delete product', err?.message); }
       });
-    }
+    });
   }
 }

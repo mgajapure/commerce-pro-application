@@ -6,6 +6,7 @@ import { ShipmentService } from '../../../core/services/fulfillment/shipment.ser
 import { FulfillmentService } from '../../../core/services/fulfillment/fulfillment.service';
 import { ShipmentSummary, ShipmentDetail, ShipmentStats, CreateShipmentRequest, AddTrackingEventRequest, Carrier } from '../../../core/models/fulfillment/fulfillment.model';
 import { PageParams } from '../../../core/models/common';
+import { AlertService } from '../../../shared/services/alert.service';
 
 @Component({
   selector: 'app-shipments',
@@ -17,6 +18,7 @@ import { PageParams } from '../../../core/models/common';
 export class Shipments implements OnInit {
   private svc      = inject(ShipmentService);
   private fulfSvc  = inject(FulfillmentService);
+  private alertSvc = inject(AlertService);
 
   shipments     = signal<ShipmentSummary[]>([]);
   stats         = signal<ShipmentStats | null>(null);
@@ -90,8 +92,12 @@ export class Shipments implements OnInit {
     this.formError.set(null);
     const req: CreateShipmentRequest = { orderId: f.orderId, carrierId: f.carrierId || undefined, trackingNumber: f.trackingNumber || undefined, shippingMethod: f.shippingMethod, notes: f.notes };
     this.svc.createShipment(req).subscribe({
-      next: () => { this.submitting.set(false); this.closeCreateModal(); this.loadShipments(); this.svc.getStats().subscribe(s => this.stats.set(s)); },
-      error: err => { this.submitting.set(false); this.formError.set(err?.error?.message ?? 'Failed to create shipment'); }
+      next: () => {
+        this.submitting.set(false); this.closeCreateModal(); this.loadShipments();
+        this.svc.getStats().subscribe(s => this.stats.set(s));
+        this.alertSvc.success('Shipment created', 'Tracking info synced to the order.');
+      },
+      error: err => { this.submitting.set(false); this.formError.set(err?.error?.message ?? 'Failed to create shipment'); this.alertSvc.error('Failed to create shipment', err?.error?.message); }
     });
   }
 
@@ -106,18 +112,34 @@ export class Shipments implements OnInit {
     this.submitting.set(true);
     const req: AddTrackingEventRequest = { status: f.status, description: f.description, location: f.location || undefined };
     this.svc.addTrackingEvent(s.id, req).subscribe({
-      next: updated => { this.submitting.set(false); this.selectedShipment.set(updated); this.closeTrackModal(); this.loadShipments(); },
-      error: err => { this.submitting.set(false); this.formError.set(err?.error?.message ?? 'Failed to add event'); }
+      next: updated => {
+        this.submitting.set(false); this.selectedShipment.set(updated); this.closeTrackModal(); this.loadShipments();
+        this.alertSvc.success('Tracking event added', 'Shipment and order status updated.');
+      },
+      error: err => { this.submitting.set(false); this.formError.set(err?.error?.message ?? 'Failed to add event'); this.alertSvc.error('Failed to add tracking event'); }
     });
   }
 
   markDelivered(id: string) {
-    this.svc.markDelivered(id).subscribe(updated => { this.selectedShipment.set(updated); this.loadShipments(); });
+    this.svc.markDelivered(id).subscribe({
+      next: updated => { this.selectedShipment.set(updated); this.loadShipments(); this.alertSvc.success('Marked as delivered', 'Order status updated to Delivered.'); },
+      error: () => this.alertSvc.error('Failed to mark as delivered')
+    });
   }
 
   deleteShipment(id: string) {
-    if (!confirm('Delete this shipment?')) return;
-    this.svc.deleteShipment(id).subscribe(() => { this.closeDetail(); this.loadShipments(); });
+    this.alertSvc.confirm({
+      title: 'Delete Shipment',
+      message: 'This will permanently delete the shipment label. Only LABEL_CREATED shipments can be deleted.',
+      confirmLabel: 'Delete',
+      danger: true
+    }).then(ok => {
+      if (!ok) return;
+      this.svc.deleteShipment(id).subscribe({
+        next: () => { this.closeDetail(); this.loadShipments(); this.alertSvc.success('Shipment deleted'); },
+        error: () => this.alertSvc.error('Failed to delete shipment', 'Only LABEL_CREATED shipments can be deleted.')
+      });
+    });
   }
 
   applyQuickFilter(s: string) { this.filterStatus.set(s); this.currentPage.set(1); this.loadShipments(); }
@@ -171,5 +193,4 @@ export class Shipments implements OnInit {
   setTrackFormLocation(location: any){
     this.trackForm.update(f => ({...f, location: location}))
   }
-
 }

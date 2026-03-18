@@ -8,6 +8,7 @@ import {
   CategoryTreeNode 
 } from '../../../core/models/catalog/category.model';
 import { CategoryService } from '../../../core/services/catalog/category.service';
+import { AlertService } from '../../../shared/services/alert.service';
 
 @Component({
   selector: 'app-categories',
@@ -17,8 +18,9 @@ import { CategoryService } from '../../../core/services/catalog/category.service
   styleUrl: './categories.scss'
 })
 export class Categories implements OnInit {
-  private fb = inject(FormBuilder);
+  private fb              = inject(FormBuilder);
   private categoryService = inject(CategoryService);
+  private alertSvc        = inject(AlertService);
   
   // View state
   viewMode = signal<'tree' | 'grid'>('tree');
@@ -312,19 +314,23 @@ export class Categories implements OnInit {
   
   deleteCategory(category: Category) {
     const hasSubcategories = this.categories().some(c => c.parentId === category.id);
-    const hasProducts = category.productCount > 0;
-    
-    let message = `Are you sure you want to delete "${category.name}"?`;
-    if (hasSubcategories) {
-      message += '\n\nThis category has subcategories that will also be deleted.';
-    }
-    if (hasProducts) {
-      message += `\n\nThis category contains ${category.productCount} products.`;
-    }
-    
-    if (confirm(message)) {
-      this.categoryService.deleteCategory(category.id).subscribe();
-    }
+    const hasProducts      = category.productCount > 0;
+    let detail = '';
+    if (hasSubcategories) detail += 'This category has subcategories that will also be deleted. ';
+    if (hasProducts)      detail += `This category contains ${category.productCount} product(s).`;
+
+    this.alertSvc.confirm({
+      title: `Delete "${category.name}"`,
+      message: `Are you sure you want to delete this category?${detail ? ' ' + detail : ''}`,
+      confirmLabel: 'Delete',
+      danger: true
+    }).then(ok => {
+      if (!ok) return;
+      this.categoryService.deleteCategory(category.id).subscribe({
+        next: () => this.alertSvc.success('Category deleted'),
+        error: () => this.alertSvc.error('Failed to delete category')
+      });
+    });
   }
   
   toggleStatus(category: Category) {
@@ -370,12 +376,18 @@ export class Categories implements OnInit {
   bulkDelete() {
     const ids = this.selectedCategories();
     if (ids.length === 0) return;
-    
-    if (confirm(`Delete ${ids.length} categories?`)) {
-      this.categoryService.bulkDelete(ids).subscribe(() => {
-        this.selectedCategories.set([]);
+    this.alertSvc.confirm({
+      title: 'Delete Categories',
+      message: `Are you sure you want to delete ${ids.length} category(s)? This action cannot be undone.`,
+      confirmLabel: `Delete ${ids.length}`,
+      danger: true
+    }).then(ok => {
+      if (!ok) return;
+      this.categoryService.bulkDelete(ids).subscribe({
+        next: () => { this.selectedCategories.set([]); this.alertSvc.success('Categories deleted', `${ids.length} category(s) removed.`); },
+        error: () => this.alertSvc.error('Failed to delete categories')
       });
-    }
+    });
   }
 
   // Filters

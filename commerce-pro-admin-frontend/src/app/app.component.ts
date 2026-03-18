@@ -5,11 +5,12 @@ import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { AuthService } from './core/services/auth/auth.service';
 import { Header } from './shared/layout/header/header';
 import { Sidebar } from './shared/layout/sidebar/sidebar';
+import { AlertComponent } from './shared/components/alert/alert';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, Sidebar, Header],
+  imports: [CommonModule, RouterOutlet, Sidebar, Header, AlertComponent],
   template: `
     @if (isAuthRoute()) {
       <router-outlet></router-outlet>
@@ -36,6 +37,9 @@ import { Sidebar } from './shared/layout/sidebar/sidebar';
         </div>
       </div>
     }
+
+    <!-- Global alert layer — toasts + confirm dialog rendered here once for the whole app -->
+    <app-alert></app-alert>
   `
 })
 export class AppComponent {
