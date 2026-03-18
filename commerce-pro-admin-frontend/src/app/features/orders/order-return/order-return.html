@@ -1,589 +1,157 @@
 <div class="min-h-screen bg-gray-50/50 p-4 sm:p-6 lg:p-8">
-    <div class="max-w-[1600px] mx-auto space-y-6">
+  <div class="max-w-[1600px] mx-auto space-y-6">
 
-        <!-- Header Section -->
-        <div
-            class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-            <div>
-                <div class="flex items-center gap-3">
-                    <h1 class="text-2xl font-bold text-gray-900">Returns & Exchanges</h1>
-                    <span class="px-3 py-1 bg-gray-100 text-gray-600 text-sm font-medium rounded-full">
-                        {{ filteredReturns().length }} returns
-                    </span>
-                </div>
-                <p class="text-gray-500 mt-1 text-sm">Manage product returns, exchanges, and refunds</p>
-            </div>
-            <div class="flex flex-wrap items-center gap-3">
-                <button (click)="toggleFilters()"
-                    class="group px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:border-indigo-300 hover:text-indigo-600 transition-all flex items-center gap-2 shadow-sm">
-                    <i class="bi bi-funnel group-hover:scale-110 transition-transform"></i>
-                    <span class="hidden sm:inline">Filters</span>
-                    @if (activeFiltersCount() > 0) {
-                    <span class="bg-indigo-600 text-white text-xs px-2 py-0.5 rounded-full animate-pulse">
-                        {{ activeFiltersCount() }}
-                    </span>
-                    }
-                </button>
-
-                <button (click)="toggleViewMode()"
-                    class="p-2.5 bg-white border border-gray-200 rounded-xl text-gray-700 hover:border-indigo-300 hover:text-indigo-600 transition-all shadow-sm">
-                    <i class="bi bi-{{viewMode() === 'table' ? 'grid' : 'list'}}"></i>
-                </button>
-
-                <app-dropdown label="Export" icon="download" align="end" [items]="[
-            { id: 'csv', label: 'Export as CSV', icon: 'filetype-csv' },
-            { id: 'excel', label: 'Export as Excel', icon: 'filetype-xlsx' },
-            { id: 'pdf', label: 'Export as PDF', icon: 'filetype-pdf' }
-          ]" triggerClass="shadow-sm" 
-          (itemSelected)="exportReturns($event.id)"
-          [showChevron]="false">
-                </app-dropdown>
-            </div>
+    <!-- Header -->
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+      <div>
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-pink-100 text-pink-600">
+            <i class="bi bi-arrow-return-left text-lg"></i>
+          </div>
+          <h1 class="text-2xl font-bold text-gray-900">Returns</h1>
+          <span class="px-3 py-1 bg-gray-100 text-gray-600 text-sm font-medium rounded-full">
+            {{ totalElements() | number }}
+          </span>
         </div>
-
-        <!-- Stats Overview -->
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            @for (stat of returnStats(); track stat.label) {
-            <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all cursor-pointer group"
-                [class.ring-2]="selectedQuickFilter() === stat.filter"
-                [class.ring-indigo-500]="selectedQuickFilter() === stat.filter" (click)="applyQuickFilter(stat.filter)">
-                <div class="flex items-start justify-between">
-                    <div>
-                        <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">{{ stat.label }}</p>
-                        <p class="text-2xl font-bold text-gray-900 group-hover:text-indigo-600 transition-colors">
-                            {{ stat.value }}
-                        </p>
-                    </div>
-                    <div
-                        class="w-10 h-10 rounded-xl flex items-center justify-center transition-colors {{ stat.bgColor }}">
-                        <i class="bi bi-{{stat.icon}} {{stat.iconColor}} text-lg"></i>
-                    </div>
-                </div>
-                <div class="mt-3 flex items-center gap-2">
-                    <span class="text-xs font-medium px-2 py-0.5 rounded-full"
-                        [class]="stat.trend >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'">
-                        {{ stat.trend >= 0 ? '+' : '' }}{{ stat.trend }}%
-                    </span>
-                    <span class="text-xs text-gray-400">vs last week</span>
-                </div>
-            </div>
-            }
+        <p class="text-gray-500 mt-1 text-sm">Customer return requests</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="relative">
+          <i class="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+          <input type="text" [value]="searchQuery()" (input)="onSearch($any($event.target).value)"
+            placeholder="Search orders…"
+            class="pl-9 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 w-56">
         </div>
+        <a routerLink="/orders/all"
+          class="px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:border-indigo-300 hover:text-indigo-600 transition-all flex items-center gap-2 shadow-sm">
+          <i class="bi bi-list-ul"></i> All Orders
+        </a>
+        <button (click)="load()"
+          class="p-2.5 bg-white border border-gray-200 rounded-xl text-gray-600 hover:border-indigo-300 hover:text-indigo-600 transition-all shadow-sm" title="Refresh">
+          <i class="bi bi-arrow-clockwise" [class.animate-spin]="isLoading()"></i>
+        </button>
+      </div>
+    </div>
 
-        <!-- Advanced Filters Panel -->
-        @if (showFilters()) {
-        <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-            <div class="flex items-center justify-between mb-6">
-                <h3 class="font-semibold text-gray-900 flex items-center gap-2">
-                    <i class="bi bi-funnel-fill text-indigo-600"></i>
-                    Advanced Filters
-                </h3>
-                <button (click)="clearAllFilters()" class="text-sm text-gray-500 hover:text-gray-700 transition-colors">
-                    Clear all
-                </button>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <!-- Search -->
-                <div class="lg:col-span-2">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Search Returns</label>
-                    <div class="relative">
-                        <i class="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                        <input type="text" [(ngModel)]="searchQuery"
-                            placeholder="Search by return #, order #, customer..."
-                            class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all">
-                    </div>
-                </div>
-
-                <!-- Status -->
-                <div class="relative">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Return Status</label>
-                    <select [(ngModel)]="filterStatus"
-                        class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none cursor-pointer">
-                        <option value="">All Statuses</option>
-                        <option value="requested">Requested</option>
-                        <option value="approved">Approved</option>
-                        <option value="received">Received</option>
-                        <option value="inspecting">Inspecting</option>
-                        <option value="refunded">Refunded</option>
-                        <option value="completed">Completed</option>
-                        <option value="rejected">Rejected</option>
-                        <option value="cancelled">Cancelled</option>
-                    </select>
-                    <i
-                        class="bi bi-chevron-down absolute right-3 top-[38px] -translate-y-1/2 text-gray-400 pointer-events-none"></i>
-                </div>
-
-                <!-- Return Method -->
-                <div class="relative">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Resolution</label>
-                    <select [(ngModel)]="filterReturnMethod"
-                        class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none cursor-pointer">
-                        <option value="">All Methods</option>
-                        <option value="refund">Refund</option>
-                        <option value="exchange">Exchange</option>
-                        <option value="store_credit">Store Credit</option>
-                    </select>
-                    <i
-                        class="bi bi-chevron-down absolute right-3 top-[38px] -translate-y-1/2 text-gray-400 pointer-events-none"></i>
-                </div>
-
-                <!-- Priority -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Priority</label>
-                    <div class="flex gap-2">
-                        @for (priority of ['all', 'low', 'medium', 'high', 'urgent']; track priority) {
-                        <button (click)="filterPriority.set(priority === 'all' ? '' : priority)"
-                            class="flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-all capitalize"
-                            [class.bg-indigo-600]="(priority === 'all' && !filterPriority()) || filterPriority() === priority"
-                            [class.text-white]="(priority === 'all' && !filterPriority()) || filterPriority() === priority"
-                            [class.bg-gray-100]="!((priority === 'all' && !filterPriority()) || filterPriority() === priority)"
-                            [class.text-gray-700]="!((priority === 'all' && !filterPriority()) || filterPriority() === priority)">
-                            {{ priority }}
-                        </button>
-                        }
-                    </div>
-                </div>
-
-                <!-- Condition -->
-                <div class="relative">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Item Condition</label>
-                    <select [(ngModel)]="filterCondition"
-                        class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 appearance-none cursor-pointer">
-                        <option value="">All Conditions</option>
-                        <option value="unopened">Unopened</option>
-                        <option value="opened">Opened</option>
-                        <option value="damaged">Damaged</option>
-                        <option value="defective">Defective</option>
-                    </select>
-                    <i
-                        class="bi bi-chevron-down absolute right-3 top-[38px] -translate-y-1/2 text-gray-400 pointer-events-none"></i>
-                </div>
-
-                <!-- Amount Range -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Refund Amount</label>
-                    <div class="flex items-center gap-2">
-                        <div class="relative flex-1">
-                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
-                            <input type="number" [(ngModel)]="filterMinAmount" placeholder="Min"
-                                class="w-full pl-7 pr-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm">
-                        </div>
-                        <span class="text-gray-400">-</span>
-                        <div class="relative flex-1">
-                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
-                            <input type="number" [(ngModel)]="filterMaxAmount" placeholder="Max"
-                                class="w-full pl-7 pr-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Date Range -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">From Date</label>
-                    <input type="date" [(ngModel)]="filterDateFrom"
-                        class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">To Date</label>
-                    <input type="date" [(ngModel)]="filterDateTo"
-                        class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
-                </div>
-            </div>
+    <!-- Error -->
+    @if (error() && !isLoading()) {
+      <div class="bg-red-50 border border-red-200 rounded-2xl p-5 flex items-center gap-4">
+        <i class="bi bi-exclamation-triangle text-red-600 text-xl flex-shrink-0"></i>
+        <div class="flex-1">
+          <p class="font-semibold text-red-800">Load failed</p>
+          <p class="text-sm text-red-600">{{ error() }}</p>
         </div>
+        <button (click)="load()" class="px-4 py-2 bg-red-600 text-white rounded-xl text-sm hover:bg-red-700 flex items-center gap-2">
+          <i class="bi bi-arrow-clockwise"></i> Retry
+        </button>
+      </div>
+    }
+
+    <!-- Loading skeleton -->
+    @if (isLoading()) {
+      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden animate-pulse">
+        <div class="h-12 bg-gray-50 border-b border-gray-100"></div>
+        @for (i of [1,2,3,4,5,6]; track i) {
+          <div class="h-14 border-b border-gray-50 flex items-center px-6 gap-4">
+            <div class="flex-1 h-4 bg-gray-200 rounded"></div>
+            <div class="w-32 h-4 bg-gray-200 rounded"></div>
+            <div class="w-20 h-6 bg-gray-200 rounded-full"></div>
+            <div class="w-24 h-4 bg-gray-200 rounded"></div>
+          </div>
         }
+      </div>
+    }
 
-        <!-- Bulk Actions Bar -->
-        @if (selectedReturns().length > 0) {
-        <div
-            class="bg-indigo-600 text-white rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-lg shadow-indigo-200">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-                    <i class="bi bi-check-square text-xl"></i>
-                </div>
-                <div>
-                    <p class="font-semibold">{{ selectedReturns().length }} returns selected</p>
-                    <p class="text-sm text-indigo-100">Choose an action to apply to selected items</p>
-                </div>
-            </div>
-            <div class="flex flex-wrap gap-2">
-                <button (click)="bulkApprove()"
-                    class="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
-                    <i class="bi bi-check-circle"></i>
-                    Approve
-                </button>
-                <button (click)="bulkPrintLabels()"
-                    class="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
-                    <i class="bi bi-printer"></i>
-                    Print Labels
-                </button>
-                <div class="w-px h-8 bg-white/20 mx-1"></div>
-                <button (click)="bulkReject()"
-                    class="px-4 py-2 bg-red-500 hover:bg-red-600 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
-                    <i class="bi bi-x-circle"></i>
-                    Reject
-                </button>
-            </div>
-        </div>
-        }
-
-        <!-- Returns Table View -->
-        @if (viewMode() === 'table') {
-        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="w-full">
-                    <thead class="bg-gray-50/50 border-b border-gray-100">
-                        <tr>
-                            <th class="px-6 py-4 text-left w-12">
-                                <input type="checkbox" [checked]="isAllSelected()" (change)="toggleSelectAll()"
-                                    class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer">
-                            </th>
-                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer hover:text-gray-700 group"
-                                (click)="sort('returnNumber')">
-                                Return
-                                <i class="bi bi-arrow-down-up ml-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                                    [class.opacity-100]="sortField() === 'returnNumber'"></i>
-                            </th>
-                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer hover:text-gray-700 group"
-                                (click)="sort('customer')">
-                                Customer
-                                <i class="bi bi-arrow-down-up ml-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                                    [class.opacity-100]="sortField() === 'customer'"></i>
-                            </th>
-                            <th
-                                class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                Status
-                            </th>
-                            <th
-                                class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                Items & Condition
-                            </th>
-                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer hover:text-gray-700 group"
-                                (click)="sort('refundAmount')">
-                                Refund
-                                <i class="bi bi-arrow-down-up ml-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                                    [class.opacity-100]="sortField() === 'refundAmount'"></i>
-                            </th>
-                            <th
-                                class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                Requested
-                            </th>
-                            <th
-                                class="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                Actions
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100">
-                        @for (returnItem of paginatedReturns(); track returnItem.id) {
-                        <tr class="group hover:bg-gray-50/50 transition-colors"
-                            [class.bg-indigo-50/30]="isSelected(returnItem.id)">
-                            <td class="px-6 py-4">
-                                <input type="checkbox" [checked]="isSelected(returnItem.id)"
-                                    (change)="toggleSelection(returnItem.id)"
-                                    class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer">
-                            </td>
-                            <td class="px-6 py-4">
-                                <div class="flex flex-col">
-                                    <a [routerLink]="['/returns', returnItem.id]"
-                                        class="font-semibold text-gray-900 hover:text-indigo-600 transition-colors">
-                                        {{ returnItem.returnNumber }}
-                                    </a>
-                                    <span class="text-xs text-gray-500">Order: {{ returnItem.orderNumber }}</span>
-                                    @if (returnItem.priority !== 'low') {
-                                    <span
-                                        class="mt-1 px-2 py-0.5 text-xs rounded-full w-fit {{ getPriorityColor(returnItem.priority) }}">
-                                        {{ returnItem.priority }}
-                                    </span>
-                                    }
-                                </div>
-                            </td>
-                            <td class="px-6 py-4">
-                                <div class="flex items-center gap-3">
-                                    <img [src]="returnItem.customer.avatar" [alt]="returnItem.customer.name"
-                                        class="w-10 h-10 rounded-full object-cover bg-gray-100">
-                                    <div>
-                                        <p class="font-medium text-gray-900">{{ returnItem.customer.name }}</p>
-                                        <div class="flex items-center gap-1 text-xs text-gray-500">
-                                            <i class="bi bi-{{getCustomerTypeIcon(returnItem.customer.type)}}"></i>
-                                            <span class="capitalize">{{ returnItem.customer.type }}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="px-6 py-4">
-                                <div class="flex flex-col gap-1">
-                                    <span
-                                        class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium w-fit {{ getStatusColor(returnItem.status) }}">
-                                        <span
-                                            class="w-1.5 h-1.5 rounded-full mr-1.5 {{ getStatusDot(returnItem.status) }}"></span>
-                                        {{ returnItem.status | titlecase }}
-                                    </span>
-                                    <span class="text-xs text-gray-500 flex items-center gap-1">
-                                        <i class="bi bi-{{getReturnMethodIcon(returnItem.returnMethod)}}"></i>
-                                        {{ returnItem.returnMethod | titlecase }}
-                                    </span>
-                                </div>
-                            </td>
-                            <td class="px-6 py-4">
-                                <div class="flex flex-col gap-2">
-                                    <div class="flex items-center gap-2">
-                                        <div class="flex -space-x-2">
-                                            @for (item of returnItem.items.slice(0, 3); track item.productId) {
-                                            <img [src]="item.image" [alt]="item.name"
-                                                class="w-8 h-8 rounded-lg object-cover bg-gray-100 border-2 border-white"
-                                                [title]="item.name">
-                                            }
-                                            @if (returnItem.items.length > 3) {
-                                            <div
-                                                class="w-8 h-8 rounded-lg bg-gray-100 border-2 border-white flex items-center justify-center text-xs font-medium text-gray-600">
-                                                +{{ returnItem.items.length - 3 }}
-                                            </div>
-                                            }
-                                        </div>
-                                        <span class="text-sm text-gray-600">{{ returnItem.items.length }} items</span>
-                                    </div>
-                                    <div class="flex flex-wrap gap-1">
-                                        @for (item of returnItem.items; track item.productId) {
-                                        <span
-                                            class="px-2 py-0.5 text-xs rounded-full {{ getConditionColor(item.condition) }}">
-                                            {{ item.condition | titlecase }}
-                                        </span>
-                                        }
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="px-6 py-4">
-                                <div class="flex flex-col">
-                                    <span class="font-semibold text-gray-900">${{ returnItem.refundAmount |
-                                        number:'1.2-2' }}</span>
-                                    <span class="text-xs text-gray-500">of ${{ returnItem.originalOrderTotal |
-                                        number:'1.2-2' }}</span>
-                                </div>
-                            </td>
-                            <td class="px-6 py-4">
-                                <div class="flex flex-col">
-                                    <span class="text-sm text-gray-900">{{ getTimeAgo(returnItem.requestedAt) }}</span>
-                                    <span class="text-xs text-gray-500">{{ formatDate(returnItem.requestedAt) }}</span>
-                                    @if (returnItem.assignedTo) {
-                                    <span class="text-xs text-indigo-600 mt-1">Assigned: {{ returnItem.assignedTo
-                                        }}</span>
-                                    }
-                                </div>
-                            </td>
-                            <td class="px-6 py-4 text-right">
-                                <div class="flex items-center justify-end gap-1">
-                                    <a [routerLink]="['/returns', returnItem.id]"
-                                        class="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                                        title="View Return">
-                                        <i class="bi bi-eye"></i>
-                                    </a>
-                                    <app-dropdown icon="three-dots-vertical" align="end"
-                                        [items]="getReturnMenuItems(returnItem)"
-                                        triggerClass="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg border-0 shadow-none"
-                                        menuClass="w-52" 
-                                        (itemSelected)="onReturnAction($event, returnItem)"
-                                        [showChevron]="false">
-                                    </app-dropdown>
-                                </div>
-                            </td>
-                        </tr>
-                        } @empty {
-                        <tr>
-                            <td colspan="8" class="px-6 py-12 text-center">
-                                <div class="flex flex-col items-center">
-                                    <div
-                                        class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mb-4">
-                                        <i class="bi bi-arrow-return-left text-2xl text-gray-400"></i>
-                                    </div>
-                                    <h3 class="text-lg font-medium text-gray-900 mb-1">No returns found</h3>
-                                    <p class="text-gray-500 mb-4">Try adjusting your filters or search query</p>
-                                    <button (click)="clearAllFilters()"
-                                        class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors">
-                                        Clear Filters
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Table Footer -->
-            <div
-                class="px-6 py-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div class="flex items-center gap-2">
-                    <span class="text-sm text-gray-500">Show</span>
-                    <select [(ngModel)]="itemsPerPage" (change)="currentPage.set(1)"
-                        class="px-2 py-1 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
-                        <option [value]="10">10</option>
-                        <option [value]="25">25</option>
-                        <option [value]="50">50</option>
-                        <option [value]="100">100</option>
-                    </select>
-                    <span class="text-sm text-gray-500">of {{ filteredReturns().length }} returns</span>
-                </div>
-
-                <div class="flex items-center gap-2">
-                    <button (click)="previousPage()" [disabled]="currentPage() === 1"
-                        class="p-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-                        <i class="bi bi-chevron-left"></i>
-                    </button>
-
-                    @for (page of visiblePages(); track page) {
-                    @if (page === '...') {
-                    <span class="px-3 py-2 text-gray-400">...</span>
-                    } @else {
-                    <button (click)="goToPage(+page)" class="px-3 py-2 rounded-lg text-sm font-medium transition-colors"
-                        [class.bg-indigo-600]="currentPage() === page" [class.text-white]="currentPage() === page"
-                        [class.text-gray-700]="currentPage() !== page"
-                        [class.hover:bg-gray-100]="currentPage() !== page">
-                        {{ page }}
-                    </button>
-                    }
-                    }
-
-                    <button (click)="nextPage()" [disabled]="currentPage() === totalPages()"
-                        class="p-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-                        <i class="bi bi-chevron-right"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-        } @else {
-        <!-- Grid View -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            @for (returnItem of paginatedReturns(); track returnItem.id) {
-            <div class="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-all"
-                [class.ring-2]="isSelected(returnItem.id)" [class.ring-indigo-500]="isSelected(returnItem.id)">
-
-                <!-- Header -->
-                <div class="p-4 border-b border-gray-100 flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                        <input type="checkbox" [checked]="isSelected(returnItem.id)"
-                            (change)="toggleSelection(returnItem.id)"
-                            class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
-                        <a [routerLink]="['/returns', returnItem.id]"
-                            class="font-semibold text-gray-900 hover:text-indigo-600 transition-colors">
-                            {{ returnItem.returnNumber }}
-                        </a>
+    <!-- Table -->
+    @if (!isLoading() && !error()) {
+      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead class="bg-gray-50/50 border-b border-gray-100">
+              <tr>
+                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Order</th>
+                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Customer</th>
+                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Items</th>
+                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Total</th>
+                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>
+                <th class="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+              @for (order of orders(); track order.id) {
+                <tr class="group hover:bg-gray-50/50 transition-colors">
+                  <td class="px-6 py-4">
+                    <div class="flex items-center gap-1.5">
+                      @if (order.isFlagged) { <i class="bi bi-flag-fill text-red-500 text-xs"></i> }
+                      <a [routerLink]="['/orders/details', order.id]"
+                        class="font-semibold text-gray-900 hover:text-indigo-600 text-sm transition-colors">
+                        {{ order.orderNumber }}
+                      </a>
                     </div>
-                    <span class="px-2 py-1 rounded-full text-xs font-medium {{ getStatusColor(returnItem.status) }}">
-                        {{ returnItem.status | titlecase }}
+                  </td>
+                  <td class="px-6 py-4">
+                    <p class="font-medium text-gray-900 text-sm">{{ order.customerName }}</p>
+                    <p class="text-xs text-gray-500 truncate max-w-[160px]">{{ order.customerEmail }}</p>
+                  </td>
+                  <td class="px-6 py-4">
+                    <span class="px-2.5 py-1 rounded-full text-xs font-medium {{ getStatusBadge(order.status) }}">
+                      {{ getStatusLabel(order.status) }}
                     </span>
-                </div>
-
-                <!-- Customer -->
-                <div class="p-4">
-                    <div class="flex items-center gap-3 mb-4">
-                        <img [src]="returnItem.customer.avatar" [alt]="returnItem.customer.name"
-                            class="w-12 h-12 rounded-full object-cover bg-gray-100">
-                        <div>
-                            <p class="font-medium text-gray-900">{{ returnItem.customer.name }}</p>
-                            <p class="text-sm text-gray-500">{{ returnItem.customer.email }}</p>
-                        </div>
+                  </td>
+                  <td class="px-6 py-4 text-sm text-gray-600">{{ order.itemCount }} item{{ order.itemCount !== 1 ? 's' : '' }}</td>
+                  <td class="px-6 py-4 font-semibold text-gray-900">${{ order.totalAmount | number:'1.2-2' }}</td>
+                  <td class="px-6 py-4">
+                    <p class="text-sm text-gray-700">{{ getTimeAgo(order.createdAt) }}</p>
+                    <p class="text-xs text-gray-400">{{ formatDate(order.createdAt) }}</p>
+                  </td>
+                  <td class="px-6 py-4 text-right">
+                    <div class="flex items-center justify-end gap-1">
+                      <a [routerLink]="['/orders/details', order.id]"
+                        class="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
+                        <i class="bi bi-eye text-sm"></i>
+                      </a>
+                      <app-dropdown icon="three-dots-vertical" [items]="getMenuItems()"
+                        triggerClass="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg border-0"
+                        menuClass="w-44" [showChevron]="false" label="">
+                      </app-dropdown>
                     </div>
-
-                    <!-- Items Preview -->
-                    <div class="flex items-center gap-2 mb-4">
-                        <div class="flex -space-x-2">
-                            @for (item of returnItem.items.slice(0, 3); track item.productId) {
-                            <img [src]="item.image" [alt]="item.name"
-                                class="w-10 h-10 rounded-lg object-cover bg-gray-100 border-2 border-white">
-                            }
-                            @if (returnItem.items.length > 3) {
-                            <div
-                                class="w-10 h-10 rounded-lg bg-gray-100 border-2 border-white flex items-center justify-center text-xs font-medium text-gray-600">
-                                +{{ returnItem.items.length - 3 }}
-                            </div>
-                            }
-                        </div>
-                        <div class="flex flex-col">
-                            <span class="text-sm text-gray-600">{{ returnItem.items.length }} items</span>
-                            <span class="text-xs {{ getConditionColor(returnItem.items[0].condition) }}">
-                                {{ returnItem.items[0].condition | titlecase }}
-                            </span>
-                        </div>
-                    </div>
-
-                    <!-- Refund & Priority -->
-                    <div class="flex items-center justify-between mb-4">
-                        <div>
-                            <p class="text-2xl font-bold text-gray-900">${{ returnItem.refundAmount | number:'1.2-2' }}
-                            </p>
-                            <p class="text-xs text-gray-500 flex items-center gap-1">
-                                <i class="bi bi-{{getReturnMethodIcon(returnItem.returnMethod)}}"></i>
-                                {{ returnItem.returnMethod | titlecase }}
-                            </p>
-                        </div>
-                        @if (returnItem.priority !== 'low') {
-                        <span
-                            class="px-3 py-1 rounded-full text-xs font-medium {{ getPriorityColor(returnItem.priority) }}">
-                            {{ returnItem.priority | titlecase }}
-                        </span>
-                        }
-                    </div>
-
-                    <!-- Date & Actions -->
-                    <div class="flex items-center justify-between pt-4 border-t border-gray-100">
-                        <div class="text-sm text-gray-500">
-                            <i class="bi bi-clock mr-1"></i>
-                            {{ getTimeAgo(returnItem.requestedAt) }}
-                        </div>
-                        <div class="flex gap-1">
-                            <a [routerLink]="['/returns', returnItem.id]"
-                                class="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
-                                <i class="bi bi-eye"></i>
-                            </a>
-                            <app-dropdown icon="three-dots-vertical" align="end"
-                                [items]="getReturnMenuItems(returnItem)"
-                                triggerClass="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg border-0 shadow-none"
-                                menuClass="w-52" (itemSelected)="onReturnAction($event, returnItem)">
-                            </app-dropdown>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            } @empty {
-            <div class="col-span-full py-12 text-center">
-                <div class="flex flex-col items-center">
-                    <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mb-4">
-                        <i class="bi bi-arrow-return-left text-2xl text-gray-400"></i>
-                    </div>
-                    <h3 class="text-lg font-medium text-gray-900 mb-1">No returns found</h3>
-                    <p class="text-gray-500 mb-4">Try adjusting your filters or search query</p>
-                    <button (click)="clearAllFilters()"
-                        class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors">
-                        Clear Filters
-                    </button>
-                </div>
-            </div>
-            }
+                  </td>
+                </tr>
+              } @empty {
+                <tr><td colspan="7" class="py-16 text-center">
+                  <div class="w-14 h-14 bg-pink-100 text-pink-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <i class="bi bi-arrow-return-left text-2xl"></i>
+                  </div>
+                  <p class="font-medium text-gray-900 mb-1">No returns found</p>
+                  @if (searchQuery()) {
+                    <p class="text-sm text-gray-500">No results for "{{ searchQuery() }}"</p>
+                  }
+                </td></tr>
+              }
+            </tbody>
+          </table>
         </div>
 
-        <!-- Grid Pagination -->
-        @if (filteredReturns().length > 0) {
-        <div class="flex items-center justify-between pt-6">
+        <!-- Pagination -->
+        @if (totalPages() > 1) {
+          <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
             <span class="text-sm text-gray-500">
-                Showing {{ (currentPage() - 1) * itemsPerPage() + 1 }} -
-                {{ Math.min(currentPage() * itemsPerPage(), filteredReturns().length) }} of {{ filteredReturns().length
-                }}
+              Page {{ currentPage() }} of {{ totalPages() }} · {{ totalElements() | number }} orders
             </span>
             <div class="flex items-center gap-2">
-                <button (click)="previousPage()" [disabled]="currentPage() === 1"
-                    class="px-4 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-                    Previous
-                </button>
-                <button (click)="nextPage()" [disabled]="currentPage() === totalPages()"
-                    class="px-4 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-                    Next
-                </button>
+              <button (click)="previousPage()" [disabled]="currentPage() === 1"
+                class="px-4 py-2 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 text-sm">
+                Previous
+              </button>
+              <button (click)="nextPage()" [disabled]="currentPage() === totalPages()"
+                class="px-4 py-2 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 text-sm">
+                Next
+              </button>
             </div>
-        </div>
+          </div>
         }
-        }
-
-    </div>
+      </div>
+    }
+  </div>
 </div>

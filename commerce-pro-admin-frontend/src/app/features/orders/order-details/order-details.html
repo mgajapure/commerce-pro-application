@@ -1,636 +1,477 @@
-<div class="min-h-screen bg-gray-50/50 p-4 sm:p-6 lg:p-8" *ngIf="order() as order">
+<div class="min-h-screen bg-gray-50/50 p-4 sm:p-6 lg:p-8">
   <div class="max-w-[1600px] mx-auto space-y-6">
 
-    <!-- Header -->
-    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-      <div class="flex items-start gap-4">
-        <div class="w-12 h-12 bg-indigo-600 rounded-xl flex items-center justify-center">
-          <i class="bi bi-bag-check text-2xl text-white"></i>
-        </div>
-        <div>
-          <div class="flex items-center gap-3">
-            <h1 class="text-2xl font-bold text-gray-900">{{ order.orderNumber }}</h1>
-            <span class="px-3 py-1 rounded-full text-sm font-medium {{ orderStatusColor() }}">
-              {{ order.status | titlecase }}
-            </span>
+    <!-- Loading skeleton -->
+    @if (isLoading()) {
+      <div class="animate-pulse space-y-6">
+        <div class="h-24 bg-white rounded-2xl border border-gray-100"></div>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div class="lg:col-span-2 space-y-6">
+            <div class="h-16 bg-white rounded-2xl border border-gray-100"></div>
+            <div class="h-64 bg-white rounded-2xl border border-gray-100"></div>
           </div>
-          <p class="text-gray-500 mt-1">
-            Placed {{ getTimeAgo(order.createdAt) }} • 
-            <span class="{{ paymentStatusColor() }} font-medium">{{ order.paymentStatus | titlecase }}</span>
-          </p>
+          <div class="space-y-4">
+            <div class="h-48 bg-white rounded-2xl border border-gray-100"></div>
+            <div class="h-48 bg-white rounded-2xl border border-gray-100"></div>
+          </div>
         </div>
       </div>
-      
-      <div class="flex flex-wrap items-center gap-3">
-        <button (click)="printInvoice()"
-          class="px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:border-indigo-300 hover:text-indigo-600 transition-all flex items-center gap-2 shadow-sm">
-          <i class="bi bi-printer"></i>
-          Print Invoice
+    }
+
+    <!-- Error -->
+    @if (error() && !isLoading()) {
+      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-16 text-center">
+        <div class="w-16 h-16 bg-red-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <i class="bi bi-exclamation-triangle text-2xl text-red-600"></i>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-900 mb-1">Order Not Found</h3>
+        <p class="text-gray-500 text-sm mb-4">{{ error() }}</p>
+        <button (click)="goBack()" class="px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm hover:bg-indigo-700">
+          Back to Orders
         </button>
-        
-        <app-dropdown
-          label="Actions"
-          icon="three-dots-vertical"
-          align="end"
-          [items]="[
-            { id: 'email', label: 'Email Customer', icon: 'envelope' },
-            { id: 'edit', label: 'Edit Order', icon: 'pencil' },
-            { id: 'duplicate', label: 'Duplicate Order', icon: 'copy' },
-            { id: 'divider', label: '', divider: true },
-            { id: 'cancel', label: 'Cancel Order', icon: 'x-circle', danger: true }
-          ]"
-          triggerClass="shadow-sm"
-          (itemSelected)="printInvoice()">
-        </app-dropdown>
       </div>
-    </div>
+    }
 
-    <!-- Progress Bar -->
-    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-      <div class="flex items-center justify-between mb-4">
-        <span class="text-sm font-medium text-gray-700">Order Progress</span>
-        <span class="text-sm font-medium text-indigo-600">{{ progressPercentage() }}%</span>
-      </div>
-      <div class="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-        <div class="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-500"
-          [style.width.%]="progressPercentage()"></div>
-      </div>
-      <div class="flex justify-between mt-4 text-xs text-gray-500">
-        <span class="flex items-center gap-1" [class.text-indigo-600]="progressPercentage() >= 14">
-          <i class="bi bi-check-circle-fill" *ngIf="progressPercentage() >= 14"></i>
-          Ordered
-        </span>
-        <span class="flex items-center gap-1" [class.text-indigo-600]="progressPercentage() >= 42">
-          <i class="bi bi-check-circle-fill" *ngIf="progressPercentage() >= 42"></i>
-          Processing
-        </span>
-        <span class="flex items-center gap-1" [class.text-indigo-600]="progressPercentage() >= 85">
-          <i class="bi bi-check-circle-fill" *ngIf="progressPercentage() >= 85"></i>
-          Shipped
-        </span>
-        <span class="flex items-center gap-1" [class.text-indigo-600]="progressPercentage() >= 100">
-          <i class="bi bi-check-circle-fill" *ngIf="progressPercentage() >= 100"></i>
-          Delivered
-        </span>
-      </div>
-    </div>
+    @if (!isLoading() && !error() && order(); as o) {
 
-    <!-- Navigation Tabs -->
-    <div class="bg-white p-2 rounded-2xl shadow-sm border border-gray-100">
-      <nav class="flex space-x-1 overflow-x-auto">
-        @for (tab of [
-          { id: 'overview', label: 'Overview', icon: 'house' },
-          { id: 'timeline', label: 'Timeline', icon: 'clock-history' },
-          { id: 'inventory', label: 'Inventory', icon: 'box-seam' },
-          { id: 'fulfillment', label: 'Fulfillment', icon: 'basket' },
-          { id: 'logistics', label: 'Logistics', icon: 'truck' },
-          { id: 'returns', label: 'Returns', icon: 'arrow-return-left' },
-          { id: 'activity', label: 'Activity', icon: 'activity' }
-        ]; track tab.id) {
-          <button
-            (click)="setActiveTab(tab.id)"
-            class="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all whitespace-nowrap"
-            [class.bg-indigo-50]="activeTab() === tab.id"
-            [class.text-indigo-600]="activeTab() === tab.id"
-            [class.text-gray-600]="activeTab() !== tab.id"
-            [class.hover:bg-gray-50]="activeTab() !== tab.id">
-            <i class="bi bi-{{tab.icon}}"></i>
-            {{ tab.label }}
-            @if (tab.id === 'returns' && order.returns.length > 0) {
-              <span class="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">{{ order.returns.length }}</span>
-            }
+      <!-- Toast -->
+      @if (toast()) {
+        <div class="fixed top-6 right-6 z-50 bg-green-600 text-white px-5 py-3 rounded-xl shadow-lg flex items-center gap-2 animate-slide-down">
+          <i class="bi bi-check-circle-fill"></i> {{ toast() }}
+        </div>
+      }
+
+      <!-- Page Header -->
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+        <div class="flex items-start gap-4">
+          <button (click)="goBack()"
+            class="p-2 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors">
+            <i class="bi bi-arrow-left text-lg"></i>
           </button>
-        }
-      </nav>
-    </div>
-
-    <!-- Overview Tab -->
-    @if (activeTab() === 'overview') {
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Customer Info -->
-        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-          <h3 class="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <i class="bi bi-person text-indigo-600"></i>
-            Customer
-          </h3>
-          <div class="flex items-center gap-4 mb-4">
-            <img [src]="order.customer.avatar" [alt]="order.customer.name"
-              class="w-16 h-16 rounded-full object-cover bg-gray-100">
-            <div>
-              <p class="font-semibold text-gray-900">{{ order.customer.name }}</p>
-              <span class="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-xs rounded-full uppercase">
-                {{ order.customer.type }}
+          <div class="w-12 h-12 bg-indigo-600 rounded-xl flex items-center justify-center flex-shrink-0">
+            <i class="bi bi-bag-check text-white text-xl"></i>
+          </div>
+          <div>
+            <div class="flex flex-wrap items-center gap-2">
+              <h1 class="text-2xl font-bold text-gray-900">{{ o.orderNumber }}</h1>
+              <span class="px-3 py-1 rounded-full text-sm font-medium {{ getStatusConfig(o.status).badge }}">
+                {{ getStatusConfig(o.status).label }}
               </span>
-            </div>
-          </div>
-          <div class="space-y-2 text-sm">
-            <p class="flex items-center gap-2 text-gray-600">
-              <i class="bi bi-envelope text-gray-400"></i>
-              {{ order.customer.email }}
-            </p>
-            <p class="flex items-center gap-2 text-gray-600">
-              <i class="bi bi-telephone text-gray-400"></i>
-              {{ order.customer.phone }}
-            </p>
-          </div>
-        </div>
-
-        <!-- Shipping Address -->
-        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-          <h3 class="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <i class="bi bi-geo-alt text-indigo-600"></i>
-            Shipping Address
-          </h3>
-          <div class="text-sm text-gray-600 space-y-1">
-            <p class="font-medium text-gray-900">{{ order.customer.addresses.shipping.name }}</p>
-            <p>{{ order.customer.addresses.shipping.line1 }}</p>
-            <p *ngIf="order.customer.addresses.shipping.line2">{{ order.customer.addresses.shipping.line2 }}</p>
-            <p>{{ order.customer.addresses.shipping.city }}, {{ order.customer.addresses.shipping.state }} {{ order.customer.addresses.shipping.zip }}</p>
-            <p>{{ order.customer.addresses.shipping.country }}</p>
-          </div>
-        </div>
-
-        <!-- Order Summary -->
-        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-          <h3 class="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <i class="bi bi-receipt text-indigo-600"></i>
-            Order Summary
-          </h3>
-          <div class="space-y-2 text-sm">
-            <div class="flex justify-between text-gray-600">
-              <span>Subtotal</span>
-              <span>${{ order.financials.subtotal | number:'1.2-2' }}</span>
-            </div>
-            <div class="flex justify-between text-gray-600">
-              <span>Shipping</span>
-              <span>${{ order.financials.shipping | number:'1.2-2' }}</span>
-            </div>
-            <div class="flex justify-between text-gray-600">
-              <span>Tax</span>
-              <span>${{ order.financials.tax | number:'1.2-2' }}</span>
-            </div>
-            <div class="flex justify-between text-green-600" *ngIf="order.financials.discount > 0">
-              <span>Discount</span>
-              <span>-${{ order.financials.discount | number:'1.2-2' }}</span>
-            </div>
-            <div class="h-px bg-gray-100 my-2"></div>
-            <div class="flex justify-between font-semibold text-gray-900 text-lg">
-              <span>Total</span>
-              <span>${{ order.financials.total | number:'1.2-2' }}</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Order Items -->
-        <div class="lg:col-span-3 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-          <h3 class="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <i class="bi bi-box-seam text-indigo-600"></i>
-            Order Items ({{ order.items.length }})
-          </h3>
-          <div class="divide-y divide-gray-100">
-            @for (item of order.items; track item.productId) {
-              <div class="flex items-center gap-4 py-4">
-                <img [src]="item.image" [alt]="item.name"
-                  class="w-16 h-16 rounded-xl object-cover bg-gray-100">
-                <div class="flex-1">
-                  <p class="font-medium text-gray-900">{{ item.name }}</p>
-                  <p class="text-sm text-gray-500">SKU: {{ item.sku }}</p>
-                </div>
-                <div class="text-right">
-                  <p class="font-medium text-gray-900">${{ item.price | number:'1.2-2' }}</p>
-                  <p class="text-sm text-gray-500">Qty: {{ item.quantity }}</p>
-                </div>
-                <div class="text-right min-w-[80px]">
-                  <p class="font-semibold text-gray-900">${{ item.total | number:'1.2-2' }}</p>
-                </div>
-              </div>
-            }
-          </div>
-        </div>
-
-        <!-- Quick Notes -->
-        <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="font-semibold text-gray-900 flex items-center gap-2">
-              <i class="bi bi-sticky text-indigo-600"></i>
-              Notes
-            </h3>
-            <button (click)="showAddNote.set(!showAddNote())"
-              class="text-sm text-indigo-600 hover:text-indigo-700 font-medium">
-              {{ showAddNote() ? 'Cancel' : 'Add Note' }}
-            </button>
-          </div>
-
-          @if (showAddNote()) {
-            <div class="mb-4 p-4 bg-gray-50 rounded-xl">
-              <textarea [(ngModel)]="newNote" rows="3" placeholder="Add a note..."
-                class="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-none"></textarea>
-              <div class="flex items-center justify-between mt-3">
-                <label class="flex items-center gap-2 text-sm text-gray-600">
-                  <input type="checkbox" [(ngModel)]="noteIsInternal" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
-                  Internal note only
-                </label>
-                <button (click)="addNote()"
-                  class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors">
-                  Add Note
-                </button>
-              </div>
-            </div>
-          }
-
-          <div class="space-y-3">
-            @for (note of order.notes; track note.id) {
-              <div class="p-4 bg-gray-50 rounded-xl" [class.border-l-4]="note.isInternal" [class.border-yellow-400]="note.isInternal">
-                <p class="text-sm text-gray-700">{{ note.content }}</p>
-                <div class="flex items-center gap-2 mt-2 text-xs text-gray-500">
-                  <span class="font-medium">{{ note.user }}</span>
-                  <span>•</span>
-                  <span>{{ formatDate(note.timestamp) }}</span>
-                  @if (note.isInternal) {
-                    <span class="px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded text-xs">Internal</span>
-                  }
-                </div>
-              </div>
-            } @empty {
-              <p class="text-gray-500 text-center py-4">No notes yet</p>
-            }
-          </div>
-        </div>
-
-        <!-- Shipment Preview -->
-        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-          <h3 class="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <i class="bi bi-truck text-indigo-600"></i>
-            Shipment
-          </h3>
-          @if (order.shipments.length > 0; as shipment) {
-            <div class="space-y-4">
-              <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
-                  <i class="bi bi-box text-indigo-600"></i>
-                </div>
-                <div>
-                  <p class="font-medium text-gray-900">{{ order.shipments[0].carrier }}</p>
-                  <p class="text-sm text-gray-500">{{ order.shipments[0].service }}</p>
-                </div>
-              </div>
-              <div class="p-3 bg-gray-50 rounded-lg">
-                <p class="text-xs text-gray-500 mb-1">Tracking Number</p>
-                <p class="font-mono text-sm font-medium text-gray-900">{{ order.shipments[0].trackingNumber }}</p>
-              </div>
-              <a [href]="order.shipments[0].trackingUrl" target="_blank"
-                class="flex items-center justify-center gap-2 w-full px-4 py-2 bg-indigo-50 text-indigo-600 rounded-lg text-sm font-medium hover:bg-indigo-100 transition-colors">
-                <i class="bi bi-box-arrow-up-right"></i>
-                Track Package
-              </a>
-            </div>
-          } @else {
-            <p class="text-gray-500 text-center py-4">Not shipped yet</p>
-          }
-        </div>
-      </div>
-    }
-
-    <!-- Timeline Tab -->
-    @if (activeTab() === 'timeline') {
-      <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-        <h3 class="font-semibold text-gray-900 mb-6">Order Timeline</h3>
-        <div class="relative">
-          <div class="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200"></div>
-          <div class="space-y-6">
-            @for (event of order.timeline; track event.id; let last = $last) {
-              <div class="relative flex gap-4">
-                <div class="relative z-10 w-8 h-8 rounded-full {{ event.color }} flex items-center justify-center flex-shrink-0">
-                  <i class="bi bi-{{event.icon}} text-white text-sm"></i>
-                </div>
-                <div class="flex-1 pb-6" [class.border-b]="!last" [class.border-gray-100]="!last">
-                  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
-                    <h4 class="font-semibold text-gray-900">{{ event.title }}</h4>
-                    <span class="text-sm text-gray-500">{{ formatDate(event.timestamp) }}</span>
-                  </div>
-                  <p class="text-gray-600 mt-1">{{ event.description }}</p>
-                  @if (event.user) {
-                    <div class="flex items-center gap-2 mt-2">
-                      @if (event.userAvatar) {
-                        <img [src]="event.userAvatar" [alt]="event.user" class="w-6 h-6 rounded-full">
-                      }
-                      <span class="text-sm text-gray-500">by {{ event.user }}</span>
-                    </div>
-                  }
-                </div>
-              </div>
-            }
-          </div>
-        </div>
-      </div>
-    }
-
-    <!-- Inventory Tab -->
-    @if (activeTab() === 'inventory') {
-      <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-        <h3 class="font-semibold text-gray-900 mb-6">Inventory Updates</h3>
-        <div class="overflow-x-auto">
-          <table class="w-full">
-            <thead class="bg-gray-50/50 border-b border-gray-100">
-              <tr>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Product</th>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Action</th>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Quantity</th>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Location</th>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Warehouse</th>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Time</th>
-                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">User</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-100">
-              @for (update of order.inventoryUpdates; track update.id) {
-                <tr class="hover:bg-gray-50/50">
-                  <td class="px-4 py-3">
-                    <div class="flex items-center gap-3">
-                      <img [src]="update.image" [alt]="update.productName" class="w-10 h-10 rounded-lg object-cover">
-                      <div>
-                        <p class="font-medium text-gray-900">{{ update.productName }}</p>
-                        <p class="text-xs text-gray-500">{{ update.sku }}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td class="px-4 py-3">
-                    <span class="px-2 py-1 rounded-full text-xs font-medium {{ getInventoryActionColor(update.action) }}">
-                      {{ update.action | titlecase }}
-                    </span>
-                  </td>
-                  <td class="px-4 py-3 font-medium text-gray-900">{{ update.quantity }}</td>
-                  <td class="px-4 py-3 text-gray-600 font-mono text-sm">{{ update.location }}</td>
-                  <td class="px-4 py-3 text-gray-600">{{ update.warehouse }}</td>
-                  <td class="px-4 py-3 text-sm text-gray-500">{{ getTimeAgo(update.timestamp) }}</td>
-                  <td class="px-4 py-3 text-sm text-gray-600">{{ update.user }}</td>
-                </tr>
+              @if (o.isFlagged) {
+                <span class="px-2.5 py-1 bg-red-100 text-red-700 text-xs font-medium rounded-full flex items-center gap-1">
+                  <i class="bi bi-flag-fill"></i> Flagged · Risk {{ o.riskScore }}
+                </span>
               }
-            </tbody>
-          </table>
+            </div>
+            <p class="text-gray-500 mt-1 text-sm">
+              Placed {{ getTimeAgo(o.createdAt) }} · {{ o.source | titlecase }}
+            </p>
+          </div>
+        </div>
+        <div class="flex flex-wrap items-center gap-3">
+          @if (o.isEditable) {
+            <a [routerLink]="['/orders/edit', o.id]"
+              class="px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:border-indigo-300 hover:text-indigo-600 transition-all flex items-center gap-2 shadow-sm">
+              <i class="bi bi-pencil"></i> Edit
+            </a>
+          }
+          <app-dropdown label="Actions" [items]="actionItems()" [showChevron]="true"
+            (itemSelected)="onAction($event)">
+          </app-dropdown>
         </div>
       </div>
-    }
 
-    <!-- Fulfillment Tab -->
-    @if (activeTab() === 'fulfillment') {
-      <div class="space-y-6">
-        @for (stage of order.fulfillment; track stage.stage) {
-          <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-            <div class="flex items-center justify-between mb-4">
-              <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl flex items-center justify-center"
-                  [class.bg-green-100]="stage.status === 'completed'"
-                  [class.bg-blue-100]="stage.status === 'in_progress'"
-                  [class.bg-gray-100]="stage.status === 'pending'"
-                  [class.text-green-600]="stage.status === 'completed'"
-                  [class.text-blue-600]="stage.status === 'in_progress'"
-                  [class.text-gray-600]="stage.status === 'pending'">
-                  <i class="bi bi-{{
-                    stage.stage === 'pick' ? 'basket' : 
-                    stage.stage === 'pack' ? 'box' : 'truck'
-                  }} text-xl"></i>
-                </div>
-                <div>
-                  <h4 class="font-semibold text-gray-900">{{ stage.stage | titlecase }}</h4>
-                  <span class="px-2 py-0.5 rounded-full text-xs font-medium {{ getFulfillmentStageColor(stage.status) }}">
-                    {{ stage.status | titlecase }}
-                  </span>
-                </div>
-              </div>
-              <div class="text-right text-sm text-gray-500">
-                @if (stage.assignedTo) {
-                  <p>Assigned: {{ stage.assignedTo }}</p>
-                }
-                @if (stage.completedAt) {
-                  <p>Completed: {{ formatDate(stage.completedAt) }}</p>
-                }
-              </div>
+      <!-- Main Layout -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- Left 2/3 -->
+        <div class="lg:col-span-2 space-y-6">
+
+          <!-- Tabs -->
+          <div class="bg-white rounded-2xl p-2 shadow-sm border border-gray-100">
+            <div class="flex gap-1.5">
+              @for (tab of tabs; track tab.id) {
+                <button (click)="setActiveTab(tab.id)"
+                  class="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2"
+                  [class.bg-indigo-600]="activeTab() === tab.id"
+                  [class.text-white]="activeTab() === tab.id"
+                  [class.shadow-md]="activeTab() === tab.id"
+                  [class.bg-gray-50]="activeTab() !== tab.id"
+                  [class.text-gray-700]="activeTab() !== tab.id">
+                  <i class="bi bi-{{ tab.icon }}"></i> {{ tab.label }}
+                </button>
+              }
             </div>
-
-            <div class="bg-gray-50 rounded-xl p-4">
-              <table class="w-full">
-                <thead>
-                  <tr class="text-xs text-gray-500 uppercase">
-                    <th class="text-left py-2">Item</th>
-                    <th class="text-center py-2">Required</th>
-                    <th class="text-center py-2">{{ stage.stage === 'pick' ? 'Picked' : stage.stage === 'pack' ? 'Packed' : 'Shipped' }}</th>
-                    <th class="text-right py-2">Location</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-200">
-                  @for (item of stage.items; track item.productId) {
-                    <tr>
-                      <td class="py-3">
-                        <div class="flex items-center gap-3">
-                          <img [src]="item.image" [alt]="item.name" class="w-10 h-10 rounded-lg object-cover">
-                          <span class="font-medium text-gray-900">{{ item.name }}</span>
-                        </div>
-                      </td>
-                      <td class="text-center py-3 text-gray-600">{{ item.quantity }}</td>
-                      <td class="text-center py-3">
-                        <span class="font-medium"
-                          [class.text-green-600]="(item.picked || item.packed || 0) >= item.quantity"
-                          [class.text-blue-600]="(item.picked || item.packed || 0) < item.quantity">
-                          {{ item.picked || item.packed || '-' }}
-                        </span>
-                      </td>
-                      <td class="text-right py-3 text-sm text-gray-500 font-mono">{{ item.location }}</td>
-                    </tr>
-                  }
-                </tbody>
-              </table>
-            </div>
-
-            @if (stage.notes) {
-              <div class="mt-4 p-3 bg-yellow-50 border-l-4 border-yellow-400 rounded-r-lg">
-                <p class="text-sm text-yellow-800">
-                  <i class="bi bi-sticky mr-2"></i>
-                  {{ stage.notes }}
-                </p>
-              </div>
-            }
           </div>
-        }
-      </div>
-    }
 
-    <!-- Logistics Tab -->
-    @if (activeTab() === 'logistics') {
-      <div class="space-y-6">
-        @for (shipment of order.shipments; track shipment.id) {
-          <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
-              <div class="flex items-center gap-4">
-                <div class="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center">
-                  <i class="bi bi-truck text-2xl text-indigo-600"></i>
+          <!-- Tab: Details -->
+          @if (activeTab() === 'details') {
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              @if (o.shippingAddress) {
+                <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+                  <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+                    <i class="bi bi-geo-alt text-indigo-600"></i> Shipping Address
+                  </h3>
+                  <p class="font-semibold text-gray-900">{{ o.shippingAddress.fullName }}</p>
+                  <p class="text-sm text-gray-600">{{ o.shippingAddress.addressLine1 }}</p>
+                  @if (o.shippingAddress.addressLine2) { <p class="text-sm text-gray-600">{{ o.shippingAddress.addressLine2 }}</p> }
+                  <p class="text-sm text-gray-600">{{ o.shippingAddress.city }}, {{ o.shippingAddress.state }} {{ o.shippingAddress.postalCode }}</p>
+                  <p class="text-sm text-gray-600">{{ o.shippingAddress.country }}</p>
+                  @if (o.shippingAddress.phone) {
+                    <p class="text-sm text-gray-500 mt-2"><i class="bi bi-telephone mr-1"></i>{{ o.shippingAddress.phone }}</p>
+                  }
                 </div>
-                <div>
-                  <h3 class="font-semibold text-gray-900">{{ shipment.carrier }} {{ shipment.service }}</h3>
-                  <p class="text-sm text-gray-500">Tracking: {{ shipment.trackingNumber }}</p>
+              }
+              @if (o.billingAddress) {
+                <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+                  <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+                    <i class="bi bi-credit-card text-indigo-600"></i> Billing Address
+                  </h3>
+                  <p class="font-semibold text-gray-900">{{ o.billingAddress.fullName }}</p>
+                  <p class="text-sm text-gray-600">{{ o.billingAddress.addressLine1 }}</p>
+                  <p class="text-sm text-gray-600">{{ o.billingAddress.city }}, {{ o.billingAddress.state }} {{ o.billingAddress.postalCode }}</p>
+                  <p class="text-sm text-gray-600">{{ o.billingAddress.country }}</p>
                 </div>
-              </div>
-              <div class="flex items-center gap-3">
-                <span class="px-3 py-1 rounded-full text-sm font-medium {{ getShipmentStatusColor(shipment.status) }}">
-                  {{ shipment.status | titlecase }}
-                </span>
-                <a [href]="shipment.trackingUrl" target="_blank"
-                  class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors">
-                  Track
-                </a>
-              </div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <div class="p-4 bg-gray-50 rounded-xl">
-                <p class="text-xs text-gray-500 uppercase mb-1">Estimated Delivery</p>
-                <p class="font-medium text-gray-900">{{ shipment.estimatedDelivery | date:'mediumDate' }}</p>
-              </div>
-              <div class="p-4 bg-gray-50 rounded-xl">
-                <p class="text-xs text-gray-500 uppercase mb-1">Weight</p>
-                <p class="font-medium text-gray-900">{{ shipment.weight }} kg</p>
-              </div>
-              <div class="p-4 bg-gray-50 rounded-xl">
-                <p class="text-xs text-gray-500 uppercase mb-1">Shipping Cost</p>
-                <p class="font-medium text-gray-900">${{ shipment.cost | number:'1.2-2' }}</p>
-              </div>
-            </div>
-
-            <h4 class="font-semibold text-gray-900 mb-4">Tracking Events</h4>
-            <div class="relative">
-              <div class="absolute left-3 top-0 bottom-0 w-0.5 bg-gray-200"></div>
-              <div class="space-y-4">
-                @for (event of shipment.events; track event.timestamp) {
-                  <div class="relative flex gap-4">
-                    <div class="relative z-10 w-6 h-6 rounded-full bg-indigo-500 flex items-center justify-center flex-shrink-0">
-                      <i class="bi bi-geo-alt text-white text-xs"></i>
+              }
+              <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+                <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+                  <i class="bi bi-truck text-indigo-600"></i> Shipping
+                </h3>
+                <dl class="space-y-2 text-sm">
+                  <div class="flex justify-between">
+                    <dt class="text-gray-500">Method</dt>
+                    <dd class="font-medium text-gray-900">{{ o.shippingMethod || '—' }}</dd>
+                  </div>
+                  @if (o.carrier) {
+                    <div class="flex justify-between">
+                      <dt class="text-gray-500">Carrier</dt>
+                      <dd class="font-medium text-gray-900">{{ o.carrier }}</dd>
                     </div>
-                    <div class="flex-1">
-                      <p class="font-medium text-gray-900">{{ event.status }}</p>
-                      <p class="text-sm text-gray-600">{{ event.description }}</p>
-                      <div class="flex items-center gap-2 mt-1 text-xs text-gray-500">
-                        <i class="bi bi-clock"></i>
-                        {{ formatDate(event.timestamp) }}
-                        <span>•</span>
-                        {{ event.location }}
+                  }
+                  @if (o.trackingNumber) {
+                    <div class="flex justify-between">
+                      <dt class="text-gray-500">Tracking #</dt>
+                      <dd class="font-mono text-indigo-600 font-medium">{{ o.trackingNumber }}</dd>
+                    </div>
+                  }
+                </dl>
+              </div>
+              <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+                <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+                  <i class="bi bi-chat-text text-indigo-600"></i> Notes
+                </h3>
+                @if (o.customerNotes) {
+                  <div class="mb-3">
+                    <p class="text-xs font-medium text-gray-400 uppercase mb-1">Customer</p>
+                    <p class="text-sm text-gray-700 bg-gray-50 rounded-xl p-3">{{ o.customerNotes }}</p>
+                  </div>
+                }
+                @if (o.internalNotes) {
+                  <div>
+                    <p class="text-xs font-medium text-gray-400 uppercase mb-1">Internal</p>
+                    <p class="text-sm text-gray-700 bg-yellow-50 rounded-xl p-3 border border-yellow-100">{{ o.internalNotes }}</p>
+                  </div>
+                }
+                @if (!o.customerNotes && !o.internalNotes) {
+                  <p class="text-sm text-gray-400 italic">No notes</p>
+                }
+              </div>
+            </div>
+          }
+
+          <!-- Tab: Items -->
+          @if (activeTab() === 'items') {
+            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+              <div class="px-6 py-4 border-b border-gray-100">
+                <h3 class="font-semibold text-gray-900">Line Items ({{ o.items.length }})</h3>
+              </div>
+              <div class="divide-y divide-gray-100">
+                @for (item of o.items; track item.id) {
+                  <div class="p-6 flex items-start gap-4 hover:bg-gray-50/50 transition-colors">
+                    <img [src]="item.productImageUrl || 'https://placehold.co/64x64/f3f4f6/9ca3af?text=Img'"
+                      [alt]="item.productName"
+                      class="w-16 h-16 rounded-xl object-cover bg-gray-100 flex-shrink-0">
+                    <div class="flex-1 min-w-0">
+                      <p class="font-semibold text-gray-900">{{ item.productName }}</p>
+                      <p class="text-sm text-gray-500">SKU: {{ item.sku }}</p>
+                      @if (item.variantInfo) { <p class="text-sm text-gray-500">{{ item.variantInfo }}</p> }
+                      <div class="flex flex-wrap items-center gap-4 mt-2 text-sm">
+                        <span class="text-gray-600">Qty: <strong>{{ item.quantity }}</strong></span>
+                        <span class="text-gray-600">Unit: <strong>${{ item.unitPrice | number:'1.2-2' }}</strong></span>
+                        @if (item.itemDiscount > 0) { <span class="text-green-600">-${{ item.itemDiscount | number:'1.2-2' }}</span> }
+                        <span class="text-gray-600">Tax: ${{ item.taxAmount | number:'1.2-2' }}</span>
                       </div>
+                    </div>
+                    <div class="text-right flex-shrink-0">
+                      <p class="font-bold text-gray-900 text-lg">${{ item.lineTotal | number:'1.2-2' }}</p>
+                      <p class="text-xs text-gray-400">Fulfilled: {{ item.fulfilledQuantity }}/{{ item.quantity }}</p>
+                      @if (item.returnedQuantity > 0) {
+                        <p class="text-xs text-pink-600">Returned: {{ item.returnedQuantity }}</p>
+                      }
                     </div>
                   </div>
                 }
               </div>
             </div>
-          </div>
-        } @empty {
-          <div class="bg-white p-12 rounded-2xl shadow-sm border border-gray-100 text-center">
-            <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <i class="bi bi-truck text-2xl text-gray-400"></i>
-            </div>
-            <h3 class="text-lg font-medium text-gray-900 mb-1">No shipments yet</h3>
-            <p class="text-gray-500">Order hasn't been shipped</p>
-          </div>
-        }
-      </div>
-    }
+          }
 
-    <!-- Returns Tab -->
-    @if (activeTab() === 'returns') {
-      <div class="space-y-6">
-        @if (order.returns.length > 0) {
-          @for (return of order.returns; track return.id) {
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-              <div class="flex items-center justify-between mb-4">
-                <div>
-                  <h3 class="font-semibold text-gray-900">{{ return.returnNumber }}</h3>
-                  <p class="text-sm text-gray-500">Original Order: {{ order.orderNumber }}</p>
-                </div>
-                <span class="px-3 py-1 rounded-full text-sm font-medium {{
-                  return.status === 'refunded' ? 'bg-green-100 text-green-800' :
-                  return.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                  'bg-yellow-100 text-yellow-800'
-                }}">
-                  {{ return.status | titlecase }}
-                </span>
-              </div>
-
-              <div class="bg-gray-50 rounded-xl p-4 mb-4">
-                <h4 class="font-medium text-gray-900 mb-3">Returned Items</h4>
-                <div class="space-y-3">
-                  @for (item of return.items; track item.productId) {
-                    <div class="flex items-center gap-4">
-                      <img [src]="item.image" [alt]="item.name" class="w-12 h-12 rounded-lg object-cover">
-                      <div class="flex-1">
-                        <p class="font-medium text-gray-900">{{ item.name }}</p>
-                        <p class="text-sm text-gray-500">Reason: {{ item.reason }}</p>
+          <!-- Tab: Timeline -->
+          @if (activeTab() === 'timeline') {
+            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+              <h3 class="font-semibold text-gray-900 mb-6">Order Timeline</h3>
+              <div class="relative">
+                <div class="absolute left-5 top-0 bottom-0 w-0.5 bg-gray-100"></div>
+                <div class="space-y-6">
+                  @for (event of o.statusHistory; track event.id) {
+                    <div class="flex gap-4 relative">
+                      <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 z-10 {{ getTimelineIcon(event.newStatus).color }}">
+                        <i class="bi bi-{{ getTimelineIcon(event.newStatus).icon }} text-sm"></i>
                       </div>
-                      <span class="px-2 py-1 rounded-full text-xs {{
-                        item.condition === 'unopened' ? 'bg-green-100 text-green-700' :
-                        item.condition === 'opened' ? 'bg-blue-100 text-blue-700' :
-                        item.condition === 'damaged' ? 'bg-orange-100 text-orange-700' :
-                        'bg-red-100 text-red-700'
-                      }}">
-                        {{ item.condition | titlecase }}
-                      </span>
+                      <div class="flex-1 pt-1">
+                        <div class="flex items-center justify-between gap-2">
+                          <p class="font-semibold text-gray-900 text-sm">{{ event.newStatus | titlecase }}</p>
+                          <p class="text-xs text-gray-400">{{ formatDate(event.createdAt) }}</p>
+                        </div>
+                        @if (event.reason) { <p class="text-sm text-gray-600 mt-0.5">{{ event.reason }}</p> }
+                        @if (event.changedBy) { <p class="text-xs text-gray-400">by {{ event.changedBy }}</p> }
+                      </div>
                     </div>
                   }
                 </div>
               </div>
-
-              <div class="flex items-center justify-between">
-                <div>
-                  <p class="text-sm text-gray-500">Refund Amount</p>
-                  <p class="text-xl font-bold text-gray-900">${{ return.refundAmount | number:'1.2-2' }}</p>
-                </div>
-                <div class="text-right">
-                  <p class="text-sm text-gray-500">Method</p>
-                  <p class="font-medium text-gray-900">{{ return.returnMethod | titlecase }}</p>
-                </div>
-              </div>
             </div>
           }
-        } @else {
-          <div class="bg-white p-12 rounded-2xl shadow-sm border border-gray-100 text-center">
-            <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <i class="bi bi-arrow-return-left text-2xl text-gray-400"></i>
-            </div>
-            <h3 class="text-lg font-medium text-gray-900 mb-1">No returns</h3>
-            <p class="text-gray-500">This order has no return requests</p>
-          </div>
-        }
-      </div>
-    }
+        </div>
 
-    <!-- Activity Tab -->
-    @if (activeTab() === 'activity') {
-      <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-        <h3 class="font-semibold text-gray-900 mb-6">Activity Log</h3>
-        <div class="space-y-4">
-          @for (activity of order.activities; track activity.id) {
-            <div class="flex items-start gap-4 p-4 bg-gray-50 rounded-xl">
-              <div class="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
-                <i class="bi bi-{{
-                  activity.type === 'email_sent' ? 'envelope' :
-                  activity.type === 'sms_sent' ? 'chat' :
-                  activity.type === 'call_made' ? 'telephone' :
-                  activity.type === 'note_added' ? 'sticky' :
-                  activity.type === 'status_update' ? 'arrow-repeat' :
-                  'credit-card'
-                }} text-indigo-600"></i>
+        <!-- Right 1/3 -->
+        <div class="space-y-5">
+
+          <!-- Customer -->
+          <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+            <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">Customer</h3>
+            <div class="flex items-center gap-3 mb-4">
+              <div class="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <span class="text-indigo-600 font-bold text-lg">{{ o.customerName.charAt(0) }}</span>
               </div>
-              <div class="flex-1">
-                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
-                  <h4 class="font-medium text-gray-900">{{ activity.title }}</h4>
-                  <span class="text-sm text-gray-500">{{ formatDate(activity.timestamp) }}</span>
-                </div>
-                <p class="text-gray-600 mt-1">{{ activity.description }}</p>
-                <p class="text-sm text-gray-500 mt-2">by {{ activity.user }}</p>
+              <div>
+                <p class="font-semibold text-gray-900">{{ o.customerName }}</p>
+                <p class="text-sm text-gray-500">{{ o.customerEmail }}</p>
               </div>
             </div>
-          } @empty {
-            <p class="text-gray-500 text-center py-8">No activities recorded</p>
+            @if (o.customerPhone) {
+              <p class="text-sm text-gray-600 flex items-center gap-2">
+                <i class="bi bi-telephone text-gray-400"></i> {{ o.customerPhone }}
+              </p>
+            }
+            @if (o.customerId) {
+              <a [routerLink]="['/customers', o.customerId]"
+                class="mt-3 text-sm text-indigo-600 hover:text-indigo-700 flex items-center gap-1">
+                <i class="bi bi-arrow-up-right-square"></i> View Customer Profile
+              </a>
+            }
+          </div>
+
+          <!-- Order Summary -->
+          <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+            <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">Order Summary</h3>
+            <dl class="space-y-2.5 text-sm">
+              <div class="flex justify-between">
+                <dt class="text-gray-500">Subtotal</dt>
+                <dd class="font-medium">${{ o.subtotal | number:'1.2-2' }}</dd>
+              </div>
+              @if (o.discountAmount > 0) {
+                <div class="flex justify-between">
+                  <dt class="text-green-600">Discount {{ o.couponCode ? '(' + o.couponCode + ')' : '' }}</dt>
+                  <dd class="font-medium text-green-600">-${{ o.discountAmount | number:'1.2-2' }}</dd>
+                </div>
+              }
+              <div class="flex justify-between">
+                <dt class="text-gray-500">Shipping</dt>
+                <dd class="font-medium">{{ o.shippingCost === 0 ? 'Free' : '$' + (o.shippingCost | number:'1.2-2') }}</dd>
+              </div>
+              <div class="flex justify-between">
+                <dt class="text-gray-500">Tax</dt>
+                <dd class="font-medium">${{ o.taxAmount | number:'1.2-2' }}</dd>
+              </div>
+              <div class="border-t border-gray-100 pt-2.5 flex justify-between">
+                <dt class="font-semibold text-gray-900">Total</dt>
+                <dd class="font-bold text-xl text-gray-900">${{ o.totalAmount | number:'1.2-2' }}</dd>
+              </div>
+              @if (o.refundedAmount > 0) {
+                <div class="flex justify-between border-t border-gray-100 pt-2">
+                  <dt class="text-pink-600">Refunded</dt>
+                  <dd class="font-medium text-pink-600">-${{ o.refundedAmount | number:'1.2-2' }}</dd>
+                </div>
+              }
+            </dl>
+          </div>
+
+          <!-- Order Meta -->
+          <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+            <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">Order Info</h3>
+            <dl class="space-y-2.5 text-sm">
+              <div class="flex justify-between">
+                <dt class="text-gray-500">Order #</dt>
+                <dd class="font-mono font-semibold text-gray-900">{{ o.orderNumber }}</dd>
+              </div>
+              <div class="flex justify-between">
+                <dt class="text-gray-500">Source</dt>
+                <dd class="font-medium text-gray-900">{{ o.source | titlecase }}</dd>
+              </div>
+              <div class="flex justify-between">
+                <dt class="text-gray-500">Currency</dt>
+                <dd class="font-medium text-gray-900">{{ o.currency }}</dd>
+              </div>
+              <div class="flex justify-between">
+                <dt class="text-gray-500">Risk Score</dt>
+                <dd class="font-medium" [class.text-red-600]="o.riskScore >= 70" [class.text-orange-600]="o.riskScore >= 40 && o.riskScore < 70" [class.text-green-600]="o.riskScore < 40">
+                  {{ o.riskScore }}/100
+                </dd>
+              </div>
+              <div class="flex justify-between">
+                <dt class="text-gray-500">Created</dt>
+                <dd class="text-gray-700">{{ formatDate(o.createdAt) }}</dd>
+              </div>
+              <div class="flex justify-between">
+                <dt class="text-gray-500">Updated</dt>
+                <dd class="text-gray-700">{{ formatDate(o.updatedAt) }}</dd>
+              </div>
+              @if (o.shippedAt) {
+                <div class="flex justify-between">
+                  <dt class="text-gray-500">Shipped</dt>
+                  <dd class="text-gray-700">{{ formatDate(o.shippedAt) }}</dd>
+                </div>
+              }
+              @if (o.deliveredAt) {
+                <div class="flex justify-between">
+                  <dt class="text-gray-500">Delivered</dt>
+                  <dd class="text-gray-700">{{ formatDate(o.deliveredAt) }}</dd>
+                </div>
+              }
+            </dl>
+          </div>
+
+          <!-- On Hold banner -->
+          @if (o.status === 'ON_HOLD' && o.holdReason) {
+            <div class="bg-orange-50 p-5 rounded-2xl border border-orange-200">
+              <div class="flex items-center gap-2 mb-2">
+                <i class="bi bi-pause-circle-fill text-orange-600"></i>
+                <p class="font-semibold text-orange-800 text-sm">Order on Hold</p>
+              </div>
+              <p class="text-sm text-orange-700">{{ o.holdReason }}</p>
+            </div>
+          }
+
+          <!-- Cancelled banner -->
+          @if (o.status === 'CANCELLED' && o.cancellationReason) {
+            <div class="bg-red-50 p-5 rounded-2xl border border-red-200">
+              <div class="flex items-center gap-2 mb-2">
+                <i class="bi bi-x-circle-fill text-red-600"></i>
+                <p class="font-semibold text-red-800 text-sm">Order Cancelled</p>
+              </div>
+              <p class="text-sm text-red-700">{{ o.cancellationReason }}</p>
+            </div>
           }
         </div>
       </div>
     }
-
   </div>
 </div>
+
+<!-- Hold Modal -->
+@if (showHoldModal()) {
+  <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md animate-slide-up">
+      <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
+        <h2 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+          <i class="bi bi-pause-circle text-orange-600"></i> Place on Hold
+        </h2>
+        <button (click)="showHoldModal.set(false)" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="p-6">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Reason <span class="text-red-500">*</span></label>
+        <textarea [(ngModel)]="holdReason" rows="3" placeholder="Why is this order being held?"
+          class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-none"></textarea>
+      </div>
+      <div class="px-6 py-4 border-t border-gray-100 bg-gray-50/50 flex justify-end gap-3">
+        <button (click)="showHoldModal.set(false)" class="px-4 py-2 border border-gray-200 rounded-xl text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
+        <button (click)="submitHold()" [disabled]="!holdReason() || actionLoading()"
+          class="px-6 py-2 bg-orange-600 text-white rounded-xl text-sm font-medium hover:bg-orange-700 disabled:opacity-50 flex items-center gap-2">
+          @if (actionLoading()) { <i class="bi bi-arrow-repeat animate-spin"></i> }
+          Hold Order
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Cancel Modal -->
+@if (showCancelModal()) {
+  <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md animate-slide-up">
+      <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
+        <h2 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+          <i class="bi bi-x-circle text-red-600"></i> Cancel Order
+        </h2>
+        <button (click)="showCancelModal.set(false)" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="p-6">
+        <div class="bg-red-50 border border-red-100 rounded-xl p-4 mb-4">
+          <p class="text-sm text-red-700"><strong>Warning:</strong> Cancels the order and releases inventory reservations.</p>
+        </div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Reason <span class="text-red-500">*</span></label>
+        <textarea [(ngModel)]="cancelReason" rows="3" placeholder="Reason for cancellation…"
+          class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-none"></textarea>
+      </div>
+      <div class="px-6 py-4 border-t border-gray-100 bg-gray-50/50 flex justify-end gap-3">
+        <button (click)="showCancelModal.set(false)" class="px-4 py-2 border border-gray-200 rounded-xl text-sm text-gray-700 hover:bg-gray-50">Back</button>
+        <button (click)="submitCancel()" [disabled]="!cancelReason() || actionLoading()"
+          class="px-6 py-2 bg-red-600 text-white rounded-xl text-sm font-medium hover:bg-red-700 disabled:opacity-50 flex items-center gap-2">
+          @if (actionLoading()) { <i class="bi bi-arrow-repeat animate-spin"></i> }
+          Cancel Order
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Tracking Modal -->
+@if (showTrackingModal()) {
+  <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md animate-slide-up">
+      <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
+        <h2 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+          <i class="bi bi-truck text-indigo-600"></i> Shipping & Tracking
+        </h2>
+        <button (click)="showTrackingModal.set(false)" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="p-6 space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">Carrier <span class="text-red-500">*</span></label>
+          <select [(ngModel)]="carrier"
+            class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
+            <option value="">Select carrier…</option>
+            <option value="UPS">UPS</option>
+            <option value="FedEx">FedEx</option>
+            <option value="DHL">DHL</option>
+            <option value="USPS">USPS</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">Tracking Number <span class="text-red-500">*</span></label>
+          <input type="text" [(ngModel)]="trackingNumber" placeholder="e.g. 1Z999AA10123456784"
+            class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
+        </div>
+      </div>
+      <div class="px-6 py-4 border-t border-gray-100 bg-gray-50/50 flex justify-end gap-3">
+        <button (click)="showTrackingModal.set(false)" class="px-4 py-2 border border-gray-200 rounded-xl text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
+        <button (click)="submitTracking()" [disabled]="!trackingNumber() || !carrier() || actionLoading()"
+          class="px-6 py-2 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-2">
+          @if (actionLoading()) { <i class="bi bi-arrow-repeat animate-spin"></i> }
+          Save Tracking
+        </button>
+      </div>
+    </div>
+  </div>
+}

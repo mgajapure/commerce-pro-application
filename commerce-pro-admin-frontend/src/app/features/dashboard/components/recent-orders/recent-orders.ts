@@ -1,7 +1,16 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { OrderService } from '../../../../core/services/order.service';
-import { Order } from '../../../../core/models/order.model';
+import { OrderService } from '../../../../core/services/order/order.service';
+
+interface RecentOrder{
+  id: number;
+  customerAvatar: string;
+  customerName: string;
+  items: [];
+  total: number;
+  status: string;
+  date: Date;
+}
 
 @Component({
   selector: 'app-recent-orders',
@@ -13,15 +22,15 @@ import { Order } from '../../../../core/models/order.model';
 export class RecentOrders {
   private orderService = inject(OrderService);
   
-  orders = this.orderService.recentOrders;
+  recentOrders = signal<RecentOrder[]>([]);
   isLoading = this.orderService.isLoading;
   
   // Order counts by status
   orderStats = this.orderService.orderStats;
   
   // Get status color class
-  getStatusColor(status: Order['status']): string {
-    const colors: Record<string, string> = {
+  getStatusColor(status: string) {
+    const colors: any = {
       pending: 'bg-yellow-100 text-yellow-800',
       processing: 'bg-blue-100 text-blue-800',
       shipped: 'bg-purple-100 text-purple-800',
