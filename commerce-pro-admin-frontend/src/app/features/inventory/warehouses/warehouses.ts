@@ -9,6 +9,7 @@ import { RouterModule } from '@angular/router';
 import { WarehouseService } from '../../../core/services/inventory/warehouse.service';
 import { InventoryService } from '../../../core/services/inventory/inventory.service';
 import { Warehouse, InventoryItem } from '../../../core/models/inventory';
+import { AlertService } from '../../../shared/services/alert.service';
 
 interface WarehouseActivity {
   id: string;
@@ -26,9 +27,10 @@ interface WarehouseActivity {
   styleUrl: './warehouses.scss'
 })
 export class Warehouses implements OnInit {
-  private fb = inject(FormBuilder);
+  private fb               = inject(FormBuilder);
   private warehouseService = inject(WarehouseService);
   private inventoryService = inject(InventoryService);
+  private alertSvc         = inject(AlertService);
 
   // View state
   showWarehouseModal = signal(false);
@@ -157,19 +159,13 @@ export class Warehouses implements OnInit {
 
     if (existing) {
       this.warehouseService.updateWarehouse(existing.id, formValue).subscribe({
-        next: () => this.closeWarehouseModal(),
-        error: (err) => {
-          console.error('Failed to update warehouse:', err);
-          alert('Failed to update warehouse. Please try again.');
-        }
+        next: () => { this.closeWarehouseModal(); this.alertSvc.success('Warehouse updated'); },
+        error: (err) => { console.error('Failed to update warehouse:', err); this.alertSvc.error('Failed to update warehouse', 'Please try again.'); }
       });
     } else {
       this.warehouseService.createWarehouse(formValue).subscribe({
-        next: () => this.closeWarehouseModal(),
-        error: (err) => {
-          console.error('Failed to create warehouse:', err);
-          alert('Failed to create warehouse. Please try again.');
-        }
+        next: () => { this.closeWarehouseModal(); this.alertSvc.success('Warehouse created'); },
+        error: (err) => { console.error('Failed to create warehouse:', err); this.alertSvc.error('Failed to create warehouse', 'Please try again.'); }
       });
     }
   }
@@ -177,12 +173,9 @@ export class Warehouses implements OnInit {
   toggleWarehouseStatus(warehouse: Warehouse, event: Event) {
     event.stopPropagation();
     const newStatus = !(warehouse.isActive ?? true);
-    
     this.warehouseService.updateWarehouse(warehouse.id, { isActive: newStatus }).subscribe({
-      error: (err) => {
-        console.error('Failed to toggle status:', err);
-        alert('Failed to update status. Please try again.');
-      }
+      next: () => this.alertSvc.success(newStatus ? 'Warehouse activated' : 'Warehouse deactivated'),
+      error: (err) => { console.error('Failed to toggle status:', err); this.alertSvc.error('Failed to update status', 'Please try again.'); }
     });
   }
 
@@ -196,14 +189,8 @@ export class Warehouses implements OnInit {
     const id = this.selectedWarehouse()?.id;
     if (id) {
       this.warehouseService.deleteWarehouse(id).subscribe({
-        next: () => {
-          this.showDeleteConfirm.set(false);
-          this.selectedWarehouse.set(null);
-        },
-        error: (err) => {
-          console.error('Failed to delete warehouse:', err);
-          alert('Failed to delete warehouse. It may have inventory items.');
-        }
+        next: () => { this.showDeleteConfirm.set(false); this.selectedWarehouse.set(null); this.alertSvc.success('Warehouse deleted'); },
+        error: (err) => { console.error('Failed to delete warehouse:', err); this.alertSvc.error('Failed to delete warehouse', 'It may have inventory items assigned to it.'); }
       });
     }
   }

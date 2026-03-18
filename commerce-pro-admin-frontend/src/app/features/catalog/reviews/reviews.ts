@@ -8,6 +8,7 @@ import { RouterModule } from '@angular/router';
 import { Dropdown, DropdownItem } from '../../../shared/components/dropdown/dropdown';
 import { Review, ReviewStatus, ReviewReply } from '../../../core/models/review.model';
 import { ReviewService } from '../../../core/services/review.service';
+import { AlertService } from '../../../shared/services/alert.service';
 
 @Component({
   selector: 'app-reviews',
@@ -17,8 +18,9 @@ import { ReviewService } from '../../../core/services/review.service';
   styleUrl: './reviews.scss'
 })
 export class Reviews implements OnInit {
-  private fb = inject(FormBuilder);
+  private fb            = inject(FormBuilder);
   private reviewService = inject(ReviewService);
+  private alertSvc      = inject(AlertService);
 
   // View State
   showReplyModal = signal(false);
@@ -223,9 +225,18 @@ export class Reviews implements OnInit {
   }
 
   deleteReview(review: Review) {
-    if (confirm('Are you sure you want to delete this review?')) {
-      this.reviewService.deleteReview(review.id).subscribe();
-    }
+    this.alertSvc.confirm({
+      title: 'Delete Review',
+      message: 'Are you sure you want to delete this review? This action cannot be undone.',
+      confirmLabel: 'Delete',
+      danger: true
+    }).then(ok => {
+      if (!ok) return;
+      this.reviewService.deleteReview(review.id).subscribe({
+        next: () => this.alertSvc.success('Review deleted'),
+        error: () => this.alertSvc.error('Failed to delete review')
+      });
+    });
   }
 
   // Reply functionality
@@ -262,9 +273,15 @@ export class Reviews implements OnInit {
   }
 
   deleteReply(review: Review) {
-    if (confirm('Delete your reply to this review?')) {
-      // Simulate reply deletion
-    }
+    this.alertSvc.confirm({
+      title: 'Delete Reply',
+      message: 'Are you sure you want to delete your reply to this review?',
+      confirmLabel: 'Delete',
+      danger: true
+    }).then(ok => {
+      if (!ok) return;
+      this.alertSvc.success('Reply deleted');
+    });
   }
 
   // Helpful votes

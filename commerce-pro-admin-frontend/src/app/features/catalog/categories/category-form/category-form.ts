@@ -8,6 +8,7 @@ import {
   Category, 
   CategoryTemplate 
 } from '../../../../core/models/catalog/category.model';
+import { AlertService } from '../../../../shared/services/alert.service';
 
 @Component({
   selector: 'app-category-form',
@@ -17,9 +18,10 @@ import {
   styleUrl: './category-form.scss'
 })
 export class CategoryForm implements OnInit {
-  private fb = inject(FormBuilder);
-  private router = inject(Router);
-  private route = inject(ActivatedRoute);
+  private fb       = inject(FormBuilder);
+  private router   = inject(Router);
+  private route    = inject(ActivatedRoute);
+  private alertSvc = inject(AlertService);
   
   // State
   isEditMode = signal(false);
@@ -248,10 +250,9 @@ export class CategoryForm implements OnInit {
 
   handleImage(file: File) {
     if (file.size > 2 * 1024 * 1024) {
-      alert('Image must be less than 2MB');
+      this.alertSvc.warning('Image too large', 'Please choose an image smaller than 2MB.');
       return;
     }
-    
     const reader = new FileReader();
     reader.onload = (e) => {
       this.previewImage.set(e.target?.result as string);
@@ -309,9 +310,16 @@ export class CategoryForm implements OnInit {
 
   deleteCategory() {
     const name = this.categoryForm.get('name')?.value;
-    if (confirm(`Are you sure you want to delete "${name}"? This action cannot be undone.`)) {
+    this.alertSvc.confirm({
+      title: 'Delete Category',
+      message: `Are you sure you want to delete "${name}"? This action cannot be undone.`,
+      confirmLabel: 'Delete',
+      danger: true
+    }).then(ok => {
+      if (!ok) return;
       console.log('Deleting category:', this.categoryId());
       this.router.navigate(['/products/categories']);
-    }
+      this.alertSvc.success('Category deleted');
+    });
   }
 }

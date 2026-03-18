@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { ShipmentService } from '../../../core/services/fulfillment/shipment.service';
 import { ShipmentSummary, ShipmentStats } from '../../../core/models/fulfillment/fulfillment.model';
 import { PageParams } from '../../../core/models/common';
+import { AlertService } from '../../../shared/services/alert.service';
 
 @Component({
   selector: 'app-labels',
@@ -14,7 +15,8 @@ import { PageParams } from '../../../core/models/common';
   styleUrl: './labels.scss'
 })
 export class Labels implements OnInit {
-  private svc = inject(ShipmentService);
+  private svc      = inject(ShipmentService);
+  private alertSvc = inject(AlertService);
 
   shipments     = signal<ShipmentSummary[]>([]);
   stats         = signal<ShipmentStats | null>(null);
@@ -64,7 +66,7 @@ export class Labels implements OnInit {
 
   printSelected() {
     const count = this.selected().length || this.filtered().length;
-    alert(`Print ${count} label(s) — PDF label generation requires Apache PDFBox integration (Phase 2).`);
+    this.alertSvc.info('PDF Labels — Phase 2', `${count} label(s) selected. PDF generation via Apache PDFBox is coming in Phase 2.`);
   }
 
   getStatusConfig(s: string): { badge: string; label: string } {

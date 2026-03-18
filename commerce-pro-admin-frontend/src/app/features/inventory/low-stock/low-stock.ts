@@ -13,6 +13,7 @@ import {
 } from '../../../core/models/inventory';
 import { LowStockService } from '../../../core/services/inventory/low-stock.service';
 import { WarehouseService } from '../../../core/services/inventory/warehouse.service';
+import { AlertService } from '../../../shared/services/alert.service';
 
 @Component({
   selector: 'app-low-stock',
@@ -22,9 +23,10 @@ import { WarehouseService } from '../../../core/services/inventory/warehouse.ser
   styleUrl: './low-stock.scss'
 })
 export class LowStock implements OnInit {
-  private fb = inject(FormBuilder);
-  private lowStockService = inject(LowStockService);
+  private fb               = inject(FormBuilder);
+  private lowStockService  = inject(LowStockService);
   private warehouseService = inject(WarehouseService);
+  private alertSvc         = inject(AlertService);
 
   // View State
   activeView = signal<'dashboard' | 'alerts' | 'suggestions'>('dashboard');
@@ -275,11 +277,10 @@ export class LowStock implements OnInit {
 
   confirmCreatePO() {
     if (this.poForm.invalid) return;
-    
     const poId = `PO-${Date.now()}`;
-    alert(`Purchase Order ${poId} created successfully!`);
     this.showCreatePOModal.set(false);
     this.poForm.reset();
+    this.alertSvc.success('Purchase Order Created', `${poId} has been created successfully.`);
   }
 
   // ==================== Settings ====================

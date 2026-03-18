@@ -4,6 +4,7 @@ import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { FulfillmentService } from '../../../core/services/fulfillment/fulfillment.service';
 import { ShippingRule, ShippingRuleRequest, Carrier, CarrierRequest } from '../../../core/models/fulfillment/fulfillment.model';
+import { AlertService } from '../../../shared/services/alert.service';
 
 @Component({
   selector: 'app-shipping-rules',
@@ -13,7 +14,8 @@ import { ShippingRule, ShippingRuleRequest, Carrier, CarrierRequest } from '../.
   styleUrl: './shipping-rules.scss'
 })
 export class ShippingRules implements OnInit {
-  private svc = inject(FulfillmentService);
+  private svc      = inject(FulfillmentService);
+  private alertSvc = inject(AlertService);
 
   carriers     = signal<Carrier[]>([]);
   rules        = signal<ShippingRule[]>([]);
@@ -69,13 +71,23 @@ export class ShippingRules implements OnInit {
     const ec = this.editCarrier();
     const obs = ec ? this.svc.updateCarrier(ec.id, f) : this.svc.createCarrier(f);
     obs.subscribe({
-      next: () => { this.savingCarrier.set(false); this.closeCarrierModal(); this.svc.getCarriers().subscribe(c => this.carriers.set(c)); },
-      error: err => { this.savingCarrier.set(false); this.carrierError.set(err?.error?.message ?? 'Failed to save carrier'); }
+      next: () => {
+        this.savingCarrier.set(false); this.closeCarrierModal();
+        this.svc.getCarriers().subscribe(c => this.carriers.set(c));
+        this.alertSvc.success(ec ? 'Carrier updated' : 'Carrier created');
+      },
+      error: err => { this.savingCarrier.set(false); this.carrierError.set(err?.error?.message ?? 'Failed to save carrier'); this.alertSvc.error('Failed to save carrier', err?.error?.message); }
     });
   }
   deleteCarrier(id: string) {
-    if (!confirm('Delete this carrier?')) return;
-    this.svc.deleteCarrier(id).subscribe(() => this.svc.getCarriers().subscribe(c => this.carriers.set(c)));
+    this.alertSvc.confirm({ title: 'Delete Carrier', message: 'Are you sure you want to delete this carrier?', confirmLabel: 'Delete', danger: true })
+      .then(ok => {
+        if (!ok) return;
+        this.svc.deleteCarrier(id).subscribe({
+          next: () => { this.svc.getCarriers().subscribe(c => this.carriers.set(c)); this.alertSvc.success('Carrier deleted'); },
+          error: () => this.alertSvc.error('Failed to delete carrier')
+        });
+      });
   }
 
   // ── Rule actions ───────────────────────────────────────────────────────────
@@ -101,13 +113,23 @@ export class ShippingRules implements OnInit {
     const er = this.editRule();
     const obs = er ? this.svc.updateRule(er.id, f) : this.svc.createRule(f);
     obs.subscribe({
-      next: () => { this.savingRule.set(false); this.closeRuleModal(); this.svc.getRules().subscribe(r => this.rules.set(r)); },
-      error: err => { this.savingRule.set(false); this.ruleError.set(err?.error?.message ?? 'Failed to save rule'); }
+      next: () => {
+        this.savingRule.set(false); this.closeRuleModal();
+        this.svc.getRules().subscribe(r => this.rules.set(r));
+        this.alertSvc.success(er ? 'Rule updated' : 'Shipping rule created');
+      },
+      error: err => { this.savingRule.set(false); this.ruleError.set(err?.error?.message ?? 'Failed to save rule'); this.alertSvc.error('Failed to save rule', err?.error?.message); }
     });
   }
   deleteRule(id: string) {
-    if (!confirm('Delete this shipping rule?')) return;
-    this.svc.deleteRule(id).subscribe(() => this.svc.getRules().subscribe(r => this.rules.set(r)));
+    this.alertSvc.confirm({ title: 'Delete Shipping Rule', message: 'Are you sure you want to delete this shipping rule?', confirmLabel: 'Delete', danger: true })
+      .then(ok => {
+        if (!ok) return;
+        this.svc.deleteRule(id).subscribe({
+          next: () => { this.svc.getRules().subscribe(r => this.rules.set(r)); this.alertSvc.success('Shipping rule deleted'); },
+          error: () => this.alertSvc.error('Failed to delete rule')
+        });
+      });
   }
 
   updateRuleFormField(field: string, value: any) {

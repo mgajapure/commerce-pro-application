@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { FulfillmentService } from '../../../core/services/fulfillment/fulfillment.service';
 import { PickListSummary, PickList, UpdatePickItemRequest } from '../../../core/models/fulfillment/fulfillment.model';
 import { PageParams } from '../../../core/models/common';
+import { AlertService } from '../../../shared/services/alert.service';
 
 @Component({
   selector: 'app-pick-pack',
@@ -14,7 +15,8 @@ import { PageParams } from '../../../core/models/common';
   styleUrl: './pick-pack.scss'
 })
 export class PickPack implements OnInit {
-  private svc = inject(FulfillmentService);
+  private svc      = inject(FulfillmentService);
+  private alertSvc = inject(AlertService);
 
   pickLists     = signal<PickListSummary[]>([]);
   isLoading     = signal(false);
@@ -90,8 +92,8 @@ export class PickPack implements OnInit {
     pl.items.forEach(item => {
       const qty = this.editedQtys()[item.id] ?? item.quantityPicked;
       this.svc.updatePickItem(pl.id, item.id, { quantityPicked: qty } as UpdatePickItemRequest).subscribe({
-        next: () => { done++; if (done === pl.items.length) { this.saving.set(false); this.successMsg.set('Items saved'); this.openDetail(pl.id); } },
-        error: () => { this.saving.set(false); this.errorMsg.set('Failed to save some items'); }
+        next: () => { done++; if (done === pl.items.length) { this.saving.set(false); this.successMsg.set('Items saved'); this.alertSvc.success('Progress saved', 'Pick quantities updated successfully.'); this.openDetail(pl.id); } },
+        error: () => { this.saving.set(false); this.errorMsg.set('Failed to save some items'); this.alertSvc.error('Failed to save items', 'Some quantities could not be updated.'); }
       });
     });
   }
@@ -99,13 +101,33 @@ export class PickPack implements OnInit {
   startPickList(id: string) { this.svc.startPickList(id).subscribe(() => { this.openDetail(id); this.loadPickLists(); }); }
 
   completePickList(id: string) {
-    if (!confirm('Complete this pick list? This will update inventory and order fulfillment status.')) return;
-    this.svc.completePickList(id).subscribe(() => { this.closeDetail(); this.loadPickLists(); });
+    this.alertSvc.confirm({
+      title: 'Complete Pick List',
+      message: 'This will update inventory and order fulfillment status for all picked items.',
+      confirmLabel: 'Complete',
+      danger: false
+    }).then(ok => {
+      if (!ok) return;
+      this.svc.completePickList(id).subscribe({
+        next: () => { this.closeDetail(); this.loadPickLists(); this.alertSvc.success('Pick list completed', 'Inventory and order status updated.'); },
+        error: () => this.alertSvc.error('Failed to complete pick list')
+      });
+    });
   }
 
   cancelPickList(id: string) {
-    if (!confirm('Cancel this pick list?')) return;
-    this.svc.cancelPickList(id).subscribe(() => { this.closeDetail(); this.loadPickLists(); });
+    this.alertSvc.confirm({
+      title: 'Cancel Pick List',
+      message: 'Are you sure you want to cancel this pick list? This cannot be undone.',
+      confirmLabel: 'Cancel Pick List',
+      danger: true
+    }).then(ok => {
+      if (!ok) return;
+      this.svc.cancelPickList(id).subscribe({
+        next: () => { this.closeDetail(); this.loadPickLists(); this.alertSvc.success('Pick list cancelled'); },
+        error: () => this.alertSvc.error('Failed to cancel pick list')
+      });
+    });
   }
 
   applyQuickFilter(s: string) { this.filterStatus.set(s); this.currentPage.set(1); this.loadPickLists(); }

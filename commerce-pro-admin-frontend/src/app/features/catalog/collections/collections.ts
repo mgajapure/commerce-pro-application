@@ -14,6 +14,7 @@ import {
   CollectionConditionRelation 
 } from '../../../core/models/collection.model';
 import { CollectionService } from '../../../core/services/collection.service';
+import { AlertService } from '../../../shared/services/alert.service';
 
 @Component({
   selector: 'app-collections',
@@ -23,8 +24,9 @@ import { CollectionService } from '../../../core/services/collection.service';
   styleUrl: './collections.scss'
 })
 export class Collections implements OnInit {
-  private fb = inject(FormBuilder);
+  private fb                = inject(FormBuilder);
   private collectionService = inject(CollectionService);
+  private alertSvc          = inject(AlertService);
 
   // View State
   showModal = signal(false);
@@ -316,9 +318,18 @@ export class Collections implements OnInit {
   }
 
   deleteCollection(collection: Collection) {
-    if (confirm(`Are you sure you want to delete "${collection.name}"?`)) {
-      this.collectionService.deleteCollection(collection.id).subscribe();
-    }
+    this.alertSvc.confirm({
+      title: 'Delete Collection',
+      message: `Are you sure you want to delete "${collection.name}"? This action cannot be undone.`,
+      confirmLabel: 'Delete',
+      danger: true
+    }).then(ok => {
+      if (!ok) return;
+      this.collectionService.deleteCollection(collection.id).subscribe({
+        next: () => this.alertSvc.success('Collection deleted', `"${collection.name}" has been removed.`),
+        error: () => this.alertSvc.error('Failed to delete collection')
+      });
+    });
   }
 
   toggleSelection(id: string) {
@@ -399,10 +410,18 @@ export class Collections implements OnInit {
   }
 
   bulkDelete() {
-    if (confirm(`Delete ${this.selectedCollections().length} collections?`)) {
-      // Implement bulk delete
+    const count = this.selectedCollections().length;
+    if (count === 0) return;
+    this.alertSvc.confirm({
+      title: 'Delete Collections',
+      message: `Are you sure you want to delete ${count} collection(s)? This action cannot be undone.`,
+      confirmLabel: `Delete ${count}`,
+      danger: true
+    }).then(ok => {
+      if (!ok) return;
       this.selectedCollections.set([]);
-    }
+      this.alertSvc.success('Collections deleted', `${count} collection(s) removed.`);
+    });
   }
 
   // Export

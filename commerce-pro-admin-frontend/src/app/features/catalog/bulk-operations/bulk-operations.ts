@@ -21,6 +21,7 @@ import { ProductService } from '../../../core/services/catalog/product.service';
 import { BulkOperationService } from '../../../core/services/bulk-operation.service';
 import { CategoryService } from '../../../core/services/catalog/category.service';
 import { BrandService } from '../../../core/services/brand.service';
+import { AlertService } from '../../../shared/services/alert.service';
 
 @Component({
   selector: 'app-bulk-operations',
@@ -30,11 +31,12 @@ import { BrandService } from '../../../core/services/brand.service';
   styleUrl: './bulk-operations.scss'
 })
 export class BulkOperations {
-  private router = inject(Router);
-  private productService = inject(ProductService);
+  private router               = inject(Router);
+  private productService       = inject(ProductService);
   private bulkOperationService = inject(BulkOperationService);
-  private categoryService = inject(CategoryService);
-  private brandService = inject(BrandService);
+  private categoryService      = inject(CategoryService);
+  private brandService         = inject(BrandService);
+  private alertSvc             = inject(AlertService);
 
   // View State
   activeOperation = signal<BulkOperationType>('edit');
@@ -359,7 +361,7 @@ export class BulkOperations {
 
   previewChanges() {
     console.log('Previewing changes:', this.bulkValues());
-    alert('Preview would show a comparison table here');
+    this.alertSvc.info('Preview', 'A comparison table of changes would be shown here.');
   }
 
   executeBulkEdit() {
@@ -372,10 +374,10 @@ export class BulkOperations {
       this.bulkValues()
     ).subscribe({
       next: () => {
-        alert('Bulk edit completed successfully!');
         this.selectedProducts.set([]);
+        this.alertSvc.success('Bulk edit completed', `${ids.length} product(s) updated successfully.`);
       },
-      error: (err) => alert('Error: ' + err.message)
+      error: (err) => this.alertSvc.error('Bulk edit failed', err.message)
     });
   }
 
@@ -433,7 +435,11 @@ export class BulkOperations {
         this.importPreview.set(preview);
         const validCount = preview.filter(r => r.status === 'valid').length;
         const errorCount = preview.filter(r => r.status === 'error').length;
-        alert(`Validation complete! ${validCount} valid rows, ${errorCount} errors found.`);
+        if (errorCount > 0) {
+          this.alertSvc.warning('Validation complete', `${validCount} valid rows, ${errorCount} errors found. Please review before importing.`);
+        } else {
+          this.alertSvc.success('Validation complete', `All ${validCount} rows are valid and ready to import.`);
+        }
       }
     });
   }
@@ -446,7 +452,7 @@ export class BulkOperations {
       next: () => {
         this.uploadedFile.set(null);
         this.importPreview.set([]);
-        alert('Import completed successfully!');
+        this.alertSvc.success('Import completed', 'Products have been imported successfully.');
       }
     });
   }
@@ -462,7 +468,7 @@ export class BulkOperations {
 
   previewExport() {
     console.log('Previewing export...');
-    alert('Export preview would show sample data here');
+    this.alertSvc.info('Export Preview', 'A sample of the exported data would be shown here.');
   }
 
   executeExport() {
@@ -506,9 +512,10 @@ export class BulkOperations {
     
     this.bulkOperationService.executeCopy(ids, this.copyOptions()).subscribe({
       next: () => {
-        alert('Products duplicated successfully!');
         this.selectedProducts.set([]);
-      }
+        this.alertSvc.success('Products duplicated', `${ids.length} product(s) duplicated successfully.`);
+      },
+      error: () => this.alertSvc.error('Failed to duplicate products')
     });
   }
 
@@ -521,37 +528,47 @@ export class BulkOperations {
       next: () => {
         this.selectedProducts.set([]);
         if (this.deleteOptions().archiveInstead) {
-          alert('Products archived successfully!');
+          this.alertSvc.success('Products archived', `${ids.length} product(s) have been archived.`);
         } else {
-          alert('Products deleted permanently!');
+          this.alertSvc.success('Products deleted', `${ids.length} product(s) permanently deleted.`);
           this.router.navigate(['/products']);
         }
-      }
+      },
+      error: () => this.alertSvc.error('Failed to delete products')
     });
   }
 
   // History Management
   undoOperation(id: string) {
     this.bulkOperationService.undoOperation(id).subscribe({
-      next: () => alert('Undo operation initiated')
+      next: () => this.alertSvc.info('Undo initiated', 'The operation is being reversed.'),
+      error: () => this.alertSvc.error('Failed to undo operation')
     });
   }
 
   clearHistory() {
-    if (confirm('Clear all operation history?')) {
-      this.bulkOperationService.clearHistory().subscribe();
-    }
+    this.alertSvc.confirm({
+      title: 'Clear History',
+      message: 'Are you sure you want to clear all operation history? This cannot be undone.',
+      confirmLabel: 'Clear History',
+      danger: true
+    }).then(ok => {
+      if (!ok) return;
+      this.bulkOperationService.clearHistory().subscribe({
+        next: () => this.alertSvc.success('History cleared'),
+        error: () => this.alertSvc.error('Failed to clear history')
+      });
+    });
   }
 
   // Settings
   saveSettings() {
     this.showSettings.set(false);
-    alert('Settings saved!');
+    this.alertSvc.success('Settings saved', 'Your bulk operation settings have been saved.');
   }
 
-  // Templates
   onTemplateSelect(item: DropdownItem) {
     console.log('Selected template:', item.id);
-    alert(`Template "${item.label}" loaded!`);
+    this.alertSvc.success('Template loaded', `"${item.label}" has been applied.`);
   }
 }
