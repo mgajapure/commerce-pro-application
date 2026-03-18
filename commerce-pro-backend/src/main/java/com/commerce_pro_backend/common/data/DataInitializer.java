@@ -266,6 +266,140 @@ public class DataInitializer {
         SecurityContextHolder.clearContext();
     }
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // 4. FULFILLMENT  (carriers, pick lists, shipments)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    @Bean
+    @Profile("dev")
+    @Order(4)
+    CommandLineRunner seedFulfillment(
+            com.commerce_pro_backend.fulfillment.service.FulfillmentService fulfillmentService,
+            com.commerce_pro_backend.fulfillment.service.ShipmentService shipmentService,
+            com.commerce_pro_backend.order.repository.OrderRepository orderRepository,
+            UserDetailsService userDetailsService) {
+        return args -> {
+            log.info("━━━ [Seed] Fulfillment ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
+            try {
+                authenticateAsSuperAdmin(userDetailsService);
+
+                // ── Carriers ──────────────────────────────────────────────────
+                com.commerce_pro_backend.fulfillment.dto.CarrierRequestDTO manual =
+                        new com.commerce_pro_backend.fulfillment.dto.CarrierRequestDTO();
+                manual.setName("Manual / In-House");
+                manual.setCode("MANUAL");
+                manual.setNotes("Default in-house delivery — no external carrier");
+                manual.setIsDefault(true);
+                com.commerce_pro_backend.fulfillment.dto.CarrierDTO manualCarrier =
+                        fulfillmentService.createCarrier(manual);
+
+                com.commerce_pro_backend.fulfillment.dto.CarrierRequestDTO fedex =
+                        new com.commerce_pro_backend.fulfillment.dto.CarrierRequestDTO();
+                fedex.setName("FedEx");
+                fedex.setCode("FEDEX");
+                fedex.setTrackingUrlTemplate("https://www.fedex.com/apps/fedextrack/?tracknumbers={trackingNumber}");
+                fedex.setIsDefault(false);
+                fulfillmentService.createCarrier(fedex);
+
+                com.commerce_pro_backend.fulfillment.dto.CarrierRequestDTO ups =
+                        new com.commerce_pro_backend.fulfillment.dto.CarrierRequestDTO();
+                ups.setName("UPS");
+                ups.setCode("UPS");
+                ups.setTrackingUrlTemplate("https://www.ups.com/track?tracknum={trackingNumber}");
+                ups.setIsDefault(false);
+                fulfillmentService.createCarrier(ups);
+
+                com.commerce_pro_backend.fulfillment.dto.CarrierRequestDTO dhl =
+                        new com.commerce_pro_backend.fulfillment.dto.CarrierRequestDTO();
+                dhl.setName("DHL Express");
+                dhl.setCode("DHL");
+                dhl.setTrackingUrlTemplate("https://www.dhl.com/en/express/tracking.html?AWB={trackingNumber}");
+                dhl.setIsDefault(false);
+                fulfillmentService.createCarrier(dhl);
+
+                log.info("[Seed] Created 4 carriers");
+
+                // ── Shipping Rules ─────────────────────────────────────────────
+                com.commerce_pro_backend.fulfillment.dto.ShippingRuleRequestDTO standardRule =
+                        new com.commerce_pro_backend.fulfillment.dto.ShippingRuleRequestDTO();
+                standardRule.setName("Standard Domestic Shipping");
+                standardRule.setConditionType("ALWAYS");
+                standardRule.setShippingMethod("Standard");
+                standardRule.setServiceLevel("3-5 Business Days");
+                standardRule.setPriority(100);
+                standardRule.setIsActive(true);
+                fulfillmentService.createRule(standardRule);
+
+                com.commerce_pro_backend.fulfillment.dto.ShippingRuleRequestDTO expressRule =
+                        new com.commerce_pro_backend.fulfillment.dto.ShippingRuleRequestDTO();
+                expressRule.setName("Express Shipping — Orders over $100");
+                expressRule.setConditionType("PRICE");
+                expressRule.setConditionMin(new java.math.BigDecimal("100.00"));
+                expressRule.setShippingMethod("Express");
+                expressRule.setServiceLevel("1-2 Business Days");
+                expressRule.setPriority(50);
+                expressRule.setIsActive(true);
+                fulfillmentService.createRule(expressRule);
+
+                log.info("[Seed] Created 2 shipping rules");
+
+                // ── Pick List — from CONFIRMED orders ─────────────────────────
+                java.util.List<com.commerce_pro_backend.order.entity.Order> confirmedOrders =
+                        orderRepository.findByStatus(com.commerce_pro_backend.order.enums.OrderStatus.CONFIRMED);
+                if (!confirmedOrders.isEmpty()) {
+                    java.util.List<String> pickOrderIds = confirmedOrders.stream()
+                            .limit(2)
+                            .map(com.commerce_pro_backend.order.entity.Order::getId)
+                            .collect(java.util.stream.Collectors.toList());
+
+                    com.commerce_pro_backend.fulfillment.dto.CreatePickListRequest pickReq =
+                            new com.commerce_pro_backend.fulfillment.dto.CreatePickListRequest();
+                    pickReq.setOrderIds(pickOrderIds);
+                    pickReq.setWarehouseName("Main Warehouse");
+                    pickReq.setNotes("Seeded pick list for demo purposes");
+                    com.commerce_pro_backend.fulfillment.dto.PickListDTO pickList =
+                            fulfillmentService.generatePickList(pickReq);
+                    log.info("[Seed] Generated pick list {} for {} orders",
+                            pickList.getPickListNumber(), pickOrderIds.size());
+                }
+
+                // ── Shipment — from SHIPPED orders ────────────────────────────
+                java.util.List<com.commerce_pro_backend.order.entity.Order> shippedOrders =
+                        orderRepository.findByStatus(com.commerce_pro_backend.order.enums.OrderStatus.SHIPPED);
+                if (!shippedOrders.isEmpty()) {
+                    com.commerce_pro_backend.order.entity.Order shippedOrder = shippedOrders.get(0);
+                    com.commerce_pro_backend.fulfillment.dto.CreateShipmentRequest shipReq =
+                            new com.commerce_pro_backend.fulfillment.dto.CreateShipmentRequest();
+                    shipReq.setOrderId(shippedOrder.getId());
+                    shipReq.setCarrierId(manualCarrier.getId());
+                    shipReq.setTrackingNumber("TRK-DEMO-001");
+                    shipReq.setShippingMethod("Standard");
+                    shipReq.setEstimatedDeliveryDate(java.time.LocalDate.now().plusDays(3));
+                    shipReq.setNotes("Seeded shipment for demo purposes");
+                    com.commerce_pro_backend.fulfillment.dto.ShipmentDTO shipment =
+                            shipmentService.createShipment(shipReq);
+
+                    // Add a tracking event — IN_TRANSIT
+                    com.commerce_pro_backend.fulfillment.dto.AddTrackingEventRequest eventReq =
+                            new com.commerce_pro_backend.fulfillment.dto.AddTrackingEventRequest();
+                    eventReq.setStatus("IN_TRANSIT");
+                    eventReq.setDescription("Package departed sorting facility");
+                    eventReq.setLocation("Distribution Center, Chicago IL");
+                    shipmentService.addTrackingEvent(shipment.getId(), eventReq);
+                    log.info("[Seed] Created shipment {} with tracking event", shipment.getShipmentNumber());
+                }
+
+                log.info("[Seed] Fulfillment seed complete");
+
+            } catch (Exception e) {
+                log.error("[Seed] Fulfillment seed failed: {}", e.getMessage(), e);
+            } finally {
+                clearSecurityContext();
+            }
+        };
+    }
+
     // ═════════════════════════════════════════════════════════════════════════
     // PRODUCT CATALOGUE
     // ═════════════════════════════════════════════════════════════════════════

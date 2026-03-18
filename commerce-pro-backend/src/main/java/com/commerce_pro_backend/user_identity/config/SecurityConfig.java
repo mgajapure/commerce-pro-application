@@ -17,7 +17,6 @@ import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 import com.commerce_pro_backend.user_identity.service.JwtAuthenticationFilter;
 import com.commerce_pro_backend.user_identity.service.JwtTokenProvider;
@@ -46,7 +45,7 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 // Disable CSRF for H2 Console and stateless JWT
                 .csrf(csrf -> csrf
-                        .ignoringRequestMatchers(new AntPathRequestMatcher("/h2-console/**"))
+                        .ignoringRequestMatchers("/h2-console/**")
                         .disable())
                 // Configure headers before authorizeHttpRequests
                 .headers(headers -> headers
@@ -55,7 +54,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         // Public endpoints - H2 Console must be first
-                        .requestMatchers(new AntPathRequestMatcher("/h2-console/**")).permitAll()
+                        .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers("/api/v1/auth/login", "/api/v1/auth/refresh").permitAll()
                         .requestMatchers("/actuator/health").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
@@ -68,7 +67,7 @@ public class SecurityConfig {
                         // Identity User
                         .requestMatchers(HttpMethod.POST, "/api/v1/identity/users").hasAuthority("identity:user:create")
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/identity/users/**").hasAuthority("identity:user:delete")
-                        
+
                         // Identity roles (align with RoleController + PermissionRegistry)
                         .requestMatchers(HttpMethod.GET, "/api/v1/identity/roles/**").hasAuthority("identity:role:read")
                         .requestMatchers(HttpMethod.POST, "/api/v1/identity/roles").hasAuthority("identity:role:create")
@@ -89,16 +88,48 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET,    "/api/v1/orders").hasAuthority("order:order:read")
                         .requestMatchers(HttpMethod.POST,   "/api/v1/orders").hasAuthority("order:order:create")
                         .requestMatchers(HttpMethod.PUT,    "/api/v1/orders/**").hasAuthority("order:order:update")
-                        .requestMatchers(HttpMethod.PATCH,  "/api/v1/orders/**/tracking").hasAuthority("order:order:update")
+                        .requestMatchers(HttpMethod.PATCH,  "/api/v1/orders/*/tracking").hasAuthority("order:order:update")
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/orders/**").hasAuthority("order:order:cancel")
-                        .requestMatchers(HttpMethod.POST,   "/api/v1/orders/**/confirm").hasAuthority("order:order:manage-status")
-                        .requestMatchers(HttpMethod.POST,   "/api/v1/orders/**/process").hasAuthority("order:order:manage-status")
-                        .requestMatchers(HttpMethod.POST,   "/api/v1/orders/**/ship").hasAuthority("order:order:manage-status")
-                        .requestMatchers(HttpMethod.POST,   "/api/v1/orders/**/deliver").hasAuthority("order:order:manage-status")
-                        .requestMatchers(HttpMethod.POST,   "/api/v1/orders/**/hold").hasAuthority("order:order:manage-status")
-                        .requestMatchers(HttpMethod.POST,   "/api/v1/orders/**/release-hold").hasAuthority("order:order:manage-status")
-                        .requestMatchers(HttpMethod.POST,   "/api/v1/orders/**/close").hasAuthority("order:order:manage-status")
+                        .requestMatchers(HttpMethod.POST,   "/api/v1/orders/*/confirm").hasAuthority("order:order:manage-status")
+                        .requestMatchers(HttpMethod.POST,   "/api/v1/orders/*/process").hasAuthority("order:order:manage-status")
+                        .requestMatchers(HttpMethod.POST,   "/api/v1/orders/*/ship").hasAuthority("order:order:manage-status")
+                        .requestMatchers(HttpMethod.POST,   "/api/v1/orders/*/deliver").hasAuthority("order:order:manage-status")
+                        .requestMatchers(HttpMethod.POST,   "/api/v1/orders/*/hold").hasAuthority("order:order:manage-status")
+                        .requestMatchers(HttpMethod.POST,   "/api/v1/orders/*/release-hold").hasAuthority("order:order:manage-status")
+                        .requestMatchers(HttpMethod.POST,   "/api/v1/orders/*/close").hasAuthority("order:order:manage-status")
                         .requestMatchers(HttpMethod.POST,   "/api/v1/orders/bulk-action").hasAuthority("order:order:bulk-action")
+
+                        // Fulfillment — Pick Lists & Queue
+                        .requestMatchers(HttpMethod.GET,    "/api/v1/fulfillment/queue").hasAuthority("fulfillment:picklist:read")
+                        .requestMatchers(HttpMethod.GET,    "/api/v1/fulfillment/stats").hasAuthority("fulfillment:stats")
+                        .requestMatchers(HttpMethod.GET,    "/api/v1/fulfillment/pick-lists/**").hasAuthority("fulfillment:picklist:read")
+                        .requestMatchers(HttpMethod.GET,    "/api/v1/fulfillment/pick-lists").hasAuthority("fulfillment:picklist:read")
+                        .requestMatchers(HttpMethod.POST,   "/api/v1/fulfillment/pick-lists").hasAuthority("fulfillment:picklist:create")
+                        .requestMatchers(HttpMethod.POST,   "/api/v1/fulfillment/pick-lists/*/assign").hasAuthority("fulfillment:picklist:manage")
+                        .requestMatchers(HttpMethod.POST,   "/api/v1/fulfillment/pick-lists/*/start").hasAuthority("fulfillment:picklist:manage")
+                        .requestMatchers(HttpMethod.PATCH,  "/api/v1/fulfillment/pick-lists/*/items/*").hasAuthority("fulfillment:picklist:manage")
+                        .requestMatchers(HttpMethod.POST,   "/api/v1/fulfillment/pick-lists/*/complete").hasAuthority("fulfillment:picklist:manage")
+                        .requestMatchers(HttpMethod.POST,   "/api/v1/fulfillment/pick-lists/*/cancel").hasAuthority("fulfillment:picklist:manage")
+                        // Fulfillment — Carriers
+                        .requestMatchers(HttpMethod.GET,    "/api/v1/fulfillment/carriers/**").hasAuthority("fulfillment:carrier:read")
+                        .requestMatchers(HttpMethod.GET,    "/api/v1/fulfillment/carriers").hasAuthority("fulfillment:carrier:read")
+                        .requestMatchers(HttpMethod.POST,   "/api/v1/fulfillment/carriers").hasAuthority("fulfillment:carrier:manage")
+                        .requestMatchers(HttpMethod.PUT,    "/api/v1/fulfillment/carriers/**").hasAuthority("fulfillment:carrier:manage")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/fulfillment/carriers/**").hasAuthority("fulfillment:carrier:manage")
+                        // Fulfillment — Shipping Rules
+                        .requestMatchers(HttpMethod.GET,    "/api/v1/fulfillment/shipping-rules/**").hasAuthority("fulfillment:rules:read")
+                        .requestMatchers(HttpMethod.GET,    "/api/v1/fulfillment/shipping-rules").hasAuthority("fulfillment:rules:read")
+                        .requestMatchers(HttpMethod.POST,   "/api/v1/fulfillment/shipping-rules").hasAuthority("fulfillment:rules:manage")
+                        .requestMatchers(HttpMethod.PUT,    "/api/v1/fulfillment/shipping-rules/**").hasAuthority("fulfillment:rules:manage")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/fulfillment/shipping-rules/**").hasAuthority("fulfillment:rules:manage")
+                        // Shipments
+                        .requestMatchers(HttpMethod.GET,    "/api/v1/shipments/**").hasAuthority("fulfillment:shipment:read")
+                        .requestMatchers(HttpMethod.GET,    "/api/v1/shipments").hasAuthority("fulfillment:shipment:read")
+                        .requestMatchers(HttpMethod.POST,   "/api/v1/shipments").hasAuthority("fulfillment:shipment:create")
+                        .requestMatchers(HttpMethod.PUT,    "/api/v1/shipments/**").hasAuthority("fulfillment:shipment:update")
+                        .requestMatchers(HttpMethod.POST,   "/api/v1/shipments/*/tracking-events").hasAuthority("fulfillment:shipment:update")
+                        .requestMatchers(HttpMethod.POST,   "/api/v1/shipments/*/deliver").hasAuthority("fulfillment:shipment:manage")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/shipments/**").hasAuthority("fulfillment:shipment:delete")
 
                         // All other requests need authentication
                         .anyRequest().authenticated())

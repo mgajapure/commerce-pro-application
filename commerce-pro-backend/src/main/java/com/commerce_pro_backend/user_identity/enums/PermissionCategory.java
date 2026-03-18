@@ -8,5 +8,6 @@ public enum PermissionCategory {
     SECURITY_OPERATIONS,    // Session management, force logout
     API_MANAGEMENT,         // API keys, webhooks
     INTEGRATION_CONFIG,      // SSO, LDAP, external IdPs
-    ORDER_MANAGEMENT        // Orders, fulfilment, cancellations   ← NEW
+    ORDER_MANAGEMENT,        // Orders, fulfilment, cancellations
+    FULFILLMENT_MANAGEMENT   // Pick lists, shipments, carriers, shipping rules
 }
