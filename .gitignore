@@ -97,3 +97,8 @@ Thumbs.db
 /commerce-pro-backend/data/*
 commerce-pro-backend/data/*
 data/*
+.vscode
+.vscode/*
+commerce-pro-backend/.idea/*
+commerce-pro-backend/bin/*
+commerce-pro-backend/build/*
