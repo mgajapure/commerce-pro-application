@@ -84,6 +84,22 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/v1/identity/permissions/**").hasAuthority("identity:permission:update")
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/identity/permissions/**").hasAuthority("identity:permission:delete")
 
+                        // Order Management  (align with OrderController)
+                        .requestMatchers(HttpMethod.GET,    "/api/v1/orders/**").hasAuthority("order:order:read")
+                        .requestMatchers(HttpMethod.GET,    "/api/v1/orders").hasAuthority("order:order:read")
+                        .requestMatchers(HttpMethod.POST,   "/api/v1/orders").hasAuthority("order:order:create")
+                        .requestMatchers(HttpMethod.PUT,    "/api/v1/orders/**").hasAuthority("order:order:update")
+                        .requestMatchers(HttpMethod.PATCH,  "/api/v1/orders/**/tracking").hasAuthority("order:order:update")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/orders/**").hasAuthority("order:order:cancel")
+                        .requestMatchers(HttpMethod.POST,   "/api/v1/orders/**/confirm").hasAuthority("order:order:manage-status")
+                        .requestMatchers(HttpMethod.POST,   "/api/v1/orders/**/process").hasAuthority("order:order:manage-status")
+                        .requestMatchers(HttpMethod.POST,   "/api/v1/orders/**/ship").hasAuthority("order:order:manage-status")
+                        .requestMatchers(HttpMethod.POST,   "/api/v1/orders/**/deliver").hasAuthority("order:order:manage-status")
+                        .requestMatchers(HttpMethod.POST,   "/api/v1/orders/**/hold").hasAuthority("order:order:manage-status")
+                        .requestMatchers(HttpMethod.POST,   "/api/v1/orders/**/release-hold").hasAuthority("order:order:manage-status")
+                        .requestMatchers(HttpMethod.POST,   "/api/v1/orders/**/close").hasAuthority("order:order:manage-status")
+                        .requestMatchers(HttpMethod.POST,   "/api/v1/orders/bulk-action").hasAuthority("order:order:bulk-action")
+
                         // All other requests need authentication
                         .anyRequest().authenticated())
                 .addFilterBefore(superAdminFilter, UsernamePasswordAuthenticationFilter.class)

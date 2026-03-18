@@ -7,5 +7,6 @@ public enum PermissionCategory {
     AUDIT_AND_COMPLIANCE,   // Viewing audit logs, reports
     SECURITY_OPERATIONS,    // Session management, force logout
     API_MANAGEMENT,         // API keys, webhooks
-    INTEGRATION_CONFIG      // SSO, LDAP, external IdPs
+    INTEGRATION_CONFIG,      // SSO, LDAP, external IdPs
+    ORDER_MANAGEMENT        // Orders, fulfilment, cancellations   ← NEW
 }
