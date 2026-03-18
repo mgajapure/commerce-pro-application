@@ -1,41 +1,12 @@
-import { Component, signal, computed, OnInit } from '@angular/core';
+import { Component, signal, computed, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
 import { Dropdown, DropdownItem } from '../../../shared/components/dropdown/dropdown';
-
-interface Order {
-  id: string;
-  orderNumber: string;
-  customer: {
-    name: string;
-    email: string;
-    avatar: string;
-    type: 'new' | 'returning' | 'vip';
-  };
-  items: {
-    productId: string;
-    name: string;
-    quantity: number;
-    price: number;
-    image: string;
-  }[];
-  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled' | 'refunded';
-  paymentStatus: 'paid' | 'pending' | 'failed' | 'refunded' | 'partially_refunded';
-  shippingMethod: string;
-  trackingNumber?: string;
-  subtotal: number;
-  tax: number;
-  shipping: number;
-  discount: number;
-  total: number;
-  currency: string;
-  createdAt: Date;
-  updatedAt: Date;
-  notes?: string;
-  tags: string[];
-  priority: 'low' | 'medium' | 'high' | 'urgent';
-}
+import { OrderService } from '../../../core/services/order/order.service';
+import { OrderSummaryResponse, OrderStatsResponse, OrderStatus } from '../../../core/models/order/order.model';
+import { PageParams } from '../../../core/models/common';
 
 @Component({
   selector: 'app-order-list',
@@ -44,690 +15,300 @@ interface Order {
   templateUrl: './order-list.html',
   styleUrl: './order-list.scss'
 })
-export class OrderList implements OnInit {
-  // expose global Math for template
-  readonly Math: typeof Math = Math;
-  
-  // View State
-  viewMode = signal<'table' | 'grid'>('table');
-  showFilters = signal(false);
+export class OrderList implements OnInit, OnDestroy {
+  readonly Math = Math;
+  private orderService = inject(OrderService);
+  private destroy$ = new Subject<void>();
+  private searchSubject = new Subject<string>();
+
+  // ── View state ─────────────────────────────────────────────────────────────
+  viewMode       = signal<'table' | 'grid'>('table');
+  showFilters    = signal(false);
   selectedOrders = signal<string[]>([]);
+  showConfirm    = signal(false);
+  confirmAction  = signal<{ label: string; status: OrderStatus; ids: string[] } | null>(null);
 
-  // Pagination
-  currentPage = signal(1);
-  itemsPerPage = signal(10);
-  
-  // Filters
-  searchQuery = signal('');
-  filterStatus = signal<string>('');
-  filterPaymentStatus = signal<string>('');
-  filterPriority = signal<string>('');
-  filterDateFrom = signal<string>('');
-  filterDateTo = signal<string>('');
-  filterMinAmount = signal<number | null>(null);
-  filterMaxAmount = signal<number | null>(null);
-  filterCustomerType = signal<string>('');
-  filterTags = signal<string>('');
+  // ── Server-side data ───────────────────────────────────────────────────────
+  orders        = signal<OrderSummaryResponse[]>([]);
+  stats         = signal<OrderStatsResponse | null>(null);
+  isLoading     = signal(false);
+  error         = signal<string | null>(null);
+  totalElements = signal(0);
+  totalPages    = signal(0);
 
-  // Sorting
-  sortField = signal<string>('createdAt');
+  // ── Pagination (0-based for API, 1-based for UI) ───────────────────────────
+  currentPage  = signal(1);
+  itemsPerPage = signal(20);
+
+  // ── Filters ────────────────────────────────────────────────────────────────
+  searchQuery   = signal('');
+  filterStatus  = signal('');
+  filterPayment = signal('');
+  filterSource  = signal('');
+  filterFlagged = signal('');
+  filterFrom    = signal('');
+  filterTo      = signal('');
+
+  // ── Sort ───────────────────────────────────────────────────────────────────
+  sortField     = signal('createdAt');
   sortDirection = signal<'asc' | 'desc'>('desc');
 
-  // Orders Data
-  orders = signal<Order[]>([]);
-
   exportItems: DropdownItem[] = [
-    { id: 'csv', label: 'Export as CSV', icon: 'filetype-csv' },
+    { id: 'csv',   label: 'Export as CSV',   icon: 'filetype-csv' },
     { id: 'excel', label: 'Export as Excel', icon: 'filetype-xlsx' },
-    { id: 'pdf', label: 'Export as PDF', icon: 'filetype-pdf' }
+    { id: 'pdf',   label: 'Export as PDF',   icon: 'filetype-pdf' }
   ];
-  
-  ngOnInit() {
+
+  quickFilters = [
+    { label: 'All',         value: '' },
+    { label: 'Draft',       value: 'DRAFT' },
+    { label: 'Pending',     value: 'PENDING_PAYMENT' },
+    { label: 'Confirmed',   value: 'CONFIRMED' },
+    { label: 'On Hold',     value: 'ON_HOLD' },
+    { label: 'Processing',  value: 'PROCESSING' },
+    { label: 'Shipped',     value: 'SHIPPED' },
+    { label: 'Delivered',   value: 'DELIVERED' },
+    { label: 'Cancelled',   value: 'CANCELLED' },
+    { label: 'Refunded',    value: 'REFUNDED' },
+    { label: 'Closed',      value: 'CLOSED' }
+  ];
+
+  activeFiltersCount = computed(() =>
+    [this.filterStatus(), this.filterPayment(), this.filterSource(),
+     this.filterFlagged(), this.filterFrom(), this.filterTo()].filter(Boolean).length
+  );
+
+  displayStats = computed(() => {
+    const s = this.stats();
+    if (!s) return [];
+    return [
+      { label: 'Total Orders',  value: s.totalOrders,       icon: 'bag-check',    bg: 'bg-blue-100',    ic: 'text-blue-600',    trend: 12.5 },
+      { label: 'Revenue Today', value: '$' + s.revenueToday.toFixed(0), icon: 'cash-stack', bg: 'bg-emerald-100', ic: 'text-emerald-600', trend: 8.3 },
+      { label: 'Pending',       value: s.pendingOrders,     icon: 'clock-history', bg: 'bg-yellow-100',  ic: 'text-yellow-600',  trend: -2.1 },
+      { label: 'Processing',    value: s.processingOrders,  icon: 'gear',          bg: 'bg-indigo-100',  ic: 'text-indigo-600',  trend: 5.4 },
+      { label: 'Shipped',       value: s.shippedOrders,     icon: 'truck',         bg: 'bg-purple-100',  ic: 'text-purple-600',  trend: 15.2 },
+      { label: 'Flagged',       value: s.flaggedOrders,     icon: 'flag-fill',     bg: 'bg-red-100',     ic: 'text-red-600',     trend: -30.0 }
+    ];
+  });
+
+  ngOnInit(): void {
+    // Debounce search input
+    this.searchSubject.pipe(
+      debounceTime(400),
+      distinctUntilChanged(),
+      takeUntil(this.destroy$)
+    ).subscribe(() => {
+      this.currentPage.set(1);
+      this.loadOrders();
+    });
+
+    this.loadStats();
     this.loadOrders();
   }
 
-  loadOrders() {
-    this.orders.set([
-      {
-        id: 'ord_001',
-        orderNumber: 'ORD-2024-001',
-        customer: {
-          name: 'Sarah Johnson',
-          email: 'sarah.j@example.com',
-          avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop&crop=face',
-          type: 'vip'
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  // ── Data loading ───────────────────────────────────────────────────────────
+
+  loadStats(): void {
+    this.orderService.getStats().subscribe(s => this.stats.set(s));
+  }
+
+  loadOrders(): void {
+    this.isLoading.set(true);
+    this.error.set(null);
+
+    const pageParams: PageParams = {
+      page: this.currentPage() - 1,
+      size: this.itemsPerPage(),
+      sort: this.sortField(),
+      direction: this.sortDirection()
+    };
+
+    const filter: any = {};
+    if (this.searchQuery())   filter.search        = this.searchQuery();
+    if (this.filterStatus())  filter.status        = this.filterStatus();
+    if (this.filterPayment()) filter.paymentStatus = this.filterPayment();
+    if (this.filterSource())  filter.source        = this.filterSource();
+    if (this.filterFlagged() === 'true')  filter.isFlagged = true;
+    if (this.filterFlagged() === 'false') filter.isFlagged = false;
+    if (this.filterFrom())    filter.createdFrom   = this.filterFrom();
+    if (this.filterTo())      filter.createdTo     = this.filterTo();
+
+    this.orderService.getOrders(filter, pageParams)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: page => {
+          this.orders.set(page.content);
+          this.totalElements.set(page.totalElements);
+          this.totalPages.set(page.totalPages);
+          this.isLoading.set(false);
         },
-        items: [
-          { productId: 'prod_001', name: 'Wireless Headphones Pro', quantity: 1, price: 299.99, image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=150&h=150&fit=crop' },
-          { productId: 'prod_002', name: 'USB-C Cable 2m', quantity: 2, price: 19.99, image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=150&h=150&fit=crop' }
-        ],
-        status: 'processing',
-        paymentStatus: 'paid',
-        shippingMethod: 'Express Shipping',
-        trackingNumber: 'TRK123456789',
-        subtotal: 339.97,
-        tax: 34.00,
-        shipping: 15.00,
-        discount: 20.00,
-        total: 368.97,
-        currency: 'USD',
-        createdAt: new Date('2024-01-15T10:30:00'),
-        updatedAt: new Date('2024-01-15T14:20:00'),
-        priority: 'high',
-        tags: ['gift', 'express']
-      },
-      {
-        id: 'ord_002',
-        orderNumber: 'ORD-2024-002',
-        customer: {
-          name: 'Michael Chen',
-          email: 'michael.c@example.com',
-          avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
-          type: 'returning'
-        },
-        items: [
-          { productId: 'prod_003', name: 'Mechanical Keyboard RGB', quantity: 1, price: 149.99, image: 'https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?w=150&h=150&fit=crop' }
-        ],
-        status: 'shipped',
-        paymentStatus: 'paid',
-        shippingMethod: 'Standard Shipping',
-        trackingNumber: 'TRK987654321',
-        subtotal: 149.99,
-        tax: 15.00,
-        shipping: 10.00,
-        discount: 0,
-        total: 174.99,
-        currency: 'USD',
-        createdAt: new Date('2024-01-14T09:15:00'),
-        updatedAt: new Date('2024-01-14T16:30:00'),
-        priority: 'medium',
-        tags: []
-      },
-      {
-        id: 'ord_003',
-        orderNumber: 'ORD-2024-003',
-        customer: {
-          name: 'Emma Davis',
-          email: 'emma.d@example.com',
-          avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
-          type: 'new'
-        },
-        items: [
-          { productId: 'prod_004', name: 'Smart Watch Series 5', quantity: 1, price: 399.99, image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=150&h=150&fit=crop' },
-          { productId: 'prod_005', name: 'Watch Band - Black', quantity: 1, price: 49.99, image: 'https://images.unsplash.com/photo-1579586337278-3befd40fd17a?w=150&h=150&fit=crop' },
-          { productId: 'prod_006', name: 'Screen Protector', quantity: 2, price: 12.99, image: 'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=150&h=150&fit=crop' }
-        ],
-        status: 'pending',
-        paymentStatus: 'pending',
-        shippingMethod: 'Express Shipping',
-        subtotal: 475.96,
-        tax: 47.60,
-        shipping: 15.00,
-        discount: 50.00,
-        total: 488.56,
-        currency: 'USD',
-        createdAt: new Date('2024-01-15T14:20:00'),
-        updatedAt: new Date('2024-01-15T14:20:00'),
-        priority: 'urgent',
-        tags: ['vip', 'fragile']
-      },
-      {
-        id: 'ord_004',
-        orderNumber: 'ORD-2024-004',
-        customer: {
-          name: 'James Wilson',
-          email: 'james.w@example.com',
-          avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face',
-          type: 'returning'
-        },
-        items: [
-          { productId: 'prod_007', name: 'Running Shoes Pro', quantity: 1, price: 129.99, image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=150&h=150&fit=crop' },
-          { productId: 'prod_008', name: 'Sports Socks 3-Pack', quantity: 2, price: 24.99, image: 'https://images.unsplash.com/photo-1582966772680-860e372bb558?w=150&h=150&fit=crop' }
-        ],
-        status: 'delivered',
-        paymentStatus: 'paid',
-        shippingMethod: 'Standard Shipping',
-        trackingNumber: 'TRK456789123',
-        subtotal: 179.97,
-        tax: 18.00,
-        shipping: 0,
-        discount: 10.00,
-        total: 187.97,
-        currency: 'USD',
-        createdAt: new Date('2024-01-10T11:45:00'),
-        updatedAt: new Date('2024-01-13T09:30:00'),
-        priority: 'low',
-        tags: ['sports']
-      },
-      {
-        id: 'ord_005',
-        orderNumber: 'ORD-2024-005',
-        customer: {
-          name: 'Lisa Anderson',
-          email: 'lisa.a@example.com',
-          avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face',
-          type: 'vip'
-        },
-        items: [
-          { productId: 'prod_009', name: 'Leather Handbag', quantity: 1, price: 249.99, image: 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=150&h=150&fit=crop' },
-          { productId: 'prod_010', name: 'Designer Scarf', quantity: 1, price: 89.99, image: 'https://images.unsplash.com/photo-1584030373081-f37b7bb4fa33?w=150&h=150&fit=crop' }
-        ],
-        status: 'processing',
-        paymentStatus: 'paid',
-        shippingMethod: 'Express Shipping',
-        trackingNumber: 'TRK789123456',
-        subtotal: 339.98,
-        tax: 34.00,
-        shipping: 20.00,
-        discount: 0,
-        total: 393.98,
-        currency: 'USD',
-        createdAt: new Date('2024-01-15T16:00:00'),
-        updatedAt: new Date('2024-01-15T18:30:00'),
-        priority: 'high',
-        tags: ['fashion', 'gift']
-      },
-      {
-        id: 'ord_006',
-        orderNumber: 'ORD-2024-006',
-        customer: {
-          name: 'Robert Taylor',
-          email: 'robert.t@example.com',
-          avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
-          type: 'new'
-        },
-        items: [
-          { productId: 'prod_011', name: 'Coffee Maker Deluxe', quantity: 1, price: 199.99, image: 'https://images.unsplash.com/photo-1517668808822-9ebb02f2a0e6?w=150&h=150&fit=crop' },
-          { productId: 'prod_012', name: 'Coffee Beans 1kg', quantity: 2, price: 34.99, image: 'https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=150&h=150&fit=crop' }
-        ],
-        status: 'shipped',
-        paymentStatus: 'paid',
-        shippingMethod: 'Standard Shipping',
-        trackingNumber: 'TRK321654987',
-        subtotal: 269.97,
-        tax: 27.00,
-        shipping: 15.00,
-        discount: 25.00,
-        total: 286.97,
-        currency: 'USD',
-        createdAt: new Date('2024-01-13T08:20:00'),
-        updatedAt: new Date('2024-01-14T10:15:00'),
-        priority: 'medium',
-        tags: ['kitchen']
-      },
-      {
-        id: 'ord_007',
-        orderNumber: 'ORD-2024-007',
-        customer: {
-          name: 'Jennifer Martinez',
-          email: 'jennifer.m@example.com',
-          avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&h=150&fit=crop&crop=face',
-          type: 'returning'
-        },
-        items: [
-          { productId: 'prod_013', name: 'Yoga Mat Premium', quantity: 1, price: 79.99, image: 'https://images.unsplash.com/photo-1601925260368-ae2f83cf8b7f?w=150&h=150&fit=crop' },
-          { productId: 'prod_014', name: 'Resistance Bands Set', quantity: 1, price: 29.99, image: 'https://images.unsplash.com/photo-1598289431512-b97b0917affc?w=150&h=150&fit=crop' },
-          { productId: 'prod_015', name: 'Water Bottle 1L', quantity: 1, price: 24.99, image: 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=150&h=150&fit=crop' }
-        ],
-        status: 'pending',
-        paymentStatus: 'failed',
-        shippingMethod: 'Standard Shipping',
-        subtotal: 134.97,
-        tax: 13.50,
-        shipping: 10.00,
-        discount: 0,
-        total: 158.47,
-        currency: 'USD',
-        createdAt: new Date('2024-01-15T20:00:00'),
-        updatedAt: new Date('2024-01-15T20:05:00'),
-        priority: 'low',
-        tags: ['fitness']
-      },
-      {
-        id: 'ord_008',
-        orderNumber: 'ORD-2024-008',
-        customer: {
-          name: 'David Brown',
-          email: 'david.b@example.com',
-          avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&h=150&fit=crop&crop=face',
-          type: 'vip'
-        },
-        items: [
-          { productId: 'prod_016', name: 'Gaming Laptop Pro', quantity: 1, price: 1499.99, image: 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=150&h=150&fit=crop' },
-          { productId: 'prod_017', name: 'Gaming Mouse RGB', quantity: 1, price: 79.99, image: 'https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=150&h=150&fit=crop' }
-        ],
-        status: 'processing',
-        paymentStatus: 'paid',
-        shippingMethod: 'Express Shipping',
-        trackingNumber: 'TRK147258369',
-        subtotal: 1579.98,
-        tax: 158.00,
-        shipping: 25.00,
-        discount: 100.00,
-        total: 1662.98,
-        currency: 'USD',
-        createdAt: new Date('2024-01-12T14:30:00'),
-        updatedAt: new Date('2024-01-12T16:00:00'),
-        priority: 'urgent',
-        tags: ['gaming', 'high-value']
-      },
-      {
-        id: 'ord_009',
-        orderNumber: 'ORD-2024-009',
-        customer: {
-          name: 'Amanda White',
-          email: 'amanda.w@example.com',
-          avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&h=150&fit=crop&crop=face',
-          type: 'new'
-        },
-        items: [
-          { productId: 'prod_018', name: 'Skincare Set Premium', quantity: 1, price: 189.99, image: 'https://images.unsplash.com/photo-1570194065650-d99fb4b38b15?w=150&h=150&fit=crop' }
-        ],
-        status: 'cancelled',
-        paymentStatus: 'refunded',
-        shippingMethod: 'Standard Shipping',
-        subtotal: 189.99,
-        tax: 19.00,
-        shipping: 0,
-        discount: 0,
-        total: 0,
-        currency: 'USD',
-        createdAt: new Date('2024-01-11T10:00:00'),
-        updatedAt: new Date('2024-01-12T09:00:00'),
-        priority: 'low',
-        tags: ['beauty']
-      },
-      {
-        id: 'ord_010',
-        orderNumber: 'ORD-2024-010',
-        customer: {
-          name: 'Thomas Garcia',
-          email: 'thomas.g@example.com',
-          avatar: 'https://images.unsplash.com/photo-1507591064344-4c6ce005b128?w=150&h=150&fit=crop&crop=face',
-          type: 'returning'
-        },
-        items: [
-          { productId: 'prod_019', name: 'Bluetooth Speaker', quantity: 2, price: 89.99, image: 'https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=150&h=150&fit=crop' },
-          { productId: 'prod_020', name: 'Phone Stand', quantity: 1, price: 19.99, image: 'https://images.unsplash.com/photo-1586495777744-4413f21062fa?w=150&h=150&fit=crop' }
-        ],
-        status: 'delivered',
-        paymentStatus: 'paid',
-        shippingMethod: 'Standard Shipping',
-        trackingNumber: 'TRK369258147',
-        subtotal: 199.97,
-        tax: 20.00,
-        shipping: 0,
-        discount: 15.00,
-        total: 204.97,
-        currency: 'USD',
-        createdAt: new Date('2024-01-08T13:45:00'),
-        updatedAt: new Date('2024-01-11T11:30:00'),
-        priority: 'medium',
-        tags: ['electronics']
-      }
-    ]);
+        error: err => {
+          this.error.set('Failed to load orders');
+          this.isLoading.set(false);
+        }
+      });
   }
 
-  // Rest of the component remains the same...
-  // (All computed properties and methods from previous version)
+  // ── UI actions ─────────────────────────────────────────────────────────────
 
-  filteredOrders = computed(() => {
-    let result = this.orders();
-
-    if (this.searchQuery()) {
-      const query = this.searchQuery().toLowerCase();
-      result = result.filter(o => 
-        o.orderNumber.toLowerCase().includes(query) ||
-        o.customer.name.toLowerCase().includes(query) ||
-        o.customer.email.toLowerCase().includes(query) ||
-        o.items.some(i => i.name.toLowerCase().includes(query))
-      );
-    }
-
-    if (this.filterStatus()) {
-      result = result.filter(o => o.status === this.filterStatus());
-    }
-
-    if (this.filterPaymentStatus()) {
-      result = result.filter(o => o.paymentStatus === this.filterPaymentStatus());
-    }
-
-    if (this.filterPriority()) {
-      result = result.filter(o => o.priority === this.filterPriority());
-    }
-
-    if (this.filterMinAmount()) {
-      result = result.filter(o => o.total >= this.filterMinAmount()!);
-    }
-    if (this.filterMaxAmount()) {
-      result = result.filter(o => o.total <= this.filterMaxAmount()!);
-    }
-
-    if (this.filterDateFrom()) {
-      result = result.filter(o => o.createdAt >= new Date(this.filterDateFrom()));
-    }
-    if (this.filterDateTo()) {
-      result = result.filter(o => o.createdAt <= new Date(this.filterDateTo()));
-    }
-
-    result = [...result].sort((a, b) => {
-      let aVal: any, bVal: any;
-      
-      switch (this.sortField()) {
-        case 'total': aVal = a.total; bVal = b.total; break;
-        case 'customer': aVal = a.customer.name; bVal = b.customer.name; break;
-        case 'items': aVal = a.items.length; bVal = b.items.length; break;
-        default: aVal = a.createdAt; bVal = b.createdAt;
-      }
-
-      if (this.sortDirection() === 'asc') {
-        return aVal > bVal ? 1 : -1;
-      } else {
-        return aVal < bVal ? 1 : -1;
-      }
-    });
-
-    return result;
-  });
-
-  paginatedOrders = computed(() => {
-    const start = (this.currentPage() - 1) * this.itemsPerPage();
-    return this.filteredOrders().slice(start, start + this.itemsPerPage());
-  });
-
-  totalPages = computed(() => Math.ceil(this.filteredOrders().length / this.itemsPerPage()));
-
-  orderStats = computed(() => [
-    { 
-      label: 'Total Orders', 
-      value: this.orders().length.toString(), 
-      trend: 12.5, 
-      icon: 'bag-check', 
-      bgColor: 'bg-blue-100', 
-      iconColor: 'text-blue-600',
-      filter: 'all'
-    },
-    { 
-      label: 'Pending', 
-      value: this.orders().filter(o => o.status === 'pending').length.toString(), 
-      trend: -5.2, 
-      icon: 'clock-history', 
-      bgColor: 'bg-yellow-100', 
-      iconColor: 'text-yellow-600',
-      filter: 'pending'
-    },
-    { 
-      label: 'Processing', 
-      value: this.orders().filter(o => o.status === 'processing').length.toString(), 
-      trend: 8.1, 
-      icon: 'gear', 
-      bgColor: 'bg-indigo-100', 
-      iconColor: 'text-indigo-600',
-      filter: 'processing'
-    },
-    { 
-      label: 'Shipped', 
-      value: this.orders().filter(o => o.status === 'shipped').length.toString(), 
-      trend: 15.3, 
-      icon: 'truck', 
-      bgColor: 'bg-purple-100', 
-      iconColor: 'text-purple-600',
-      filter: 'shipped'
-    },
-    { 
-      label: 'Delivered', 
-      value: this.orders().filter(o => o.status === 'delivered').length.toString(), 
-      trend: 22.7, 
-      icon: 'check-circle', 
-      bgColor: 'bg-green-100', 
-      iconColor: 'text-green-600',
-      filter: 'delivered'
-    },
-    { 
-      label: 'Revenue', 
-      value: '$' + this.orders().filter(o => o.status !== 'cancelled').reduce((sum, o) => sum + o.total, 0).toFixed(2), 
-      trend: 18.4, 
-      icon: 'cash-stack', 
-      bgColor: 'bg-emerald-100', 
-      iconColor: 'text-emerald-600',
-      filter: 'revenue'
-    }
-  ]);
-
-  activeFiltersCount = computed(() => {
-    let count = 0;
-    if (this.filterStatus()) count++;
-    if (this.filterPaymentStatus()) count++;
-    if (this.filterPriority()) count++;
-    if (this.filterDateFrom() || this.filterDateTo()) count++;
-    if (this.filterMinAmount() || this.filterMaxAmount()) count++;
-    if (this.filterCustomerType()) count++;
-    if (this.filterTags()) count++;
-    return count;
-  });
-
-  selectedQuickFilter = signal<string>('');
-  
-
-  toggleFilters() {
-    this.showFilters.update(v => !v);
+  onSearchInput(value: string): void {
+    this.searchQuery.set(value);
+    this.searchSubject.next(value);
   }
 
-  toggleViewMode() {
-    this.viewMode.update(v => v === 'table' ? 'grid' : 'table');
+  applyFilter(): void {
+    this.currentPage.set(1);
+    this.loadOrders();
   }
 
-  getOrderMenuItems(order: Order): DropdownItem[] {
-    return [
-      { id: 'edit', label: 'Edit Order', icon: 'pencil', shortcut: '⌘E' },
-      { id: 'invoice', label: 'Print Invoice', icon: 'printer', shortcut: '⌘P' },
-      { id: 'email', label: 'Send Email', icon: 'send', shortcut: '⌘M' },
-      { id: 'divider', label: '', divider: true },
-      { id: 'cancel', label: 'Cancel Order', icon: 'x-circle', danger: true }
-    ];
+  applyQuickFilter(status: string): void {
+    this.filterStatus.set(status);
+    this.filterFlagged.set('');
+    this.currentPage.set(1);
+    this.loadOrders();
   }
 
-  onExport(item: DropdownItem) {
-    this.exportOrders(item.id as 'csv' | 'excel' | 'pdf');
-  }
-
-  onOrderAction(item: DropdownItem, order: Order) {
-    switch (item.id) {
-      case 'edit':
-        // Navigate to edit
-        break;
-      case 'invoice':
-        // Print invoice
-        break;
-      case 'email':
-        // Send email
-        break;
-      case 'cancel':
-        // Cancel order
-        break;
-    }
-  }
-
-  toggleSelection(orderId: string) {
-    this.selectedOrders.update(selected => {
-      if (selected.includes(orderId)) {
-        return selected.filter(id => id !== orderId);
-      } else {
-        return [...selected, orderId];
-      }
-    });
-  }
-
-  isSelected(orderId: string): boolean {
-    return this.selectedOrders().includes(orderId);
-  }
-
-  isAllSelected(): boolean {
-    return this.paginatedOrders().length > 0 && 
-           this.paginatedOrders().every(o => this.isSelected(o.id));
-  }
-
-  toggleSelectAll() {
-    if (this.isAllSelected()) {
-      this.selectedOrders.set([]);
-    } else {
-      this.selectedOrders.set(this.paginatedOrders().map(o => o.id));
-    }
-  }
-
-  sort(field: string) {
-    if (this.sortField() === field) {
-      this.sortDirection.update(d => d === 'asc' ? 'desc' : 'asc');
-    } else {
-      this.sortField.set(field);
-      this.sortDirection.set('desc');
-    }
-  }
-
-  applyQuickFilter(filter: string) {
-    this.selectedQuickFilter.set(filter);
-    if (filter === 'all') {
-      this.filterStatus.set('');
-    } else if (filter !== 'revenue') {
-      this.filterStatus.set(filter);
-    }
-  }
-
-  clearAllFilters() {
-    this.filterStatus.set('');
-    this.filterPaymentStatus.set('');
-    this.filterPriority.set('');
-    this.filterDateFrom.set('');
-    this.filterDateTo.set('');
-    this.filterMinAmount.set(null);
-    this.filterMaxAmount.set(null);
-    this.filterCustomerType.set('');
-    this.filterTags.set('');
+  clearAllFilters(): void {
+    this.filterStatus.set(''); this.filterPayment.set(''); this.filterSource.set('');
+    this.filterFlagged.set(''); this.filterFrom.set(''); this.filterTo.set('');
     this.searchQuery.set('');
-    this.selectedQuickFilter.set('');
+    this.currentPage.set(1);
+    this.loadOrders();
   }
 
-  exportOrders(format: 'csv' | 'excel' | 'pdf') {
-    console.log('Exporting as', format);
+  sort(field: string): void {
+    if (this.sortField() === field) this.sortDirection.update(d => d === 'asc' ? 'desc' : 'asc');
+    else { this.sortField.set(field); this.sortDirection.set('desc'); }
+    this.loadOrders();
   }
 
-  bulkUpdateStatus(status: string) {
-    console.log('Bulk update status to', status);
+  toggleViewMode(): void { this.viewMode.update(v => v === 'table' ? 'grid' : 'table'); }
+  toggleFilters(): void  { this.showFilters.update(v => !v); }
+
+  // ── Selection ──────────────────────────────────────────────────────────────
+
+  toggleSelection(id: string): void {
+    this.selectedOrders.update(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id]);
+  }
+  isSelected(id: string): boolean { return this.selectedOrders().includes(id); }
+  isAllSelected(): boolean {
+    return this.orders().length > 0 && this.orders().every(o => this.isSelected(o.id));
+  }
+  toggleSelectAll(): void {
+    if (this.isAllSelected()) this.selectedOrders.set([]);
+    else this.selectedOrders.set(this.orders().map(o => o.id));
   }
 
-  bulkPrintInvoices() {
-    console.log('Printing invoices');
+  // ── Bulk actions ───────────────────────────────────────────────────────────
+
+  openConfirm(label: string, status: OrderStatus): void {
+    this.confirmAction.set({ label, status, ids: this.selectedOrders() });
+    this.showConfirm.set(true);
   }
 
-  previousPage() {
-    if (this.currentPage() > 1) {
-      this.currentPage.update(p => p - 1);
-    }
+  executeBulk(): void {
+    const a = this.confirmAction();
+    if (!a) return;
+    this.isLoading.set(true);
+    this.orderService.bulkAction(a.ids, a.status).subscribe(() => {
+      this.selectedOrders.set([]);
+      this.showConfirm.set(false);
+      this.loadStats();
+      this.loadOrders();
+    });
   }
 
-  nextPage() {
-    if (this.currentPage() < this.totalPages()) {
-      this.currentPage.update(p => p + 1);
-    }
-  }
+  // ── Pagination ─────────────────────────────────────────────────────────────
 
-  goToPage(page: number) {
-    this.currentPage.set(page);
-  }
+  goToPage(p: number): void { this.currentPage.set(p); this.loadOrders(); }
+  previousPage(): void { if (this.currentPage() > 1) { this.currentPage.update(p => p - 1); this.loadOrders(); } }
+  nextPage(): void     { if (this.currentPage() < this.totalPages()) { this.currentPage.update(p => p + 1); this.loadOrders(); } }
 
   visiblePages(): (number | string)[] {
-    const total = this.totalPages();
-    const current = this.currentPage();
+    const total = this.totalPages(), cur = this.currentPage();
     const pages: (number | string)[] = [];
-
-    if (total <= 7) {
-      for (let i = 1; i <= total; i++) pages.push(i);
-    } else {
-      if (current <= 3) {
-        pages.push(1, 2, 3, 4, '...', total);
-      } else if (current >= total - 2) {
-        pages.push(1, '...', total - 3, total - 2, total - 1, total);
-      } else {
-        pages.push(1, '...', current - 1, current, current + 1, '...', total);
-      }
-    }
+    if (total <= 7) { for (let i = 1; i <= total; i++) pages.push(i); }
+    else if (cur <= 3) pages.push(1, 2, 3, 4, '...', total);
+    else if (cur >= total - 2) pages.push(1, '...', total-3, total-2, total-1, total);
+    else pages.push(1, '...', cur-1, cur, cur+1, '...', total);
     return pages;
   }
 
-  getStatusColor(status: string): string {
-    const colors: Record<string, string> = {
-      pending: 'bg-yellow-100 text-yellow-800',
-      processing: 'bg-indigo-100 text-indigo-800',
-      shipped: 'bg-purple-100 text-purple-800',
-      delivered: 'bg-green-100 text-green-800',
-      cancelled: 'bg-red-100 text-red-800',
-      refunded: 'bg-gray-100 text-gray-800'
+  onExport(item: DropdownItem): void { console.log('Export', item.id); }
+
+  getOrderMenuItems(order: OrderSummaryResponse): DropdownItem[] {
+    return [
+      { id: 'view',    label: 'View Details',  icon: 'eye' },
+      { id: 'divider', label: '', divider: true },
+      { id: 'cancel',  label: 'Cancel Order',  icon: 'x-circle', danger: true }
+    ];
+  }
+
+  // ── Display helpers ─────────────────────────────────────────────────────────
+
+  getStatusConfig(s: string): { badge: string; dot: string; label: string } {
+    const m: Record<string, { badge: string; dot: string; label: string }> = {
+      DRAFT:              { badge: 'bg-gray-100 text-gray-700',     dot: 'bg-gray-400',    label: 'Draft' },
+      PENDING_PAYMENT:    { badge: 'bg-yellow-100 text-yellow-800', dot: 'bg-yellow-500',  label: 'Pending' },
+      PAYMENT_FAILED:     { badge: 'bg-red-100 text-red-800',       dot: 'bg-red-500',     label: 'Pay Failed' },
+      CONFIRMED:          { badge: 'bg-blue-100 text-blue-800',     dot: 'bg-blue-500',    label: 'Confirmed' },
+      ON_HOLD:            { badge: 'bg-orange-100 text-orange-800', dot: 'bg-orange-500',  label: 'On Hold' },
+      PROCESSING:         { badge: 'bg-indigo-100 text-indigo-800', dot: 'bg-indigo-500',  label: 'Processing' },
+      PARTIALLY_FULFILLED:{ badge: 'bg-cyan-100 text-cyan-800',     dot: 'bg-cyan-500',    label: 'Partial' },
+      FULFILLED:          { badge: 'bg-teal-100 text-teal-800',     dot: 'bg-teal-500',    label: 'Fulfilled' },
+      SHIPPED:            { badge: 'bg-purple-100 text-purple-800', dot: 'bg-purple-500',  label: 'Shipped' },
+      OUT_FOR_DELIVERY:   { badge: 'bg-violet-100 text-violet-800', dot: 'bg-violet-500',  label: 'Out for Delivery' },
+      DELIVERED:          { badge: 'bg-green-100 text-green-800',   dot: 'bg-green-500',   label: 'Delivered' },
+      CANCELLED:          { badge: 'bg-red-100 text-red-800',       dot: 'bg-red-500',     label: 'Cancelled' },
+      RETURN_INITIATED:   { badge: 'bg-pink-100 text-pink-800',     dot: 'bg-pink-500',    label: 'Return Init.' },
+      RETURN_IN_TRANSIT:  { badge: 'bg-rose-100 text-rose-800',     dot: 'bg-rose-500',    label: 'Return Transit' },
+      RETURN_RECEIVED:    { badge: 'bg-fuchsia-100 text-fuchsia-800',dot: 'bg-fuchsia-500',label: 'Return Rcvd' },
+      REFUNDED:           { badge: 'bg-gray-100 text-gray-800',     dot: 'bg-gray-500',    label: 'Refunded' },
+      PARTIALLY_REFUNDED: { badge: 'bg-gray-100 text-gray-600',     dot: 'bg-gray-400',    label: 'Part. Refunded' },
+      CLOSED:             { badge: 'bg-slate-100 text-slate-700',   dot: 'bg-slate-400',   label: 'Closed' }
     };
-    return colors[status] || 'bg-gray-100 text-gray-800';
+    return m[s] ?? { badge: 'bg-gray-100 text-gray-700', dot: 'bg-gray-400', label: s };
   }
 
-  getStatusDot(status: string): string {
-    const colors: Record<string, string> = {
-      pending: 'bg-yellow-500',
-      processing: 'bg-indigo-500',
-      shipped: 'bg-purple-500',
-      delivered: 'bg-green-500',
-      cancelled: 'bg-red-500',
-      refunded: 'bg-gray-500'
+  getPaymentConfig(s: string): { color: string; icon: string } {
+    const m: Record<string, { color: string; icon: string }> = {
+      PENDING:            { color: 'text-yellow-600', icon: 'clock' },
+      AUTHORIZED:         { color: 'text-blue-600',   icon: 'shield-check' },
+      CAPTURED:           { color: 'text-green-600',  icon: 'check-circle' },
+      FAILED:             { color: 'text-red-600',    icon: 'x-circle' },
+      VOIDED:             { color: 'text-gray-500',   icon: 'slash-circle' },
+      REFUNDED:           { color: 'text-gray-600',   icon: 'arrow-counterclockwise' },
+      PARTIALLY_REFUNDED: { color: 'text-orange-600', icon: 'arrow-counterclockwise' },
+      CHARGEBACK:         { color: 'text-red-700',    icon: 'exclamation-triangle' }
     };
-    return colors[status] || 'bg-gray-500';
+    return m[s] ?? { color: 'text-gray-500', icon: 'dash' };
   }
 
-  getPaymentStatusColor(status: string): string {
-    const colors: Record<string, string> = {
-      paid: 'text-green-600',
-      pending: 'text-yellow-600',
-      failed: 'text-red-600',
-      refunded: 'text-gray-600',
-      partially_refunded: 'text-orange-600'
+  getSourceBadge(s: string): string {
+    const m: Record<string, string> = {
+      STOREFRONT: 'bg-blue-50 text-blue-700',
+      MANUAL:     'bg-gray-100 text-gray-700',
+      API:        'bg-indigo-50 text-indigo-700',
+      IMPORT:     'bg-yellow-50 text-yellow-700',
+      MOBILE_APP: 'bg-purple-50 text-purple-700'
     };
-    return colors[status] || 'text-gray-600';
+    return m[s] ?? 'bg-gray-100 text-gray-700';
   }
 
-  getPriorityColor(priority: string): string {
-    const colors: Record<string, string> = {
-      low: 'bg-gray-100 text-gray-600',
-      medium: 'bg-blue-100 text-blue-600',
-      high: 'bg-orange-100 text-orange-600',
-      urgent: 'bg-red-100 text-red-600'
-    };
-    return colors[priority] || 'bg-gray-100 text-gray-600';
+  formatDate(iso: string): string {
+    return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(iso));
   }
 
-  getCustomerTypeIcon(type: string): string {
-    const icons: Record<string, string> = {
-      new: 'star',
-      returning: 'arrow-repeat',
-      vip: 'gem'
-    };
-    return icons[type] || 'person';
-  }
-
-  formatDate(date: Date): string {
-    return new Intl.DateTimeFormat('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    }).format(date);
-  }
-
-  getTimeAgo(date: Date): string {
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    const minutes = Math.floor(diff / 60000);
-    const hours = Math.floor(diff / 3600000);
-    const days = Math.floor(diff / 86400000);
-
-    if (minutes < 60) return `${minutes}m ago`;
-    if (hours < 24) return `${hours}h ago`;
-    if (days < 7) return `${days}d ago`;
-    return this.formatDate(date);
+  getTimeAgo(iso: string): string {
+    const diff = Date.now() - new Date(iso).getTime();
+    const m = Math.floor(diff / 60000), h = Math.floor(diff / 3600000), d = Math.floor(diff / 86400000);
+    if (m < 60) return `${m}m ago`;
+    if (h < 24) return `${h}h ago`;
+    return `${d}d ago`;
   }
 }

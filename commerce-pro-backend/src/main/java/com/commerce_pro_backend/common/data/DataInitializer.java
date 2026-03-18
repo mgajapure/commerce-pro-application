@@ -17,6 +17,7 @@ import com.commerce_pro_backend.order.dto.OrderItemRequestDTO;
 import com.commerce_pro_backend.order.dto.TrackingUpdateRequest;
 import com.commerce_pro_backend.order.enums.OrderSource;
 import com.commerce_pro_backend.order.service.OrderService;
+import com.commerce_pro_backend.user_identity.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +26,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetailsService;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -41,6 +46,22 @@ import java.util.List;
  * DDL is create-drop so the schema is always fresh on restart.
  * Every section is fully isolated in try/catch so a failure in one
  * module never blocks the rest of the seed data from loading.
+ *
+ * ── WHY THE SECURITY CONTEXT FIX IS NEEDED ───────────────────────────────────
+ * OrderService.createOrder() (and every other mutating method) calls
+ * CurrentUserService.getCurrentUserId() on its very first line.
+ * CurrentUserService reads from SecurityContextHolder, which is EMPTY during
+ * CommandLineRunner startup — there is no HTTP request and no JWT token.
+ * Without an authenticated principal, CurrentUserService throws
+ * ApiException.unauthorized("Unauthenticated request"), which causes every
+ * single createOrder / confirmOrder / markShipped call to fail silently.
+ *
+ * The fix: call authenticateAsSuperAdmin() before the first OrderService call,
+ * and clearSecurityContext() after the seed block finishes. This installs a
+ * synthetic UsernamePasswordAuthenticationToken for the "superadmin" user into
+ * the SecurityContextHolder so getCurrentUserId() can resolve a real User ID
+ * from the database. The superadmin user is guaranteed to exist because
+ * SuperAdminSetupService runs via @PostConstruct before any CommandLineRunner.
  */
 @Slf4j
 @Configuration
@@ -88,7 +109,7 @@ public class DataInitializer {
     @Profile("dev")
     @Order(2)
     CommandLineRunner seedInventory(ProductService productService,
-                                   InventoryService inventoryService) {
+                                    InventoryService inventoryService) {
         return args -> {
             log.info("━━━ [Seed] Inventory ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
@@ -150,13 +171,20 @@ public class DataInitializer {
 
     // ─────────────────────────────────────────────────────────────────────────
     // 3. ORDERS  (diverse status scenarios)
+    //
+    // FIX: authenticateAsSuperAdmin() is called before the first OrderService
+    // call so that CurrentUserService.getCurrentUserId() can resolve a real
+    // User ID from the SecurityContextHolder.  The context is cleared with
+    // clearSecurityContext() in the finally block when seeding is done.
     // ─────────────────────────────────────────────────────────────────────────
 
     @Bean
     @Profile("dev")
     @Order(3)
     CommandLineRunner seedOrders(ProductService productService,
-                                 OrderService orderService) {
+                                 OrderService orderService,
+                                 UserDetailsService userDetailsService,
+                                 UserRepository userRepository) {
         return args -> {
             log.info("━━━ [Seed] Orders ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
@@ -166,21 +194,76 @@ public class DataInitializer {
                 return;
             }
 
-            int total = products.size();
+            // ── SECURITY CONTEXT SETUP ────────────────────────────────────────
+            // SuperAdminSetupService runs @PostConstruct (before CommandLineRunner)
+            // so "superadmin" is guaranteed to exist in the users table by now.
+            // We load its UserDetails and install them into the SecurityContextHolder
+            // so that CurrentUserService.getCurrentUserId() resolves a valid User ID.
+            try {
+                authenticateAsSuperAdmin(userDetailsService);
+                log.info("[Seed] SecurityContext set to superadmin — order seeding can proceed");
+            } catch (Exception e) {
+                log.error("[Seed] Could not set SecurityContext: {}. Order seeding aborted.", e.getMessage());
+                return;
+            }
 
-            seedOrderDraft         (orderService, slice(products, 0,  2, total));
-            seedOrderPendingPayment(orderService, slice(products, 1,  2, total));
-            seedOrderConfirmed     (orderService, slice(products, 2,  3, total));
-            seedOrderOnHold        (orderService, slice(products, 3,  2, total));
-            seedOrderProcessing    (orderService, slice(products, 4,  3, total));
-            seedOrderShipped       (orderService, slice(products, 5,  2, total));
-            seedOrderDelivered     (orderService, slice(products, 6,  2, total));
-            seedOrderDeliveredClose(orderService, slice(products, 7,  3, total));
-            seedOrderCancelled     (orderService, slice(products, 8,  1, total));
-            seedOrderHighValue     (orderService, slice(products, 9,  4, total));
+            // ── SEED ORDERS ───────────────────────────────────────────────────
+            try {
+                int total = products.size();
 
-            log.info("[Seed] Orders complete — 10 scenario orders created");
+                seedOrderDraft         (orderService, slice(products, 0,  2, total));
+                seedOrderPendingPayment(orderService, slice(products, 1,  2, total));
+                seedOrderConfirmed     (orderService, slice(products, 2,  3, total));
+                seedOrderOnHold        (orderService, slice(products, 3,  2, total));
+                seedOrderProcessing    (orderService, slice(products, 4,  3, total));
+                seedOrderShipped       (orderService, slice(products, 5,  2, total));
+                seedOrderDelivered     (orderService, slice(products, 6,  2, total));
+                seedOrderDeliveredClose(orderService, slice(products, 7,  3, total));
+                seedOrderCancelled     (orderService, slice(products, 8,  1, total));
+                seedOrderHighValue     (orderService, slice(products, 9,  4, total));
+
+                log.info("[Seed] Orders complete — 10 scenario orders created");
+
+            } finally {
+                // Always clear the synthetic security context when seeding is done
+                // so it does not persist into subsequent application code.
+                clearSecurityContext();
+                log.info("[Seed] SecurityContext cleared after order seeding");
+            }
         };
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // SECURITY CONTEXT HELPERS
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Loads the "superadmin" user via UserDetailsService (which hits the DB) and
+     * installs a UsernamePasswordAuthenticationToken into the SecurityContextHolder.
+     *
+     * This is intentionally the same mechanism used by JwtAuthenticationFilter
+     * so CurrentUserService sees a properly structured Authentication object.
+     *
+     * SuperAdminSetupService creates the superadmin user via @PostConstruct,
+     * which runs before any CommandLineRunner, so the user always exists here.
+     */
+    private void authenticateAsSuperAdmin(UserDetailsService userDetailsService) {
+        var userDetails = userDetailsService.loadUserByUsername("superadmin");
+        var auth = new UsernamePasswordAuthenticationToken(
+                userDetails,
+                null,
+                userDetails.getAuthorities()
+        );
+        SecurityContextHolder.getContext().setAuthentication(auth);
+    }
+
+    /**
+     * Clears the SecurityContextHolder after seed operations finish.
+     * Must always be called in a finally block to prevent the synthetic
+     * context from leaking into application request handling.
+     */
+    private void clearSecurityContext() {
+        SecurityContextHolder.clearContext();
     }
 
     // ═════════════════════════════════════════════════════════════════════════
@@ -432,7 +515,7 @@ public class DataInitializer {
     // ORDER SCENARIO HELPERS
     // ═════════════════════════════════════════════════════════════════════════
 
-    /** Scenario 1 — DRAFT: created, not submitted */
+    /** Scenario 1 — DRAFT: created, not yet confirmed */
     private void seedOrderDraft(OrderService orderService, List<ProductSummaryDTO> products) {
         try {
             orderService.createOrder(buildOrderRequest(
@@ -514,7 +597,7 @@ public class DataInitializer {
         }
     }
 
-    /** Scenario 6 — SHIPPED: dispatched with real tracking number */
+    /** Scenario 6 — SHIPPED: dispatched with a real tracking number */
     private void seedOrderShipped(OrderService orderService, List<ProductSummaryDTO> products) {
         try {
             var response = orderService.createOrder(buildOrderRequest(

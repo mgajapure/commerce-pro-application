@@ -130,6 +130,7 @@ tasks.named('bootRun') {
 tasks.withType(JavaCompile) {
 	options.encoding = 'UTF-8'
 	options.compilerArgs = [
+		'-parameters',
 		'-Amapstruct.suppressGeneratorTimestamp=true',
 		'-Amapstruct.defaultComponentModel=spring',
 		'-Amapstruct.unmappedTargetPolicy=IGNORE'
