@@ -131,6 +131,27 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST,   "/api/v1/shipments/*/deliver").hasAuthority("fulfillment:shipment:manage")
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/shipments/**").hasAuthority("fulfillment:shipment:delete")
 
+                        // Customer Management
+                        .requestMatchers(HttpMethod.GET,    "/api/v1/customers").hasAuthority("customer:customer:read")
+                        .requestMatchers(HttpMethod.GET,    "/api/v1/customers/**").hasAuthority("customer:customer:read")
+                        .requestMatchers(HttpMethod.POST,   "/api/v1/customers").hasAuthority("customer:customer:create")
+                        .requestMatchers(HttpMethod.PUT,    "/api/v1/customers/**").hasAuthority("customer:customer:update")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/customers/**").hasAuthority("customer:customer:delete")
+                        .requestMatchers(HttpMethod.POST,   "/api/v1/customers/*/blacklist").hasAuthority("customer:customer:blacklist")
+                        .requestMatchers(HttpMethod.POST,   "/api/v1/customers/*/unblacklist").hasAuthority("customer:customer:blacklist")
+                        .requestMatchers(HttpMethod.POST,   "/api/v1/customers/*/fraud-flag").hasAuthority("customer:customer:fraud-flag")
+                        .requestMatchers(HttpMethod.POST,   "/api/v1/customers/*/fraud-resolve").hasAuthority("customer:customer:fraud-flag")
+                        .requestMatchers(HttpMethod.POST,   "/api/v1/customers/*/loyalty/adjust").hasAuthority("customer:customer:manage-loyalty")
+                        .requestMatchers(HttpMethod.POST,   "/api/v1/customers/*/evaluate-tier").hasAuthority("customer:customer:manage-tier")
+                        .requestMatchers(HttpMethod.POST,   "/api/v1/customers/*/status").hasAuthority("customer:customer:manage-status")
+                        .requestMatchers(HttpMethod.POST,   "/api/v1/customers/*/communications").hasAuthority("customer:communication:create")
+                        // Customer Groups
+                        .requestMatchers(HttpMethod.GET,    "/api/v1/customer-groups/**").hasAuthority("customer:group:read")
+                        .requestMatchers(HttpMethod.GET,    "/api/v1/customer-groups").hasAuthority("customer:group:read")
+                        .requestMatchers(HttpMethod.POST,   "/api/v1/customer-groups").hasAuthority("customer:group:create")
+                        .requestMatchers(HttpMethod.PUT,    "/api/v1/customer-groups/**").hasAuthority("customer:group:update")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/customer-groups/**").hasAuthority("customer:group:delete")
+
                         // All other requests need authentication
                         .anyRequest().authenticated())
                 .addFilterBefore(superAdminFilter, UsernamePasswordAuthenticationFilter.class)

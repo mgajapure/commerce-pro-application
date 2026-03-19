@@ -102,6 +102,23 @@ public class PermissionRegistry {
         register("fulfillment:rules:manage",     "Manage Shipping Rules",               PermissionCategory.FULFILLMENT_MANAGEMENT, 3);
         register("fulfillment:stats",            "View Fulfillment Statistics",         PermissionCategory.FULFILLMENT_MANAGEMENT, 1);
 
+         // Customer Management Permissions
+         register("customer:customer:read",           "View Customers",               PermissionCategory.CUSTOMER_MANAGEMENT, 1);
+         register("customer:customer:create",         "Create Customer",              PermissionCategory.CUSTOMER_MANAGEMENT, 2);
+         register("customer:customer:update",         "Update Customer",              PermissionCategory.CUSTOMER_MANAGEMENT, 2);
+         register("customer:customer:delete",         "Delete Customer",              PermissionCategory.CUSTOMER_MANAGEMENT, 4, true);
+         register("customer:customer:stats",          "View Customer Statistics",     PermissionCategory.CUSTOMER_MANAGEMENT, 1);
+         register("customer:customer:manage-status",  "Change Customer Status",       PermissionCategory.CUSTOMER_MANAGEMENT, 3);
+         register("customer:customer:manage-tier",    "Override Customer Tier",       PermissionCategory.CUSTOMER_MANAGEMENT, 3);
+         register("customer:customer:blacklist",      "Blacklist / Unblacklist",      PermissionCategory.CUSTOMER_MANAGEMENT, 4, true);
+         register("customer:customer:fraud-flag",     "Flag / Resolve Fraud",         PermissionCategory.CUSTOMER_MANAGEMENT, 4, true);
+         register("customer:customer:manage-loyalty", "Adjust Loyalty Points",        PermissionCategory.CUSTOMER_MANAGEMENT, 3);
+         register("customer:communication:create",    "Log Customer Communication",   PermissionCategory.CUSTOMER_MANAGEMENT, 2);
+         register("customer:group:read",              "View Customer Groups",         PermissionCategory.CUSTOMER_MANAGEMENT, 1);
+         register("customer:group:create",            "Create Customer Group",        PermissionCategory.CUSTOMER_MANAGEMENT, 2);
+         register("customer:group:update",            "Update Customer Group",        PermissionCategory.CUSTOMER_MANAGEMENT, 2);
+         register("customer:group:delete",            "Delete Customer Group",        PermissionCategory.CUSTOMER_MANAGEMENT, 3);
+
         log.info("Registered {} system permissions", systemPermissions.size());
     }
 

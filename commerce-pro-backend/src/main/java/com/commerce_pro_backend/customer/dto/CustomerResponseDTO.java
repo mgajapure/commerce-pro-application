@@ -1,0 +1,63 @@
+package com.commerce_pro_backend.customer.dto;
+
+import lombok.*;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Set;
+
+@Data @Builder @NoArgsConstructor @AllArgsConstructor
+public class CustomerResponseDTO {
+    private String id;
+    private String firstName;
+    private String lastName;
+    private String fullName;
+    private String email;
+    private String phone;
+    private String secondaryPhone;
+    private LocalDate dateOfBirth;
+    private String gender;
+    private String avatarUrl;
+    private String status;
+    private String tier;
+    private String groupId;
+    private String groupName;
+    private BigDecimal lifetimeSpend;
+    private Integer totalOrders;
+    private Integer totalReturns;
+    private BigDecimal averageOrderValue;
+    private LocalDateTime lastOrderAt;
+    private String lastOrderId;
+    private Integer loyaltyPoints;
+    private String taxId;
+    private String companyName;
+    private String preferredCurrency;
+    private String preferredLanguage;
+    private Boolean marketingOptIn;
+    private Boolean smsOptIn;
+    private Boolean emailVerified;
+    private Boolean phoneVerified;
+    private String acquisitionSource;
+    private String referralCode;
+    private String referredByCustomerId;
+    private String linkedUserId;
+    private Set<String> tags;
+    private String internalNotes;
+    private Boolean isBlacklisted;
+    private String blacklistReason;
+    private LocalDateTime blacklistedAt;
+    private Boolean isFraudFlagged;
+    private String fraudReason;
+    private String fraudEvidence;
+    private LocalDateTime fraudFlaggedAt;
+    private Boolean fraudResolved;
+    private String fraudResolution;
+    private Integer riskScore;
+    private Integer addressCount;
+    private Integer wishlistCount;
+    private Integer communicationLogCount;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+    private String createdBy;
+    private String updatedBy;
+}

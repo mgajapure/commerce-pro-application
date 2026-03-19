@@ -1,650 +1,234 @@
-<!-- customer-form.html -->
 <div class="min-h-screen bg-gray-50/50 p-4 sm:p-6 lg:p-8">
-    <div class="max-w-[1400px] mx-auto space-y-6">
+  <div class="max-w-3xl mx-auto space-y-6">
 
-        <!-- Header Section -->
-        <div
-            class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-            <div class="flex items-center gap-4">
-                <a routerLink="/customers/all"
-                    class="p-2.5 bg-gray-100 hover:bg-gray-200 rounded-xl text-gray-600 transition-colors">
-                    <i class="bi bi-arrow-left"></i>
-                </a>
+    <!-- Header -->
+    <div class="flex items-center justify-between bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+      <div class="flex items-center gap-4">
+        <button (click)="cancel()" class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-colors">
+          <i class="bi bi-arrow-left text-lg"></i>
+        </button>
+        <div>
+          <h1 class="text-xl font-bold text-gray-900">{{ editId() ? 'Edit Customer' : 'Add Customer' }}</h1>
+          <p class="text-sm text-gray-500">{{ editId() ? 'Update customer information' : 'Create a new customer profile' }}</p>
+        </div>
+      </div>
+      <div class="flex gap-3">
+        <button (click)="cancel()" class="px-4 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+          Cancel
+        </button>
+        <button (click)="save()" [disabled]="isSaving()"
+          class="px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 disabled:opacity-60 flex items-center gap-2 shadow-lg shadow-indigo-200 transition-all">
+          @if (isSaving()) { <i class="bi bi-arrow-repeat animate-spin"></i> }
+          {{ isSaving() ? 'Saving…' : 'Save Customer' }}
+        </button>
+      </div>
+    </div>
+
+    @if (isLoading()) {
+      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 animate-pulse">
+        <div class="space-y-4">
+          @for (i of [1,2,3,4,5,6]; track i) {
+            <div class="h-12 bg-gray-100 rounded-xl"></div>
+          }
+        </div>
+      </div>
+    } @else {
+      <!-- Tabs -->
+      <div class="bg-white rounded-2xl p-1.5 shadow-sm border border-gray-100 flex gap-1">
+        @for (tab of tabs; track tab.id) {
+          <button (click)="activeTab.set($any(tab.id))"
+            class="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all"
+            [class.bg-indigo-600]="activeTab() === tab.id"
+            [class.text-white]="activeTab() === tab.id"
+            [class.shadow-md]="activeTab() === tab.id"
+            [class.text-gray-600]="activeTab() !== tab.id"
+            [class.hover:bg-gray-50]="activeTab() !== tab.id">
+            <i class="bi bi-{{ tab.icon }}"></i>
+            {{ tab.label }}
+          </button>
+        }
+      </div>
+
+      <form [formGroup]="form" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
+
+        <!-- Tab: Basic Info -->
+        @if (activeTab() === 'basic') {
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1.5">First Name <span class="text-red-500">*</span></label>
+              <input formControlName="firstName" type="text" placeholder="Jane"
+                class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm"
+                [class.border-red-400]="hasError('firstName', 'required')">
+              @if (hasError('firstName', 'required')) {
+                <p class="mt-1 text-xs text-red-600">First name is required</p>
+              }
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1.5">Last Name <span class="text-red-500">*</span></label>
+              <input formControlName="lastName" type="text" placeholder="Smith"
+                class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm"
+                [class.border-red-400]="hasError('lastName', 'required')">
+              @if (hasError('lastName', 'required')) {
+                <p class="mt-1 text-xs text-red-600">Last name is required</p>
+              }
+            </div>
+            <div class="sm:col-span-2">
+              <label class="block text-sm font-medium text-gray-700 mb-1.5">Email Address <span class="text-red-500">*</span></label>
+              <input formControlName="email" type="email" placeholder="jane@example.com"
+                class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm"
+                [class.border-red-400]="hasError('email', 'required') || hasError('email', 'email')">
+              @if (hasError('email', 'required')) {
+                <p class="mt-1 text-xs text-red-600">Email is required</p>
+              } @else if (hasError('email', 'email')) {
+                <p class="mt-1 text-xs text-red-600">Enter a valid email address</p>
+              }
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1.5">Phone</label>
+              <input formControlName="phone" type="tel" placeholder="+1 555 000 0000"
+                class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1.5">Secondary Phone</label>
+              <input formControlName="secondaryPhone" type="tel" placeholder="+1 555 000 0001"
+                class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1.5">Date of Birth</label>
+              <input formControlName="dateOfBirth" type="date"
+                class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1.5">Gender</label>
+              <select formControlName="gender"
+                class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm">
+                <option value="">Select…</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Non-binary">Non-binary</option>
+                <option value="Prefer not to say">Prefer not to say</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1.5">Company Name</label>
+              <input formControlName="companyName" type="text" placeholder="Acme Corp"
+                class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1.5">Tax ID</label>
+              <input formControlName="taxId" type="text" placeholder="12-3456789"
+                class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1.5">Customer Group</label>
+              <select formControlName="groupId"
+                class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm">
+                <option value="">No Group</option>
+                @for (g of groups(); track g.id) {
+                  <option [value]="g.id">{{ g.name }}</option>
+                }
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1.5">Acquisition Source</label>
+              <select formControlName="acquisitionSource"
+                class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm">
+                <option value="">Select…</option>
+                <option value="STOREFRONT">Storefront</option>
+                <option value="REFERRAL">Referral</option>
+                <option value="SOCIAL">Social Media</option>
+                <option value="EMAIL">Email</option>
+                <option value="PAID_ADS">Paid Ads</option>
+                <option value="ORGANIC">Organic Search</option>
+                <option value="OTHER">Other</option>
+              </select>
+            </div>
+          </div>
+        }
+
+        <!-- Tab: Preferences -->
+        @if (activeTab() === 'preferences') {
+          <div class="space-y-5">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1.5">Preferred Currency</label>
+                <select formControlName="preferredCurrency"
+                  class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm">
+                  <option value="USD">USD — US Dollar</option>
+                  <option value="EUR">EUR — Euro</option>
+                  <option value="GBP">GBP — British Pound</option>
+                  <option value="JPY">JPY — Japanese Yen</option>
+                  <option value="CAD">CAD — Canadian Dollar</option>
+                  <option value="AUD">AUD — Australian Dollar</option>
+                  <option value="INR">INR — Indian Rupee</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1.5">Preferred Language</label>
+                <select formControlName="preferredLanguage"
+                  class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm">
+                  <option value="en">English</option>
+                  <option value="es">Spanish</option>
+                  <option value="fr">French</option>
+                  <option value="de">German</option>
+                  <option value="pt">Portuguese</option>
+                  <option value="ja">Japanese</option>
+                  <option value="zh">Chinese</option>
+                </select>
+              </div>
+            </div>
+            <div class="rounded-2xl border border-gray-100 p-5 space-y-4">
+              <h3 class="font-semibold text-gray-900 flex items-center gap-2">
+                <i class="bi bi-bell text-indigo-600"></i> Marketing Preferences
+              </h3>
+              <label class="flex items-center justify-between cursor-pointer">
                 <div>
-                    <h1 class="text-2xl font-bold text-gray-900">{{ isEditMode() ? 'Edit Customer' : 'Add Customer' }}
-                    </h1>
-                    <p class="text-gray-500 mt-1 text-sm">{{ isEditMode() ? 'Update customer information and
-                        preferences' : 'Create a new customer account' }}</p>
+                  <p class="text-sm font-medium text-gray-900">Marketing Emails</p>
+                  <p class="text-xs text-gray-500">Promotions, newsletters and product updates</p>
                 </div>
+                <div class="relative">
+                  <input type="checkbox" formControlName="marketingOptIn" class="sr-only peer">
+                  <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-indigo-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"></div>
+                </div>
+              </label>
+              <label class="flex items-center justify-between cursor-pointer">
+                <div>
+                  <p class="text-sm font-medium text-gray-900">SMS Notifications</p>
+                  <p class="text-xs text-gray-500">Order updates and promotions via SMS</p>
+                </div>
+                <div class="relative">
+                  <input type="checkbox" formControlName="smsOptIn" class="sr-only peer">
+                  <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-indigo-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"></div>
+                </div>
+              </label>
             </div>
-            <div class="flex flex-wrap items-center gap-3">
-                <button (click)="togglePreview()"
-                    class="px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:border-indigo-300 hover:text-indigo-600 transition-all flex items-center gap-2 shadow-sm">
-                    <i class="bi bi-eye"></i>
-                    <span class="hidden sm:inline">Preview</span>
-                </button>
-
-                <button (click)="saveAsDraft()"
-                    class="px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:border-indigo-300 hover:text-indigo-600 transition-all flex items-center gap-2 shadow-sm">
-                    <i class="bi bi-file-earmark"></i>
-                    <span class="hidden sm:inline">Save Draft</span>
-                </button>
-
-                <button (click)="saveCustomer()" [disabled]="isSaving()"
-                    class="px-6 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 transition-all flex items-center gap-2 shadow-lg shadow-indigo-200 hover:shadow-indigo-300 hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed">
-                    @if (isSaving()) {
-                    <i class="bi bi-arrow-repeat animate-spin"></i>
-                    <span>Saving...</span>
-                    } @else {
-                    <i class="bi bi-check-lg"></i>
-                    <span>{{ isEditMode() ? 'Update Customer' : 'Create Customer' }}</span>
-                    }
-                </button>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1.5">Avatar URL</label>
+              <input formControlName="avatarUrl" type="url" placeholder="https://…"
+                class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm">
             </div>
-        </div>
+          </div>
+        }
 
-        <!-- Progress Steps -->
-        <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-            <div class="flex items-center justify-between max-w-3xl mx-auto">
-                @for (step of steps(); track step.id; let i = $index) {
-                <div class="flex items-center" [class.flex-1]="i < steps().length - 1">
-                    <div class="flex flex-col items-center">
-                        <button (click)="goToStep(step.id)"
-                            class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold transition-all"
-                            [class.bg-indigo-600]="currentStep() === step.id"
-                            [class.text-white]="currentStep() === step.id"
-                            [class.bg-indigo-100]="isStepCompleted(step.id) && currentStep() !== step.id"
-                            [class.text-indigo-600]="isStepCompleted(step.id) && currentStep() !== step.id"
-                            [class.bg-gray-100]="!isStepCompleted(step.id) && currentStep() !== step.id"
-                            [class.text-gray-500]="!isStepCompleted(step.id) && currentStep() !== step.id">
-                            @if (isStepCompleted(step.id) && currentStep() !== step.id) {
-                            <i class="bi bi-check-lg"></i>
-                            } @else {
-                            {{ i + 1 }}
-                            }
-                        </button>
-                        <span class="mt-2 text-xs font-medium" [class.text-indigo-600]="currentStep() === step.id"
-                            [class.text-gray-900]="isStepCompleted(step.id) && currentStep() !== step.id"
-                            [class.text-gray-500]="!isStepCompleted(step.id) && currentStep() !== step.id">
-                            {{ step.label }}
-                        </span>
-                    </div>
-                    @if (i < steps().length - 1) { <div class="flex-1 h-0.5 mx-4 transition-colors"
-                        [class.bg-indigo-600]="isStepCompleted(step.id)"
-                        [class.bg-gray-200]="!isStepCompleted(step.id)">
-                </div>
-                }
+        <!-- Tab: Notes -->
+        @if (activeTab() === 'notes') {
+          <div class="space-y-5">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1.5">Internal Notes</label>
+              <p class="text-xs text-gray-500 mb-2">These notes are only visible to admins and staff.</p>
+              <textarea formControlName="internalNotes" rows="6"
+                placeholder="Add any internal notes about this customer…"
+                class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm resize-none"></textarea>
             </div>
-            }
-        </div>
-    </div>
-
-    <!-- Form Content -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-        <!-- Main Form -->
-        <div class="lg:col-span-2 space-y-6">
-
-            <!-- Basic Information -->
-            @if (currentStep() === 'basic') {
-            <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm animate-slide-in">
-                <h2 class="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
-                    <i class="bi bi-person text-indigo-600"></i>
-                    Basic Information
-                </h2>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <!-- Avatar Upload -->
-                    <div class="md:col-span-2 mb-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Profile Photo</label>
-                        <div class="flex items-center gap-4">
-                            <div class="relative">
-                                <img [src]="customerForm().avatar || 'https://via.placeholder.com/150'"
-                                    class="w-20 h-20 rounded-2xl object-cover bg-gray-100 border-2 border-dashed border-gray-300">
-                                <button (click)="removeAvatar()" *ngIf="customerForm().avatar"
-                                    class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600 transition-colors">
-                                    <i class="bi bi-x"></i>
-                                </button>
-                            </div>
-                            <div class="flex-1">
-                                <div class="border-2 border-dashed border-gray-200 rounded-xl p-4 text-center hover:border-indigo-300 transition-colors cursor-pointer"
-                                    (click)="fileInput.click()" (drop)="onFileDrop($event)"
-                                    (dragover)="$event.preventDefault()">
-                                    <i class="bi bi-cloud-upload text-2xl text-gray-400 mb-2"></i>
-                                    <p class="text-sm text-gray-600">Drop image here or click to upload</p>
-                                    <p class="text-xs text-gray-400 mt-1">PNG, JPG up to 2MB</p>
-                                </div>
-                                <input #fileInput type="file" accept="image/*" class="hidden"
-                                    (change)="onFileSelected($event)">
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- First Name -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
-                            First Name <span class="text-red-500">*</span>
-                        </label>
-                        <input type="text" [(ngModel)]="customerForm().firstName" name="firstName"
-                            class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
-                            [class.border-red-300]="errors()['firstName']" placeholder="Enter first name">
-                        @if (errors()['firstName']) {
-                        <p class="mt-1 text-xs text-red-600">{{ errors()['firstName'] }}</p>
-                        }
-                    </div>
-
-                    <!-- Last Name -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
-                            Last Name <span class="text-red-500">*</span>
-                        </label>
-                        <input type="text" [(ngModel)]="customerForm().lastName" name="lastName"
-                            class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
-                            [class.border-red-300]="errors()['lastName']" placeholder="Enter last name">
-                        @if (errors()['lastName']) {
-                        <p class="mt-1 text-xs text-red-600">{{ errors()['lastName'] }}</p>
-                        }
-                    </div>
-
-                    <!-- Email -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
-                            Email Address <span class="text-red-500">*</span>
-                        </label>
-                        <div class="relative">
-                            <i class="bi bi-envelope absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                            <input type="email" [(ngModel)]="customerForm().email" name="email"
-                                class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
-                                [class.border-red-300]="errors()['email']" placeholder="customer@example.com">
-                        </div>
-                        @if (errors()["email"]) {
-                        <p class="mt-1 text-xs text-red-600">{{ errors()["email"] }}</p>
-                        }
-                    </div>
-
-                    <!-- Phone -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
-                            Phone Number <span class="text-red-500">*</span>
-                        </label>
-                        <div class="relative">
-                            <i class="bi bi-telephone absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                            <input type="tel" [(ngModel)]="customerForm().phone" name="phone"
-                                class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
-                                [class.border-red-300]="errors()['phone']" placeholder="+1 (555) 000-0000">
-                        </div>
-                        @if (errors()['phone']) {
-                        <p class="mt-1 text-xs text-red-600">{{ errors()['phone'] }}</p>
-                        }
-                    </div>
-
-                    <!-- Customer Type -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Customer Type</label>
-                        <select [(ngModel)]="customerForm().type" name="type"
-                            class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none cursor-pointer">
-                            <option value="new">New</option>
-                            <option value="returning">Returning</option>
-                            <option value="vip">VIP</option>
-                            <option value="wholesale">Wholesale</option>
-                        </select>
-                    </div>
-
-                    <!-- Status -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Account Status</label>
-                        <select [(ngModel)]="customerForm().status" name="status"
-                            class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none cursor-pointer">
-                            <option value="active">Active</option>
-                            <option value="inactive">Inactive</option>
-                            <option value="blocked">Blocked</option>
-                        </select>
-                    </div>
-
-                    <!-- Customer Number (Read-only in edit mode) -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Customer Number</label>
-                        <input type="text" [value]="customerForm().customerNumber || 'Auto-generated'" readonly
-                            class="w-full px-4 py-2.5 bg-gray-100 border border-gray-200 rounded-xl text-gray-500 cursor-not-allowed">
-                    </div>
-
-                    <!-- Tags -->
-                    <div class="md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Tags</label>
-                        <div class="flex flex-wrap gap-2 mb-2">
-                            @for (tag of customerForm().tags; track tag) {
-                            <span
-                                class="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm font-medium flex items-center gap-1">
-                                {{ tag }}
-                                <button (click)="removeTag(tag)" class="hover:text-indigo-900">
-                                    <i class="bi bi-x"></i>
-                                </button>
-                            </span>
-                            }
-                        </div>
-                        <div class="flex gap-2">
-                            <input type="text" [(ngModel)]="newTag" (keyup.enter)="addTag()"
-                                class="flex-1 px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
-                                placeholder="Add tag and press Enter">
-                            <button (click)="addTag()"
-                                class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-xl text-gray-700 transition-colors">
-                                <i class="bi bi-plus"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Notes -->
-                    <div class="md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Internal Notes</label>
-                        <textarea [(ngModel)]="customerForm().notes" name="notes" rows="3"
-                            class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all resize-none"
-                            placeholder="Add any internal notes about this customer..."></textarea>
-                    </div>
-                </div>
-
-                <!-- Navigation -->
-                <div class="flex justify-end mt-6 pt-6 border-t border-gray-100">
-                    <button (click)="nextStep()"
-                        class="px-6 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 transition-all flex items-center gap-2">
-                        Continue to Addresses
-                        <i class="bi bi-arrow-right"></i>
-                    </button>
-                </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1.5">Linked User ID</label>
+              <p class="text-xs text-gray-500 mb-2">Optional: link this customer to a system user account.</p>
+              <input formControlName="linkedUserId" type="text" placeholder="User UUID…"
+                class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm">
             </div>
-            }
-
-            <!-- Addresses -->
-            @if (currentStep() === 'addresses') {
-            <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm animate-slide-in">
-                <div class="flex items-center justify-between mb-6">
-                    <h2 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                        <i class="bi bi-geo-alt text-indigo-600"></i>
-                        Addresses
-                    </h2>
-                    <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" [(ngModel)]="sameAsShipping" (change)="syncAddresses()"
-                            class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
-                        <span class="text-sm text-gray-700">Billing same as shipping</span>
-                    </label>
-                </div>
-
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <!-- Shipping Address -->
-                    <div class="space-y-4">
-                        <h3 class="font-medium text-gray-900 flex items-center gap-2">
-                            <i class="bi bi-truck text-gray-400"></i>
-                            Shipping Address
-                        </h3>
-
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Address Line 1 <span
-                                    class="text-red-500">*</span></label>
-                            <input type="text" [(ngModel)]="customerForm().addresses.shipping.line1"
-                                class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
-                                placeholder="Street address">
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Address Line 2</label>
-                            <input type="text" [(ngModel)]="customerForm().addresses.shipping.line2"
-                                class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
-                                placeholder="Apartment, suite, unit, etc.">
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">City <span
-                                        class="text-red-500">*</span></label>
-                                <input type="text" [(ngModel)]="customerForm().addresses.shipping.city"
-                                    class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
-                                    placeholder="City">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">State/Province <span
-                                        class="text-red-500">*</span></label>
-                                <input type="text" [(ngModel)]="customerForm().addresses.shipping.state"
-                                    class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
-                                    placeholder="State">
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">ZIP/Postal Code <span
-                                        class="text-red-500">*</span></label>
-                                <input type="text" [(ngModel)]="customerForm().addresses.shipping.zip"
-                                    class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
-                                    placeholder="ZIP code">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Country <span
-                                        class="text-red-500">*</span></label>
-                                <select [(ngModel)]="customerForm().addresses.shipping.country"
-                                    class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none">
-                                    <option value="USA">United States</option>
-                                    <option value="CAN">Canada</option>
-                                    <option value="UK">United Kingdom</option>
-                                    <option value="AU">Australia</option>
-                                    <option value="DE">Germany</option>
-                                    <option value="FR">France</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Billing Address -->
-                    <div class="space-y-4" [class.opacity-50]="sameAsShipping()">
-                        <h3 class="font-medium text-gray-900 flex items-center gap-2">
-                            <i class="bi bi-credit-card text-gray-400"></i>
-                            Billing Address
-                            @if (sameAsShipping()) {
-                            <span class="text-xs font-normal text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">Same as
-                                shipping</span>
-                            }
-                        </h3>
-
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Address Line 1 <span
-                                    class="text-red-500">*</span></label>
-                            <input type="text" [(ngModel)]="customerForm().addresses.billing.line1"
-                                [disabled]="sameAsShipping()"
-                                class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all disabled:bg-gray-100"
-                                placeholder="Street address">
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Address Line 2</label>
-                            <input type="text" [(ngModel)]="customerForm().addresses.billing.line2"
-                                [disabled]="sameAsShipping()"
-                                class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all disabled:bg-gray-100"
-                                placeholder="Apartment, suite, unit, etc.">
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">City <span
-                                        class="text-red-500">*</span></label>
-                                <input type="text" [(ngModel)]="customerForm().addresses.billing.city"
-                                    [disabled]="sameAsShipping()"
-                                    class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all disabled:bg-gray-100"
-                                    placeholder="City">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">State/Province <span
-                                        class="text-red-500">*</span></label>
-                                <input type="text" [(ngModel)]="customerForm().addresses.billing.state"
-                                    [disabled]="sameAsShipping()"
-                                    class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all disabled:bg-gray-100"
-                                    placeholder="State">
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">ZIP/Postal Code <span
-                                        class="text-red-500">*</span></label>
-                                <input type="text" [(ngModel)]="customerForm().addresses.billing.zip"
-                                    [disabled]="sameAsShipping()"
-                                    class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all disabled:bg-gray-100"
-                                    placeholder="ZIP code">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Country <span
-                                        class="text-red-500">*</span></label>
-                                <select [(ngModel)]="customerForm().addresses.billing.country"
-                                    [disabled]="sameAsShipping()"
-                                    class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none disabled:bg-gray-100">
-                                    <option value="USA">United States</option>
-                                    <option value="CAN">Canada</option>
-                                    <option value="UK">United Kingdom</option>
-                                    <option value="AU">Australia</option>
-                                    <option value="DE">Germany</option>
-                                    <option value="FR">France</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Navigation -->
-                <div class="flex justify-between mt-6 pt-6 border-t border-gray-100">
-                    <button (click)="previousStep()"
-                        class="px-6 py-2.5 border border-gray-200 text-gray-700 rounded-xl text-sm font-medium hover:border-indigo-300 hover:text-indigo-600 transition-all flex items-center gap-2">
-                        <i class="bi bi-arrow-left"></i>
-                        Back
-                    </button>
-                    <button (click)="nextStep()"
-                        class="px-6 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 transition-all flex items-center gap-2">
-                        Continue to Preferences
-                        <i class="bi bi-arrow-right"></i>
-                    </button>
-                </div>
-            </div>
-            }
-
-            <!-- Preferences -->
-            @if (currentStep() === 'preferences') {
-            <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm animate-slide-in">
-                <h2 class="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
-                    <i class="bi bi-sliders text-indigo-600"></i>
-                    Preferences & Settings
-                </h2>
-
-                <div class="space-y-6">
-                    <!-- Marketing Consent -->
-                    <div class="flex items-start gap-4 p-4 bg-gray-50 rounded-xl">
-                        <div class="flex-1">
-                            <h3 class="font-medium text-gray-900 flex items-center gap-2">
-                                <i class="bi bi-envelope text-gray-400"></i>
-                                Marketing Communications
-                            </h3>
-                            <p class="text-sm text-gray-500 mt-1">Allow marketing emails and promotional offers</p>
-                        </div>
-                        <label class="relative inline-flex items-center cursor-pointer">
-                            <input type="checkbox" [(ngModel)]="customerForm().marketingConsent" class="sr-only peer">
-                            <div
-                                class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600">
-                            </div>
-                        </label>
-                    </div>
-
-                    <!-- Order Notifications -->
-                    <div class="flex items-start gap-4 p-4 bg-gray-50 rounded-xl">
-                        <div class="flex-1">
-                            <h3 class="font-medium text-gray-900 flex items-center gap-2">
-                                <i class="bi bi-bell text-gray-400"></i>
-                                Order Notifications
-                            </h3>
-                            <p class="text-sm text-gray-500 mt-1">Send email notifications for order updates</p>
-                        </div>
-                        <label class="relative inline-flex items-center cursor-pointer">
-                            <input type="checkbox" [(ngModel)]="customerForm().orderNotifications" class="sr-only peer"
-                                checked>
-                            <div
-                                class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600">
-                            </div>
-                        </label>
-                    </div>
-
-                    <!-- SMS Notifications -->
-                    <div class="flex items-start gap-4 p-4 bg-gray-50 rounded-xl">
-                        <div class="flex-1">
-                            <h3 class="font-medium text-gray-900 flex items-center gap-2">
-                                <i class="bi bi-chat text-gray-400"></i>
-                                SMS Notifications
-                            </h3>
-                            <p class="text-sm text-gray-500 mt-1">Send text messages for shipping updates</p>
-                        </div>
-                        <label class="relative inline-flex items-center cursor-pointer">
-                            <input type="checkbox" [(ngModel)]="customerForm().smsNotifications" class="sr-only peer">
-                            <div
-                                class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600">
-                            </div>
-                        </label>
-                    </div>
-
-                    <!-- Tax Exempt -->
-                    <div class="flex items-start gap-4 p-4 bg-gray-50 rounded-xl">
-                        <div class="flex-1">
-                            <h3 class="font-medium text-gray-900 flex items-center gap-2">
-                                <i class="bi bi-receipt text-gray-400"></i>
-                                Tax Exempt
-                            </h3>
-                            <p class="text-sm text-gray-500 mt-1">Customer is exempt from sales tax</p>
-                        </div>
-                        <label class="relative inline-flex items-center cursor-pointer">
-                            <input type="checkbox" [(ngModel)]="customerForm().taxExempt" class="sr-only peer">
-                            <div
-                                class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600">
-                            </div>
-                        </label>
-                    </div>
-
-                    @if (customerForm().taxExempt) {
-                    <div class="ml-14">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Tax Exemption Number</label>
-                        <input type="text" [(ngModel)]="customerForm().taxExemptionNumber"
-                            class="w-full md:w-1/2 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
-                            placeholder="Enter exemption certificate number">
-                    </div>
-                    }
-
-                    <!-- Preferred Currency -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Preferred Currency</label>
-                            <select [(ngModel)]="customerForm().preferredCurrency"
-                                class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none">
-                                <option value="USD">USD - US Dollar</option>
-                                <option value="EUR">EUR - Euro</option>
-                                <option value="GBP">GBP - British Pound</option>
-                                <option value="CAD">CAD - Canadian Dollar</option>
-                                <option value="AUD">AUD - Australian Dollar</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Preferred Language</label>
-                            <select [(ngModel)]="customerForm().preferredLanguage"
-                                class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none">
-                                <option value="en">English</option>
-                                <option value="es">Spanish</option>
-                                <option value="fr">French</option>
-                                <option value="de">German</option>
-                                <option value="it">Italian</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Navigation -->
-                <div class="flex justify-between mt-6 pt-6 border-t border-gray-100">
-                    <button (click)="previousStep()"
-                        class="px-6 py-2.5 border border-gray-200 text-gray-700 rounded-xl text-sm font-medium hover:border-indigo-300 hover:text-indigo-600 transition-all flex items-center gap-2">
-                        <i class="bi bi-arrow-left"></i>
-                        Back
-                    </button>
-                    <button (click)="saveCustomer()" [disabled]="isSaving()"
-                        class="px-6 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
-                        @if (isSaving()) {
-                        <i class="bi bi-arrow-repeat animate-spin"></i>
-                        <span>Saving...</span>
-                        } @else {
-                        <i class="bi bi-check-lg"></i>
-                        <span>{{ isEditMode() ? 'Update Customer' : 'Create Customer' }}</span>
-                        }
-                    </button>
-                </div>
-            </div>
-            }
-
-        </div>
-
-        <!-- Sidebar -->
-        <div class="space-y-6 sticky top-6 self-start">
-
-            <!-- Summary Card -->
-            <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-                <h3 class="font-semibold text-gray-900 mb-4">Customer Summary</h3>
-
-                <div class="flex items-center gap-4 mb-6 pb-6 border-b border-gray-100">
-                    <img [src]="customerForm().avatar || 'https://via.placeholder.com/150'"
-                        class="w-16 h-16 rounded-2xl object-cover bg-gray-100">
-                    <div>
-                        <p class="font-semibold text-gray-900">{{ getFullName() || 'New Customer' }}</p>
-                        <p class="text-sm text-gray-500">{{ customerForm().email || 'No email provided' }}</p>
-                        <span
-                            class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium mt-1 {{ getTypeColor(customerForm().type) }}">
-                            {{ customerForm().type | titlecase }}
-                        </span>
-                    </div>
-                </div>
-
-                <div class="space-y-3">
-                    <div class="flex items-center justify-between text-sm">
-                        <span class="text-gray-500">Status</span>
-                        <span class="font-medium" [class]="getStatusColor(customerForm().status)">
-                            {{ customerForm().status | titlecase }}
-                        </span>
-                    </div>
-                    <div class="flex items-center justify-between text-sm">
-                        <span class="text-gray-500">Marketing</span>
-                        <span class="font-medium"
-                            [class]="customerForm().marketingConsent ? 'text-green-600' : 'text-gray-400'">
-                            {{ customerForm().marketingConsent ? 'Subscribed' : 'Unsubscribed' }}
-                        </span>
-                    </div>
-                    <div class="flex items-center justify-between text-sm">
-                        <span class="text-gray-500">Tags</span>
-                        <span class="font-medium text-gray-900">{{ customerForm().tags.length }} tags</span>
-                    </div>
-                </div>
-
-                @if (isEditMode()) {
-                <div class="mt-6 pt-6 border-t border-gray-100">
-                    <h4 class="text-sm font-medium text-gray-900 mb-3">Recent Activity</h4>
-                    <div class="space-y-3">
-                        <div class="flex items-start gap-3">
-                            <div
-                                class="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                <i class="bi bi-bag text-indigo-600 text-sm"></i>
-                            </div>
-                            <div>
-                                <p class="text-sm font-medium text-gray-900">Order #ORD-2024-001</p>
-                                <p class="text-xs text-gray-500">2 days ago</p>
-                            </div>
-                        </div>
-                        <div class="flex items-start gap-3">
-                            <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                <i class="bi bi-envelope text-green-600 text-sm"></i>
-                            </div>
-                            <div>
-                                <p class="text-sm font-medium text-gray-900">Welcome email sent</p>
-                                <p class="text-xs text-gray-500">5 days ago</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                }
-            </div>
-
-            <!-- Help Card -->
-            <div class="bg-indigo-50 rounded-2xl p-6 border border-indigo-100">
-                <h3 class="font-semibold text-indigo-900 mb-2 flex items-center gap-2">
-                    <i class="bi bi-question-circle"></i>
-                    Need Help?
-                </h3>
-                <p class="text-sm text-indigo-700 mb-4">Learn more about managing customer accounts and best practices.
-                </p>
-                <a href="#" class="text-sm font-medium text-indigo-600 hover:text-indigo-800 flex items-center gap-1">
-                    View Documentation
-                    <i class="bi bi-arrow-right"></i>
-                </a>
-            </div>
-
-        </div>
-
-    </div>
-
-</div>
+          </div>
+        }
+      </form>
+    }
+  </div>
 </div>
