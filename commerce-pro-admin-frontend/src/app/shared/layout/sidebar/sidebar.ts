@@ -246,6 +246,7 @@ export class Sidebar implements OnInit {
       // Customer Management
       'menu.customers': 'Customers',
       'menu.customers.all': 'All Customers',
+      'menu.customers.groups': 'Customer Groups',
       'menu.customers.segments': 'Segments & Personas',
       'menu.customers.vip': 'VIP Customers',
       'menu.customers.companies': 'B2B Accounts',
@@ -495,13 +496,14 @@ export class Sidebar implements OnInit {
       description: 'Customer database and relationship management',
       children: [
         { id: 'customers-all', label: 'menu.customers.all', route: '/customers/all', permissions: ['manage_customers'] },
-        { id: 'customers-segments', label: 'menu.customers.segments', route: '/customers/segments', permissions: ['manage_customer_segments'] },
-        { id: 'customers-vip', label: 'menu.customers.vip', route: '/customers/vip', permissions: ['manage_customers'] },
-        { id: 'customers-companies', label: 'menu.customers.companies', route: '/customers/companies', permissions: ['manage_customers'] },
-        { id: 'customers-reviews', label: 'menu.customers.reviews', route: '/customers/reviews', permissions: ['manage_reviews'] },
-        { id: 'customers-support', label: 'menu.customers.support', route: '/customers/support', permissions: ['manage_support_tickets'] },
-        { id: 'customers-feedback', label: 'menu.customers.feedback', route: '/customers/feedback', permissions: ['manage_support_tickets'] },
-        { id: 'customers-import', label: 'menu.customers.import', route: '/customers/import', permissions: ['manage_customers'] }
+        { id: 'customers-groups', label: 'menu.customers.groups', route: '/customers/groups', permissions: ['manage_customers'] },
+        //{ id: 'customers-segments', label: 'menu.customers.segments', route: '/customers/segments', permissions: ['manage_customer_segments'] },
+        //{ id: 'customers-vip', label: 'menu.customers.vip', route: '/customers/vip', permissions: ['manage_customers'] },
+        //{ id: 'customers-companies', label: 'menu.customers.companies', route: '/customers/companies', permissions: ['manage_customers'] },
+        //{ id: 'customers-reviews', label: 'menu.customers.reviews', route: '/customers/reviews', permissions: ['manage_reviews'] },
+        //{ id: 'customers-support', label: 'menu.customers.support', route: '/customers/support', permissions: ['manage_support_tickets'] },
+        //{ id: 'customers-feedback', label: 'menu.customers.feedback', route: '/customers/feedback', permissions: ['manage_support_tickets'] },
+        //{ id: 'customers-import', label: 'menu.customers.import', route: '/customers/import', permissions: ['manage_customers'] }
       ]
     },
 

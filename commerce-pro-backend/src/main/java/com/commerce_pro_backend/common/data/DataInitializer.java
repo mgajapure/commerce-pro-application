@@ -18,6 +18,10 @@ import com.commerce_pro_backend.order.dto.TrackingUpdateRequest;
 import com.commerce_pro_backend.order.enums.OrderSource;
 import com.commerce_pro_backend.order.service.OrderService;
 import com.commerce_pro_backend.user_identity.repository.UserRepository;
+import com.commerce_pro_backend.customer.dto.CustomerRequestDTO;
+import com.commerce_pro_backend.customer.dto.GroupDTO;
+import com.commerce_pro_backend.customer.service.CustomerGroupService;
+import com.commerce_pro_backend.customer.service.CustomerService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -234,39 +238,6 @@ public class DataInitializer {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // SECURITY CONTEXT HELPERS
-    // ─────────────────────────────────────────────────────────────────────────
-
-    /**
-     * Loads the "superadmin" user via UserDetailsService (which hits the DB) and
-     * installs a UsernamePasswordAuthenticationToken into the SecurityContextHolder.
-     *
-     * This is intentionally the same mechanism used by JwtAuthenticationFilter
-     * so CurrentUserService sees a properly structured Authentication object.
-     *
-     * SuperAdminSetupService creates the superadmin user via @PostConstruct,
-     * which runs before any CommandLineRunner, so the user always exists here.
-     */
-    private void authenticateAsSuperAdmin(UserDetailsService userDetailsService) {
-        var userDetails = userDetailsService.loadUserByUsername("superadmin");
-        var auth = new UsernamePasswordAuthenticationToken(
-                userDetails,
-                null,
-                userDetails.getAuthorities()
-        );
-        SecurityContextHolder.getContext().setAuthentication(auth);
-    }
-
-    /**
-     * Clears the SecurityContextHolder after seed operations finish.
-     * Must always be called in a finally block to prevent the synthetic
-     * context from leaking into application request handling.
-     */
-    private void clearSecurityContext() {
-        SecurityContextHolder.clearContext();
-    }
-
-    // ─────────────────────────────────────────────────────────────────────────
     // 4. FULFILLMENT  (carriers, pick lists, shipments)
     // ─────────────────────────────────────────────────────────────────────────
 
@@ -399,6 +370,106 @@ public class DataInitializer {
             }
         };
     }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // 5. Customer
+    // ─────────────────────────────────────────────────────────────────────────
+
+    @Bean
+    @Profile("dev")
+    @Order(5)
+    CommandLineRunner seedCustomers(
+            CustomerService customerService,
+            CustomerGroupService groupService,
+            UserDetailsService userDetailsService) {
+        return args -> {
+            log.info("━━━ [Seed] Customers ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            try {
+                // Authenticate as superadmin so CurrentUserService resolves properly
+                authenticateAsSuperAdmin(userDetailsService);
+
+                // Groups
+                GroupDTO.Response vipGroup = groupService.createGroup(GroupDTO.Request.builder()
+                        .name("VIP Buyers").description("High-value repeat customers")
+                        .colorHex("#F59E0B").isActive(true).build());
+
+                GroupDTO.Response wholesaleGroup = groupService.createGroup(GroupDTO.Request.builder()
+                        .name("Wholesale Accounts").description("Trade and bulk purchasers")
+                        .colorHex("#0D9488").isActive(true).build());
+
+                log.info("[Seed] Created 2 customer groups");
+
+                // Customers
+                String[][] customers = {
+                    {"Alice",  "Johnson",  "alice.johnson@example.com",  "+1-212-555-0101", "STOREFRONT"},
+                    {"Bob",    "Smith",    "bob.smith@example.com",      "+1-310-555-0102", "STOREFRONT"},
+                    {"Carol",  "Williams", "carol.williams@example.com", "+1-312-555-0103", "REFERRAL"},
+                    {"David",  "Brown",    "david.brown@example.com",    "+1-415-555-0104", "STOREFRONT"},
+                    {"Eve",    "Davis",    "eve.davis@example.com",      "+1-206-555-0105", "SOCIAL"},
+                    {"Frank",  "Miller",   "frank.miller@example.com",   "+1-713-555-0106", "STOREFRONT"},
+                    {"Grace",  "Lee",      "grace.lee@example.com",      "+1-602-555-0107", "EMAIL"},
+                    {"Henry",  "Wilson",   "henry.wilson@example.com",   "+1-305-555-0108", "STOREFRONT"},
+                    {"Irene",  "Taylor",   "irene.taylor@example.com",   "+1-617-555-0109", "REFERRAL"},
+                    {"James",  "Anderson", "james.anderson@example.com", "+1-646-555-0110", "STOREFRONT"},
+                };
+
+                int created = 0;
+                for (String[] c : customers) {
+                    try {
+                        customerService.createCustomer(CustomerRequestDTO.builder()
+                                .firstName(c[0]).lastName(c[1]).email(c[2]).phone(c[3])
+                                .acquisitionSource(c[4]).marketingOptIn(true)
+                                .preferredCurrency("USD").preferredLanguage("en")
+                                .build());
+                        created++;
+                    } catch (Exception e) {
+                        log.warn("[Seed] Customer seed skipped for {}: {}", c[2], e.getMessage());
+                    }
+                }
+                log.info("[Seed] Customers complete — {} created", created);
+
+            } catch (Exception e) {
+                log.error("[Seed] Customer seed failed: {}", e.getMessage(), e);
+            } finally {
+                clearSecurityContext();
+            }
+        };
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // SECURITY CONTEXT HELPERS
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Loads the "superadmin" user via UserDetailsService (which hits the DB) and
+     * installs a UsernamePasswordAuthenticationToken into the SecurityContextHolder.
+     *
+     * This is intentionally the same mechanism used by JwtAuthenticationFilter
+     * so CurrentUserService sees a properly structured Authentication object.
+     *
+     * SuperAdminSetupService creates the superadmin user via @PostConstruct,
+     * which runs before any CommandLineRunner, so the user always exists here.
+     */
+    private void authenticateAsSuperAdmin(UserDetailsService userDetailsService) {
+        var userDetails = userDetailsService.loadUserByUsername("superadmin");
+        var auth = new UsernamePasswordAuthenticationToken(
+                userDetails,
+                null,
+                userDetails.getAuthorities()
+        );
+        SecurityContextHolder.getContext().setAuthentication(auth);
+    }
+
+    /**
+     * Clears the SecurityContextHolder after seed operations finish.
+     * Must always be called in a finally block to prevent the synthetic
+     * context from leaking into application request handling.
+     */
+    private void clearSecurityContext() {
+        SecurityContextHolder.clearContext();
+    }
+
+    
 
     // ═════════════════════════════════════════════════════════════════════════
     // PRODUCT CATALOGUE
