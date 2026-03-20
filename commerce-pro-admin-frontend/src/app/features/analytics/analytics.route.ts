@@ -3,39 +3,22 @@ import { Analytics } from './analytics';
 
 export const ANALYTICS_ROUTES: Routes = [
   {
-    path: 'analytics',
-    component: Analytics
-  },
-  {
-    path: 'sales',
-    loadComponent: () => import('./sales/sales').then(m => m.Sales)
-  },
-  {
-    path: 'traffic',
-    loadComponent: () => import('./traffic/traffic').then(m => m.Traffic)
-  },
-  {
-    path: 'conversion',
-    loadComponent: () => import('./conversion/conversion').then(m => m.Conversion)
-  },
-  {
-    path: 'customer',
-    loadComponent: () => import('./customer/customer').then(m => m.Customer)
-  },
-  {
-    path: 'product',
-    loadComponent: () => import('./product/product').then(m => m.Product)
-  },
-  {
-    path: 'financial',
-    loadComponent: () => import('./financial/financial').then(m => m.Financial)
-  },
-  {
-    path: 'inventory',
-    loadComponent: () => import('./inventory/inventory').then(m => m.Inventory)
-  },
-  {
-    path: 'custom-reports',
-    loadComponent: () => import('./custom-reports/custom-reports').then(m => m.CustomReports)
+    path: '',
+    component: Analytics,
+    children: [
+      { path: '', redirectTo: 'overview', pathMatch: 'full' },
+      { path: 'overview',          loadComponent: () => import('./overview/overview').then(m => m.AnalyticsOverview) },
+      { path: 'sales',             loadComponent: () => import('./sales/sales').then(m => m.Sales) },
+      { path: 'inventory-report',  loadComponent: () => import('./inventory/inventory').then(m => m.Inventory) },
+      { path: 'orders-report',     loadComponent: () => import('./orders-report/orders-report').then(m => m.OrdersReportPage) },
+      { path: 'customers-report',  loadComponent: () => import('./customer/customer').then(m => m.Customer) },
+      { path: 'financial',         loadComponent: () => import('./financial/financial').then(m => m.Financial) },
+      { path: 'shipping',          loadComponent: () => import('./shipping/shipping').then(m => m.ShippingReportPage) },
+      { path: 'returns',           loadComponent: () => import('./returns/returns').then(m => m.ReturnsReportPage) },
+      { path: 'saved-reports',     loadComponent: () => import('./saved-reports/saved-reports').then(m => m.SavedReportsPage) },
+      { path: 'scheduled-reports', loadComponent: () => import('./scheduled-reports/scheduled-reports').then(m => m.ScheduledReportsPage) },
+      { path: 'execution-history', loadComponent: () => import('./execution-history/execution-history').then(m => m.ExecutionHistoryPage) },
+      { path: 'custom-reports',    loadComponent: () => import('./custom-reports/custom-reports').then(m => m.CustomReports) },
+    ]
   }
 ];

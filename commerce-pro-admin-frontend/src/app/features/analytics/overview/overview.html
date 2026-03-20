@@ -1,0 +1,207 @@
+<app-alert></app-alert>
+
+<div class="min-h-screen bg-gray-50/50 p-4 sm:p-6 lg:p-8">
+  <div class="max-w-[1600px] mx-auto space-y-6">
+
+    <!-- Page Header -->
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+      <div>
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center">
+            <i class="bi bi-bar-chart-line text-white text-lg"></i>
+          </div>
+          <h1 class="text-2xl font-bold text-gray-900">Analytics Overview</h1>
+          <span class="px-3 py-1 bg-indigo-100 text-indigo-700 text-xs font-semibold rounded-full uppercase tracking-wider">Live</span>
+        </div>
+        <p class="text-gray-500 mt-1 text-sm">Real-time business performance metrics and KPI summary</p>
+      </div>
+      <div class="flex flex-wrap items-center gap-3">
+        <button (click)="loadDashboard()"
+          class="px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:border-indigo-300 hover:text-indigo-600 transition-all flex items-center gap-2 shadow-sm"
+          [disabled]="isLoading()">
+          <i class="bi bi-arrow-clockwise" [class.animate-spin]="isLoading()"></i>
+          Refresh
+        </button>
+        <a routerLink="/analytics/sales"
+          class="px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 transition-all flex items-center gap-2 shadow-lg shadow-indigo-200 hover:-translate-y-0.5">
+          <i class="bi bi-graph-up"></i> View Reports
+        </a>
+      </div>
+    </div>
+
+    <!-- Error State -->
+    @if (error()) {
+      <div class="bg-red-50 border border-red-200 rounded-2xl p-5 flex items-start gap-4">
+        <i class="bi bi-exclamation-circle-fill text-red-500 text-xl flex-shrink-0 mt-0.5"></i>
+        <div>
+          <p class="font-semibold text-red-800">Failed to load dashboard</p>
+          <p class="text-sm text-red-600 mt-0.5">{{ error() }}</p>
+          <button (click)="loadDashboard()" class="mt-3 text-sm font-medium text-red-700 underline hover:text-red-900">Try again</button>
+        </div>
+      </div>
+    }
+
+    <!-- Inventory Alerts -->
+    @if (!isLoading() && inventoryAlerts().length > 0) {
+      <div class="space-y-2">
+        @for (alert of inventoryAlerts(); track alert.msg) {
+          <div class="flex items-center gap-3 px-5 py-3 rounded-xl border text-sm font-medium"
+            [class]="alert.type === 'error' ? 'bg-red-50 border-red-200 text-red-800' : 'bg-yellow-50 border-yellow-200 text-yellow-800'">
+            <i class="bi" [class]="alert.type === 'error' ? 'bi-exclamation-circle-fill text-red-500' : 'bi-exclamation-triangle-fill text-yellow-500'"></i>
+            {{ alert.msg }}
+            <a routerLink="/analytics/inventory-report" class="ml-auto underline hover:no-underline">View Inventory Report →</a>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Skeleton Loading -->
+    @if (isLoading()) {
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        @for (i of [1,2,3,4]; track i) {
+          <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm animate-pulse">
+            <div class="flex items-start justify-between mb-4">
+              <div class="w-14 h-14 bg-gray-200 rounded-2xl"></div>
+              <div class="w-16 h-6 bg-gray-200 rounded-full"></div>
+            </div>
+            <div class="h-4 bg-gray-200 rounded w-24 mb-2"></div>
+            <div class="h-8 bg-gray-200 rounded w-32 mb-2"></div>
+            <div class="h-3 bg-gray-200 rounded w-20"></div>
+          </div>
+        }
+      </div>
+    } @else if (dashboard()) {
+
+      <!-- KPI Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        @for (kpi of kpiCards(); track kpi.title) {
+          <div class="relative overflow-hidden rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 group cursor-pointer transform hover:-translate-y-1"
+            [class]="'bg-gradient-to-br ' + kpi.gradient">
+            <div class="absolute inset-0">
+              <div class="absolute -right-6 -top-6 w-32 h-32 rounded-full bg-white/20 blur-2xl"></div>
+              <div class="absolute -left-6 -bottom-6 w-24 h-24 rounded-full bg-white/10 blur-xl"></div>
+            </div>
+            <div class="relative z-10">
+              <div class="flex items-start justify-between mb-4">
+                <div class="w-14 h-14 rounded-2xl flex items-center justify-center bg-white/25 backdrop-blur-md border border-white/30 shadow-lg">
+                  <i class="bi bi-{{ kpi.icon }} text-2xl text-white drop-shadow-md"></i>
+                </div>
+                @if (kpi.growth !== 0) {
+                  <span class="flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-full bg-white/25 backdrop-blur-sm border border-white/30 text-white shadow-lg">
+                    <i class="bi bi-{{ kpi.growth >= 0 ? 'arrow-up-short' : 'arrow-down-short' }} text-sm"></i>
+                    {{ kpi.growth > 0 ? '+' : '' }}{{ kpi.growth | number:'1.1-1' }}%
+                  </span>
+                }
+              </div>
+              <p class="text-white/90 text-sm font-semibold mb-1 uppercase tracking-wide">{{ kpi.title }}</p>
+              <h3 class="text-3xl font-extrabold text-white tracking-tight drop-shadow-lg">{{ kpi.value }}</h3>
+              <p class="text-white/70 text-xs mt-2">{{ kpi.sub }}</p>
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Revenue Chart + Performance Metrics -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- Revenue Chart (2/3 width) -->
+        <div class="lg:col-span-2 bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+          <div class="flex items-center justify-between mb-5">
+            <div>
+              <h2 class="text-lg font-semibold text-gray-900">Revenue — Last 30 Days</h2>
+              <p class="text-sm text-gray-500 mt-0.5">Daily revenue trend</p>
+            </div>
+            <div class="text-right">
+              <p class="text-2xl font-bold text-gray-900">{{ formatCurrency(dashboard()!.revenueYtd) }}</p>
+              <p class="text-xs text-gray-500">Year to date</p>
+            </div>
+          </div>
+          <div class="h-64">
+            <canvas #revenueChart></canvas>
+          </div>
+        </div>
+
+        <!-- Performance Metrics (1/3 width) -->
+        <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+          <h2 class="text-lg font-semibold text-gray-900 mb-5">Performance Metrics</h2>
+          <div class="space-y-5">
+            @for (metric of performanceMetrics(); track metric.label) {
+              <div>
+                <div class="flex items-center justify-between mb-2">
+                  <div class="flex items-center gap-2">
+                    <div class="w-7 h-7 rounded-lg flex items-center justify-center {{ metric.bg }}">
+                      <i class="bi bi-{{ metric.icon }} {{ metric.color }} text-sm"></i>
+                    </div>
+                    <span class="text-sm font-medium text-gray-700">{{ metric.label }}</span>
+                  </div>
+                  <span class="text-sm font-bold"
+                    [class]="getMetricStatus(metric) === 'good' ? 'text-green-600' : getMetricStatus(metric) === 'warn' ? 'text-yellow-600' : 'text-red-600'">
+                    {{ metric.value | number:'1.1-1' }}%
+                  </span>
+                </div>
+                <div class="w-full bg-gray-100 rounded-full h-2">
+                  <div class="h-2 rounded-full transition-all duration-500"
+                    [style.width.%]="Math.min(100, metric.value)"
+                    [class]="getMetricStatus(metric) === 'good' ? 'bg-green-500' : getMetricStatus(metric) === 'warn' ? 'bg-yellow-500' : 'bg-red-500'">
+                  </div>
+                </div>
+                <p class="text-xs text-gray-400 mt-1">Target: {{ metric.target }}%</p>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Inventory Summary -->
+      <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+        <div class="flex items-center justify-between mb-5">
+          <h2 class="text-lg font-semibold text-gray-900">Inventory Overview</h2>
+          <a routerLink="/analytics/inventory-report" class="text-sm text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-1">
+            Full Report <i class="bi bi-arrow-right text-xs"></i>
+          </a>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="text-center p-4 bg-gray-50 rounded-xl">
+            <p class="text-2xl font-bold text-gray-900">{{ formatCurrency(dashboard()!.totalInventoryValue) }}</p>
+            <p class="text-xs text-gray-500 mt-1 uppercase tracking-wider">Total Value</p>
+          </div>
+          <div class="text-center p-4 bg-green-50 rounded-xl">
+            <p class="text-2xl font-bold text-green-700">In Stock</p>
+            <p class="text-xs text-green-600 mt-1 uppercase tracking-wider">Healthy</p>
+          </div>
+          <div class="text-center p-4 rounded-xl" [class]="dashboard()!.lowStockSkus > 0 ? 'bg-yellow-50' : 'bg-gray-50'">
+            <p class="text-2xl font-bold" [class]="dashboard()!.lowStockSkus > 0 ? 'text-yellow-700' : 'text-gray-400'">{{ dashboard()!.lowStockSkus }}</p>
+            <p class="text-xs mt-1 uppercase tracking-wider" [class]="dashboard()!.lowStockSkus > 0 ? 'text-yellow-600' : 'text-gray-500'">Low Stock SKUs</p>
+          </div>
+          <div class="text-center p-4 rounded-xl" [class]="dashboard()!.outOfStockSkus > 0 ? 'bg-red-50' : 'bg-gray-50'">
+            <p class="text-2xl font-bold" [class]="dashboard()!.outOfStockSkus > 0 ? 'text-red-700' : 'text-gray-400'">{{ dashboard()!.outOfStockSkus }}</p>
+            <p class="text-xs mt-1 uppercase tracking-wider" [class]="dashboard()!.outOfStockSkus > 0 ? 'text-red-600' : 'text-gray-500'">Out of Stock</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Links to Report Sections -->
+      <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Report Sections</h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
+          @for (link of [
+            {label:'Sales', icon:'graph-up-arrow', route:'/analytics/sales', color:'indigo'},
+            {label:'Inventory', icon:'boxes', route:'/analytics/inventory-report', color:'teal'},
+            {label:'Orders', icon:'cart-check', route:'/analytics/orders-report', color:'blue'},
+            {label:'Customers', icon:'people', route:'/analytics/customers-report', color:'purple'},
+            {label:'Financial', icon:'cash-stack', route:'/analytics/financial', color:'emerald'},
+            {label:'Shipping', icon:'truck', route:'/analytics/shipping', color:'amber'},
+            {label:'Returns', icon:'arrow-return-left', route:'/analytics/returns', color:'rose'},
+            {label:'Saved Reports', icon:'bookmark', route:'/analytics/saved-reports', color:'gray'}
+          ]; track link.label) {
+            <a [routerLink]="link.route"
+              class="flex flex-col items-center gap-2 p-4 rounded-xl bg-gray-50 hover:bg-indigo-50 hover:text-indigo-600 transition-all group border border-transparent hover:border-indigo-200 text-gray-600">
+              <i class="bi bi-{{ link.icon }} text-2xl group-hover:scale-110 transition-transform"></i>
+              <span class="text-xs font-medium text-center">{{ link.label }}</span>
+            </a>
+          }
+        </div>
+      </div>
+    }
+  </div>
+</div>

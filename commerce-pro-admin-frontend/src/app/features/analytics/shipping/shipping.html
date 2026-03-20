@@ -1,0 +1,166 @@
+<app-alert></app-alert>
+<div class="min-h-screen bg-gray-50/50 p-4 sm:p-6 lg:p-8">
+  <div class="max-w-[1600px] mx-auto space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-amber-500 rounded-xl flex items-center justify-center"><i class="bi bi-truck text-white text-lg"></i></div>
+        <div><h1 class="text-2xl font-bold text-gray-900">Shipping Reports</h1><p class="text-gray-500 text-sm">On-time delivery and carrier performance</p></div>
+      </div>
+      <div class="flex flex-wrap items-center gap-3">
+        <select [ngModel]="datePreset()" (ngModelChange)="datePreset.set($event); loadData()"
+          class="px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-700 shadow-sm">
+          @for (p of datePresets; track p.value) { <option [value]="p.value">{{ p.label }}</option> }
+        </select>
+        <app-dropdown label="Export" [items]="exportItems" [showChevron]="true" (itemSelected)="onExport($event)"></app-dropdown>
+      </div>
+    </div>
+    <!-- Tabs -->
+    <div class="bg-white rounded-2xl p-2 shadow-sm border border-gray-100">
+      <div class="flex gap-1.5">
+        @for (tab of tabs; track tab.id) {
+          <button (click)="setTab(tab.id)" class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all"
+            [class.bg-amber-500]="activeTab() === tab.id" [class.text-white]="activeTab() === tab.id"
+            [class.shadow-md]="activeTab() === tab.id" [class.bg-gray-50]="activeTab() !== tab.id"
+            [class.text-gray-600]="activeTab() !== tab.id">
+            <i class="bi bi-{{ tab.icon }}"></i>{{ tab.label }}
+          </button>
+        }
+      </div>
+    </div>
+    @if (error()) {
+      <div class="bg-red-50 border border-red-200 rounded-2xl p-5 flex items-center gap-4">
+        <i class="bi bi-exclamation-circle-fill text-red-500 text-xl"></i>
+        <p class="text-red-800 font-medium">{{ error() }}</p>
+        <button (click)="loadData()" class="ml-auto text-sm text-red-700 underline">Retry</button>
+      </div>
+    }
+    @if (isLoading()) {
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        @for (i of [1,2,3,4]; track i) { <div class="bg-white rounded-2xl p-5 border border-gray-100 animate-pulse h-24"></div> }
+      </div>
+    }
+    @if (!isLoading() && report()) {
+      <!-- Summary -->
+      @if (activeTab() === 'summary') {
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm"><p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Total Shipments</p><p class="text-2xl font-bold text-gray-900">{{ report()!.totalShipments | number }}</p></div>
+          <div class="bg-green-50 p-5 rounded-2xl border border-green-200 shadow-sm">
+            <p class="text-xs font-medium text-green-700 uppercase tracking-wider mb-1">On-Time Rate</p>
+            <p class="text-2xl font-bold text-green-700">{{ report()!.onTimeRatePct | number:'1.1-1' }}%</p>
+          </div>
+          <div class="bg-blue-50 p-5 rounded-2xl border border-blue-200 shadow-sm"><p class="text-xs font-medium text-blue-700 uppercase tracking-wider mb-1">Avg Delivery Days</p><p class="text-2xl font-bold text-blue-700">{{ report()!.averageDeliveryDays | number:'1.1-1' }}</p></div>
+          <div class="bg-red-50 p-5 rounded-2xl border border-red-200 shadow-sm"><p class="text-xs font-medium text-red-700 uppercase tracking-wider mb-1">Lost / Exception</p><p class="text-2xl font-bold text-red-700">{{ (report()!.lost + report()!.returnedToSender) | number }}</p></div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Shipment Status Breakdown</h3>
+            <div class="space-y-3">
+              @for (item of [
+                {label:'Delivered', val:report()!.deliveredShipments, color:'bg-green-500'},
+                {label:'In Transit', val:report()!.inTransit, color:'bg-blue-500'},
+                {label:'On Time', val:report()!.onTimeDeliveries, color:'bg-emerald-500'},
+                {label:'Late', val:report()!.lateDeliveries, color:'bg-orange-500'},
+                {label:'Lost', val:report()!.lost, color:'bg-red-500'}
+              ]; track item.label) {
+                <div class="flex items-center gap-3">
+                  <span class="text-sm text-gray-600 w-24">{{ item.label }}</span>
+                  <div class="flex-1 bg-gray-100 rounded-full h-2">
+                    <div class="h-2 rounded-full {{ item.color }}" [style.width.%]="Math.min(100, report()!.totalShipments > 0 ? (item.val / report()!.totalShipments) * 100 : 0)"></div>
+                  </div>
+                  <span class="text-sm font-semibold text-gray-900 w-16 text-right">{{ item.val | number }}</span>
+                </div>
+              }
+            </div>
+          </div>
+          @if (report()!.trend?.length) {
+            <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+              <h3 class="text-lg font-semibold text-gray-900 mb-4">On-Time Rate Trend</h3>
+              <div class="space-y-2">
+                @for (row of report()!.trend.slice(-8); track row.period) {
+                  <div class="flex items-center gap-3">
+                    <span class="text-xs text-gray-500 w-20 flex-shrink-0">{{ row.period }}</span>
+                    <div class="flex-1 bg-gray-100 rounded-full h-2">
+                      <div class="h-2 rounded-full transition-all" [style.width.%]="row.onTimeRatePct"
+                        [class.bg-green-500]="row.onTimeRatePct >= 90" [class.bg-yellow-500]="row.onTimeRatePct >= 75 && row.onTimeRatePct < 90" [class.bg-red-500]="row.onTimeRatePct < 75"></div>
+                    </div>
+                    <span class="text-xs font-semibold w-12 text-right">{{ row.onTimeRatePct | number:'1.1-1' }}%</span>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
+      <!-- Carrier Performance -->
+      @if (activeTab() === 'carriers') {
+        <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+          <h2 class="text-lg font-semibold text-gray-900 mb-4">On-Time Rate by Carrier</h2>
+          <div class="h-64"><canvas #carrierChart></canvas></div>
+        </div>
+        @if (report()!.carrierPerformance?.length) {
+          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <table class="w-full text-sm">
+              <thead><tr class="bg-gray-50 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th class="px-5 py-3 text-left">Carrier</th><th class="px-5 py-3 text-right">Shipments</th>
+                <th class="px-5 py-3 text-right">Delivered</th><th class="px-5 py-3 text-right">On-Time</th>
+                <th class="px-5 py-3 text-right">On-Time %</th><th class="px-5 py-3 text-right">Avg Days</th>
+                <th class="px-5 py-3 text-right">Lost</th><th class="px-5 py-3 text-right">Total Cost</th>
+              </tr></thead>
+              <tbody class="divide-y divide-gray-50">
+                @for (c of report()!.carrierPerformance; track c.carrierId) {
+                  <tr class="hover:bg-gray-50/50 transition-colors">
+                    <td class="px-5 py-3.5 font-medium text-gray-900">{{ c.carrierName }}</td>
+                    <td class="px-5 py-3.5 text-right text-gray-700">{{ c.totalShipments | number }}</td>
+                    <td class="px-5 py-3.5 text-right text-gray-700">{{ c.delivered | number }}</td>
+                    <td class="px-5 py-3.5 text-right text-green-600 font-medium">{{ c.onTime | number }}</td>
+                    <td class="px-5 py-3.5 text-right"><span class="px-2.5 py-1 rounded-full text-xs font-bold {{ onTimeBadge(c.onTimeRatePct) }}">{{ c.onTimeRatePct | number:'1.1-1' }}%</span></td>
+                    <td class="px-5 py-3.5 text-right text-gray-600">{{ c.avgDeliveryDays | number:'1.1-1' }}d</td>
+                    <td class="px-5 py-3.5 text-right text-red-600">{{ c.lost | number }}</td>
+                    <td class="px-5 py-3.5 text-right font-semibold">{{ fmt(c.totalShippingCost) }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      }
+      <!-- Shipment Details -->
+      @if (activeTab() === 'details' && report()!.rows?.length) {
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <div class="p-5 border-b border-gray-100"><h2 class="text-lg font-semibold text-gray-900">Shipment Details ({{ report()!.rows.length }})</h2></div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead><tr class="bg-gray-50 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th class="px-5 py-3 text-left">Shipment #</th><th class="px-5 py-3 text-left">Order #</th>
+                <th class="px-5 py-3 text-left">Carrier</th><th class="px-5 py-3 text-center">Status</th>
+                <th class="px-5 py-3 text-right">Est. Delivery</th><th class="px-5 py-3 text-right">Actual Delivery</th>
+                <th class="px-5 py-3 text-right">Days</th><th class="px-5 py-3 text-center">On Time</th>
+                <th class="px-5 py-3 text-right">Cost</th>
+              </tr></thead>
+              <tbody class="divide-y divide-gray-50">
+                @for (row of report()!.rows.slice(0, 50); track row.shipmentNumber) {
+                  <tr class="hover:bg-gray-50/50 transition-colors">
+                    <td class="px-5 py-3.5 font-medium text-gray-900">{{ row.shipmentNumber }}</td>
+                    <td class="px-5 py-3.5 text-indigo-600">{{ row.orderNumber }}</td>
+                    <td class="px-5 py-3.5 text-gray-700">{{ row.carrierName }}</td>
+                    <td class="px-5 py-3.5 text-center"><span class="px-2.5 py-1 rounded-full text-xs font-medium {{ statusBadge(row.status) }}">{{ row.status }}</span></td>
+                    <td class="px-5 py-3.5 text-right text-gray-500 text-xs">{{ row.estimatedDeliveryDate }}</td>
+                    <td class="px-5 py-3.5 text-right text-gray-500 text-xs">{{ row.actualDeliveryDate || '—' }}</td>
+                    <td class="px-5 py-3.5 text-right font-medium">{{ row.deliveryDays ?? '—' }}</td>
+                    <td class="px-5 py-3.5 text-center">
+                      @if (row.onTime !== null && row.onTime !== undefined) {
+                        <i class="bi" [class.bi-check-circle-fill]="row.onTime" [class.text-green-500]="row.onTime" [class.bi-x-circle-fill]="!row.onTime" [class.text-red-500]="!row.onTime"></i>
+                      } @else { <span class="text-gray-300">—</span> }
+                    </td>
+                    <td class="px-5 py-3.5 text-right">{{ fmt(row.shippingCost) }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+    }
+  </div>
+</div>

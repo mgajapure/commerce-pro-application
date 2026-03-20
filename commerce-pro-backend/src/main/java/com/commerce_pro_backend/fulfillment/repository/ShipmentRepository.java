@@ -36,4 +36,19 @@ public interface ShipmentRepository extends JpaRepository<Shipment, String>, Jpa
 
     @Query("SELECT COUNT(s) FROM Shipment s WHERE s.status = :status AND s.estimatedDeliveryDate < CURRENT_DATE")
     long countOverdue(@Param("status") ShipmentStatus status);
+    
+
+    // ── Analytics ─────────────────────────────────────────────────────────────
+
+    @Query("SELECT s FROM Shipment s WHERE s.createdAt BETWEEN :from AND :to")
+    List<Shipment> findByCreatedAtBetween(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
+
+    @Query("SELECT s FROM Shipment s WHERE s.carrierId IN :carrierIds AND s.createdAt BETWEEN :from AND :to")
+    List<Shipment> findByCarrierIdInAndCreatedAtBetween(
+            @Param("carrierIds") List<String> carrierIds,
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime to);
+
+    @Query("SELECT s.carrierId, s.carrierName, COUNT(s), SUM(s.shippingCost) FROM Shipment s WHERE s.createdAt BETWEEN :from AND :to GROUP BY s.carrierId, s.carrierName")
+    List<Object[]> aggregateByCarrier(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
 }

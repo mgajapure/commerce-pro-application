@@ -34,4 +34,17 @@ public interface StockMovementRepository extends JpaRepository<StockMovement, St
 
     @Query("SELECT sm.type, COUNT(sm), SUM(sm.quantity) FROM StockMovement sm WHERE sm.createdAt >= :since GROUP BY sm.type")
     List<Object[]> getMovementStatsSince(@Param("since") LocalDateTime since);
+
+
+    // ── Analytics ────────────────────────────────────────────────────────────
+
+    @Query("SELECT sm FROM StockMovement sm WHERE sm.createdAt BETWEEN :from AND :to ORDER BY sm.createdAt DESC")
+    List<StockMovement> findByCreatedAtBetween(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
+
+    @Query("SELECT sm FROM StockMovement sm WHERE sm.warehouse.id IN :warehouseIds AND sm.createdAt BETWEEN :from AND :to ORDER BY sm.createdAt DESC")
+    List<StockMovement> findByWarehouseIdInAndCreatedAtBetween(
+            @Param("warehouseIds") List<String> warehouseIds,
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime to);
+
 }

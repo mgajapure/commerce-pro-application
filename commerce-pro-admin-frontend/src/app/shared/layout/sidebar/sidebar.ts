@@ -196,8 +196,15 @@ export class Sidebar implements OnInit {
       'menu.analytics.customer': 'Customer Analytics',
       'menu.analytics.product': 'Product Performance',
       'menu.analytics.financial': 'Financial Reports',
-      'menu.analytics.inventory': 'Inventory Reports',
-      'menu.analytics.custom': 'Custom Reports',
+      'menu.analytics.overview':   'Analytics Overview',
+      'menu.analytics.inventory':  'Inventory Reports',
+      'menu.analytics.orders':     'Order Reports',
+      'menu.analytics.shipping':   'Shipping Reports',
+      'menu.analytics.returns':    'Returns Reports',
+      'menu.analytics.saved':      'Saved Reports',
+      'menu.analytics.scheduled':  'Scheduled Reports',
+      'menu.analytics.history':    'Execution History',
+      'menu.analytics.custom':     'Custom Reports',
 
       // Catalog Management
       'menu.catalog': 'Catalog',
@@ -399,14 +406,18 @@ export class Sidebar implements OnInit {
       permissions: ['view_analytics'],
       description: 'Comprehensive business intelligence and reporting',
       children: [
-        { id: 'analytics-sales', label: 'menu.analytics.sales', route: '/analytics/sales', permissions: ['view_sales_reports'] },
-        { id: 'analytics-traffic', label: 'menu.analytics.traffic', route: '/analytics/traffic', permissions: ['view_traffic_analytics'] },
-        { id: 'analytics-conversion', label: 'menu.analytics.conversion', route: '/analytics/conversion', permissions: ['view_conversion_analytics'] },
-        { id: 'analytics-customer', label: 'menu.analytics.customer', route: '/analytics/customer', permissions: ['view_customer_analytics'] },
-        { id: 'analytics-product', label: 'menu.analytics.product', route: '/analytics/product', permissions: ['view_analytics'] },
-        { id: 'analytics-financial', label: 'menu.analytics.financial', route: '/analytics/financial', permissions: ['view_financial_reports'] },
-        { id: 'analytics-inventory', label: 'menu.analytics.inventory', route: '/analytics/inventory', permissions: ['view_inventory_reports'] },
-        { id: 'analytics-custom', label: 'menu.analytics.custom', route: '/analytics/custom-reports', permissions: ['create_custom_reports'] }
+        { id: 'analytics-overview',    label: 'menu.analytics.overview',    route: '/analytics/overview',          permissions: ['view_analytics'] },
+        { id: 'analytics-sales',       label: 'menu.analytics.sales',       route: '/analytics/sales',             permissions: ['view_sales_reports'] },
+        { id: 'analytics-inventory',   label: 'menu.analytics.inventory',   route: '/analytics/inventory-report',  permissions: ['view_inventory_reports'] },
+        { id: 'analytics-orders',      label: 'menu.analytics.orders',      route: '/analytics/orders-report',     permissions: ['view_analytics'] },
+        { id: 'analytics-customers',   label: 'menu.analytics.customer',    route: '/analytics/customers-report',  permissions: ['view_customer_analytics'] },
+        { id: 'analytics-financial',   label: 'menu.analytics.financial',   route: '/analytics/financial',         permissions: ['view_financial_reports'] },
+        { id: 'analytics-shipping',    label: 'menu.analytics.shipping',    route: '/analytics/shipping',          permissions: ['view_analytics'] },
+        { id: 'analytics-returns',     label: 'menu.analytics.returns',     route: '/analytics/returns',           permissions: ['view_analytics'] },
+        { id: 'analytics-saved',       label: 'menu.analytics.saved',       route: '/analytics/saved-reports',     permissions: ['create_custom_reports'] },
+        { id: 'analytics-scheduled',   label: 'menu.analytics.scheduled',   route: '/analytics/scheduled-reports', permissions: ['create_custom_reports'] },
+        { id: 'analytics-history',     label: 'menu.analytics.history',     route: '/analytics/execution-history', permissions: ['create_custom_reports'] },
+        { id: 'analytics-custom',      label: 'menu.analytics.custom',      route: '/analytics/custom-reports',    permissions: ['create_custom_reports'] }
       ]
     },
 

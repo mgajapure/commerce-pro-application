@@ -1,0 +1,149 @@
+<app-alert></app-alert>
+<div class="min-h-screen bg-gray-50/50 p-4 sm:p-6 lg:p-8">
+  <div class="max-w-[1600px] mx-auto space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center"><i class="bi bi-bookmark text-white text-lg"></i></div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-2xl font-bold text-gray-900">Saved Reports</h1>
+            <span class="px-3 py-1 bg-gray-100 text-gray-600 text-sm font-medium rounded-full">{{ reports().length }}</span>
+          </div>
+          <p class="text-gray-500 text-sm">Named, reusable report definitions you can re-run or schedule</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        <a routerLink="/analytics/scheduled-reports"
+          class="px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:border-indigo-300 hover:text-indigo-600 transition-all flex items-center gap-2 shadow-sm">
+          <i class="bi bi-calendar-event"></i> Scheduled Reports
+        </a>
+        <button (click)="showCreateModal.set(true)"
+          class="px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 transition-all flex items-center gap-2 shadow-lg shadow-indigo-200 hover:-translate-y-0.5">
+          <i class="bi bi-plus-lg"></i> New Saved Report
+        </button>
+      </div>
+    </div>
+
+    @if (lastExecution() && lastExecution()!.downloadUrl) {
+      <div class="bg-green-50 border border-green-200 rounded-2xl p-4 flex items-center gap-4">
+        <i class="bi bi-check-circle-fill text-green-500 text-xl"></i>
+        <div>
+          <p class="font-semibold text-green-800">Report ready: {{ lastExecution()!.fileName }}</p>
+          <p class="text-sm text-green-600">{{ lastExecution()!.rowCount | number }} rows • {{ lastExecution()!.durationMs }}ms</p>
+        </div>
+        <button (click)="downloadLast()" class="ml-auto px-4 py-2 bg-green-600 text-white rounded-xl text-sm font-medium flex items-center gap-2">
+          <i class="bi bi-download"></i> Download
+        </button>
+      </div>
+    }
+
+    @if (error()) {
+      <div class="bg-red-50 border border-red-200 rounded-2xl p-5 flex items-center gap-4">
+        <i class="bi bi-exclamation-circle-fill text-red-500 text-xl"></i>
+        <p class="text-red-800 font-medium">{{ error() }}</p>
+        <button (click)="loadReports()" class="ml-auto text-sm text-red-700 underline">Retry</button>
+      </div>
+    }
+
+    @if (isLoading()) {
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        @for (i of [1,2,3,4,5,6]; track i) { <div class="bg-white rounded-2xl p-6 border border-gray-100 animate-pulse h-36"></div> }
+      </div>
+    } @else if (reports().length === 0) {
+      <div class="bg-white rounded-2xl p-16 border border-gray-100 text-center">
+        <i class="bi bi-bookmark text-5xl text-gray-200 mb-4 block"></i>
+        <h3 class="text-lg font-semibold text-gray-700">No saved reports yet</h3>
+        <p class="text-sm text-gray-400 mt-1">Save a report definition to re-run it anytime or schedule delivery.</p>
+        <button (click)="showCreateModal.set(true)" class="mt-4 px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium">Create First Report</button>
+      </div>
+    } @else {
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        @for (report of reports(); track report.id) {
+          <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-all group">
+            <div class="flex items-start justify-between mb-4">
+              <div class="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
+                <i class="bi bi-file-earmark-bar-graph text-indigo-600 text-lg"></i>
+              </div>
+              <div class="flex items-center gap-1">
+                @if (report.isPublic) {
+                  <span class="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full font-medium">Public</span>
+                }
+                <span class="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full">{{ report.defaultFormat }}</span>
+              </div>
+            </div>
+            <h3 class="font-semibold text-gray-900 mb-1 truncate">{{ report.name }}</h3>
+            <p class="text-xs text-indigo-600 font-medium mb-2">{{ reportTypeLabel(report.reportType) }}</p>
+            @if (report.description) { <p class="text-xs text-gray-500 mb-3 line-clamp-2">{{ report.description }}</p> }
+            <p class="text-xs text-gray-400 mb-4">Last updated {{ formatDate(report.updatedAt) }}</p>
+            <div class="flex gap-2">
+              <button (click)="runReport(report.id, report.name)"
+                [disabled]="runningId() === report.id"
+                class="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-indigo-600 text-white rounded-xl text-xs font-medium hover:bg-indigo-700 transition-all disabled:opacity-60">
+                @if (runningId() === report.id) {
+                  <i class="bi bi-arrow-clockwise animate-spin"></i> Running…
+                } @else {
+                  <i class="bi bi-play-fill"></i> Run Report
+                }
+              </button>
+              <button (click)="deleteReport(report.id)"
+                class="px-3 py-2 bg-gray-50 text-gray-500 rounded-xl text-xs hover:bg-red-50 hover:text-red-600 transition-all">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>
+
+<!-- Create Modal -->
+@if (showCreateModal()) {
+  <div class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" (click)="showCreateModal.set(false)">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg animate-fade-in" (click)="$event.stopPropagation()">
+      <div class="flex items-center justify-between p-6 border-b border-gray-100">
+        <h2 class="text-lg font-semibold text-gray-900">Create Saved Report</h2>
+        <button (click)="showCreateModal.set(false)" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors">
+          <i class="bi bi-x-lg text-gray-500"></i>
+        </button>
+      </div>
+      <div class="p-6 space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">Report Name *</label>
+          <input type="text" [(ngModel)]="newReport.name" placeholder="e.g. Monthly Sales Overview"
+            class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">Report Type *</label>
+          <select [(ngModel)]="newReport.reportType"
+            class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm">
+            @for (t of reportTypes; track t.value) { <option [value]="t.value">{{ t.label }}</option> }
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">Default Export Format</label>
+          <select [(ngModel)]="newReport.defaultFormat"
+            class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm">
+            @for (f of formats; track f.value) { <option [value]="f.value">{{ f.label }}</option> }
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">Description (optional)</label>
+          <textarea [(ngModel)]="newReport.description" rows="2" placeholder="What this report contains…"
+            class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm resize-none"></textarea>
+        </div>
+        <label class="flex items-center gap-3 cursor-pointer">
+          <input type="checkbox" [(ngModel)]="newReport.isPublic" class="w-4 h-4 rounded accent-indigo-600">
+          <span class="text-sm text-gray-700">Make this report public (visible to all users)</span>
+        </label>
+      </div>
+      <div class="flex gap-3 p-6 border-t border-gray-100">
+        <button (click)="showCreateModal.set(false)" class="flex-1 px-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-200 transition-all">Cancel</button>
+        <button (click)="createReport()" class="flex-1 px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 transition-all flex items-center justify-center gap-2">
+          <i class="bi bi-bookmark-plus"></i> Save Report
+        </button>
+      </div>
+    </div>
+  </div>
+}

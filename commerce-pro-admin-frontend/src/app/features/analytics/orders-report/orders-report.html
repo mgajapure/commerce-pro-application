@@ -1,0 +1,143 @@
+<app-alert></app-alert>
+<div class="min-h-screen bg-gray-50/50 p-4 sm:p-6 lg:p-8">
+  <div class="max-w-[1600px] mx-auto space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center"><i class="bi bi-cart-check text-white text-lg"></i></div>
+        <div><h1 class="text-2xl font-bold text-gray-900">Order Reports</h1><p class="text-gray-500 text-sm">Fulfilment rate, cancellation rate and order analysis</p></div>
+      </div>
+      <div class="flex flex-wrap items-center gap-3">
+        <select [ngModel]="datePreset()" (ngModelChange)="datePreset.set($event); loadData()"
+          class="px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-700 shadow-sm">
+          @for (p of datePresets; track p.value) { <option [value]="p.value">{{ p.label }}</option> }
+        </select>
+        <app-dropdown label="Export" [items]="exportItems" [showChevron]="true" (itemSelected)="onExport($event)"></app-dropdown>
+      </div>
+    </div>
+    <!-- Tabs -->
+    <div class="bg-white rounded-2xl p-2 shadow-sm border border-gray-100">
+      <div class="flex gap-1.5">
+        @for (tab of tabs; track tab.id) {
+          <button (click)="setTab(tab.id)" class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all"
+            [class.bg-blue-600]="activeTab() === tab.id" [class.text-white]="activeTab() === tab.id"
+            [class.shadow-md]="activeTab() === tab.id" [class.bg-gray-50]="activeTab() !== tab.id"
+            [class.text-gray-600]="activeTab() !== tab.id">
+            <i class="bi bi-{{ tab.icon }}"></i>{{ tab.label }}
+          </button>
+        }
+      </div>
+    </div>
+    @if (error()) {
+      <div class="bg-red-50 border border-red-200 rounded-2xl p-5 flex items-center gap-4">
+        <i class="bi bi-exclamation-circle-fill text-red-500 text-xl"></i>
+        <p class="text-red-800 font-medium">{{ error() }}</p>
+        <button (click)="loadData()" class="ml-auto text-sm text-red-700 underline">Retry</button>
+      </div>
+    }
+    @if (isLoading()) {
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        @for (i of [1,2,3,4]; track i) { <div class="bg-white rounded-2xl p-5 border border-gray-100 animate-pulse h-24"></div> }
+      </div>
+    }
+    @if (!isLoading() && report()) {
+      <!-- Summary -->
+      @if (activeTab() === 'summary') {
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm"><p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Total Orders</p><p class="text-2xl font-bold text-gray-900">{{ report()!.totalOrders | number }}</p></div>
+          <div class="p-5 rounded-2xl border shadow-sm" [class]="report()!.fulfillmentRatePct >= 85 ? 'bg-green-50 border-green-200' : 'bg-yellow-50 border-yellow-200'">
+            <p class="text-xs font-medium uppercase tracking-wider mb-1" [class]="report()!.fulfillmentRatePct >= 85 ? 'text-green-700' : 'text-yellow-700'">Fulfilment Rate</p>
+            <p class="text-2xl font-bold {{ rateClass(report()!.fulfillmentRatePct) }}">{{ report()!.fulfillmentRatePct | number:'1.1-1' }}%</p>
+          </div>
+          <div class="p-5 rounded-2xl border shadow-sm" [class]="report()!.cancellationRatePct <= 5 ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'">
+            <p class="text-xs font-medium uppercase tracking-wider mb-1" [class]="report()!.cancellationRatePct <= 5 ? 'text-green-700' : 'text-red-700'">Cancellation Rate</p>
+            <p class="text-2xl font-bold {{ rateClass(report()!.cancellationRatePct, true) }}">{{ report()!.cancellationRatePct | number:'1.1-1' }}%</p>
+          </div>
+          <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Avg Fulfilment Time</p>
+            <p class="text-2xl font-bold text-gray-900">{{ report()!.averageFulfillmentHours | number:'1.0-0' }}h</p>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Orders by Status</h2>
+            <div class="h-56"><canvas #statusChart></canvas></div>
+          </div>
+          <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Orders by Channel</h2>
+            <div class="space-y-3">
+              @for (entry of sourceEntries(); track entry[0]) {
+                <div class="flex items-center gap-3">
+                  <span class="text-sm text-gray-600 w-32 truncate">{{ entry[0] }}</span>
+                  <div class="flex-1 bg-gray-100 rounded-full h-2">
+                    <div class="h-2 bg-indigo-500 rounded-full" [style.width.%]="report()!.totalOrders > 0 ? (entry[1] / report()!.totalOrders) * 100 : 0"></div>
+                  </div>
+                  <span class="text-sm font-semibold text-gray-900 w-12 text-right">{{ entry[1] | number }}</span>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      }
+      <!-- Trend -->
+      @if (activeTab() === 'trend' && report()!.trend?.length) {
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <div class="p-5 border-b border-gray-100"><h2 class="text-lg font-semibold text-gray-900">Order Trend</h2></div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead><tr class="bg-gray-50 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th class="px-5 py-3 text-left">Period</th><th class="px-5 py-3 text-right">Total</th>
+                <th class="px-5 py-3 text-right">Fulfilled</th><th class="px-5 py-3 text-right">Cancelled</th>
+                <th class="px-5 py-3 text-right">Fulfil %</th><th class="px-5 py-3 text-right">Cancel %</th>
+                <th class="px-5 py-3 text-right">Revenue</th>
+              </tr></thead>
+              <tbody class="divide-y divide-gray-50">
+                @for (row of report()!.trend; track row.period) {
+                  <tr class="hover:bg-gray-50/50 transition-colors">
+                    <td class="px-5 py-3.5 font-medium">{{ row.period }}</td>
+                    <td class="px-5 py-3.5 text-right text-gray-700">{{ row.totalOrders | number }}</td>
+                    <td class="px-5 py-3.5 text-right text-green-600 font-medium">{{ row.fulfilledOrders | number }}</td>
+                    <td class="px-5 py-3.5 text-right text-red-600">{{ row.cancelledOrders | number }}</td>
+                    <td class="px-5 py-3.5 text-right"><span class="font-semibold {{ rateClass(row.fulfillmentRatePct) }}">{{ row.fulfillmentRatePct | number:'1.1-1' }}%</span></td>
+                    <td class="px-5 py-3.5 text-right"><span class="font-semibold {{ rateClass(row.cancellationRatePct, true) }}">{{ row.cancellationRatePct | number:'1.1-1' }}%</span></td>
+                    <td class="px-5 py-3.5 text-right font-semibold">{{ fmt(row.revenue) }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+      <!-- Details -->
+      @if (activeTab() === 'details' && report()!.rows?.length) {
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <div class="p-5 border-b border-gray-100"><h2 class="text-lg font-semibold text-gray-900">Order Details ({{ report()!.rows.length }})</h2></div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead><tr class="bg-gray-50 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th class="px-5 py-3 text-left">Order #</th><th class="px-5 py-3 text-left">Customer</th>
+                <th class="px-5 py-3 text-center">Status</th><th class="px-5 py-3 text-left">Source</th>
+                <th class="px-5 py-3 text-right">Total</th><th class="px-5 py-3 text-right">Items</th>
+                <th class="px-5 py-3 text-left">Created</th><th class="px-5 py-3 text-left">Carrier</th>
+              </tr></thead>
+              <tbody class="divide-y divide-gray-50">
+                @for (row of report()!.rows.slice(0, 50); track row.orderNumber) {
+                  <tr class="hover:bg-gray-50/50 transition-colors">
+                    <td class="px-5 py-3.5 font-medium text-indigo-600">{{ row.orderNumber }}</td>
+                    <td class="px-5 py-3.5"><p class="text-gray-900">{{ row.customerName }}</p><p class="text-xs text-gray-500">{{ row.customerEmail }}</p></td>
+                    <td class="px-5 py-3.5 text-center"><span class="px-2 py-1 rounded-full text-xs font-medium {{ statusBadge(row.status) }}">{{ row.status }}</span></td>
+                    <td class="px-5 py-3.5 text-gray-600">{{ row.source }}</td>
+                    <td class="px-5 py-3.5 text-right font-semibold">{{ fmt(row.totalAmount) }}</td>
+                    <td class="px-5 py-3.5 text-right text-gray-600">{{ row.itemCount }}</td>
+                    <td class="px-5 py-3.5 text-gray-500 text-xs">{{ row.createdAt | date:'mediumDate' }}</td>
+                    <td class="px-5 py-3.5 text-gray-600">{{ row.carrierName || '—' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+    }
+  </div>
+</div>

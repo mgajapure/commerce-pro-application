@@ -40,6 +40,7 @@ public class FileStorageService {
             Files.createDirectories(this.fileStoragePath.resolve("products"));
             Files.createDirectories(this.fileStoragePath.resolve("categories"));
             Files.createDirectories(this.fileStoragePath.resolve("brands"));
+            Files.createDirectories(this.fileStoragePath.resolve("reports"));
             log.info("File storage initialized at: {}", this.fileStoragePath);
         } catch (Exception ex) {
             throw new RuntimeException("Could not create upload directory", ex);
