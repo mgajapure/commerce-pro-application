@@ -37,6 +37,9 @@ public class AuditLog {
     @Column(name = "actor_id", nullable = false)
     private String actorId;  // Who performed the action
 
+    @Column(name = "actor_username", length = 50)
+    private String actorUsername;  // Snapshot of username at time of action
+
     @Column(name = "actor_role")
     private String actorRole;  // Role at time of action
 

@@ -128,9 +128,22 @@ public class Role {
     }
 
     public Set<Permission> getAllPermissions() {
+        return getAllPermissionsInternal(new java.util.HashSet<>(), 0);
+    }
+
+    private Set<Permission> getAllPermissionsInternal(java.util.Set<String> visitedRoleIds, int depth) {
+        if (depth > 10) {
+            throw new IllegalStateException(
+                "Role hierarchy depth exceeds maximum (10) at role: " + code +
+                ". Possible cycle in role hierarchy.");
+        }
+        if (!visitedRoleIds.add(this.id)) {
+            // Already visited — cycle detected, stop recursion
+            return new HashSet<>();
+        }
         Set<Permission> allPerms = new HashSet<>(permissions);
         if (parentRole != null) {
-            allPerms.addAll(parentRole.getAllPermissions());
+            allPerms.addAll(parentRole.getAllPermissionsInternal(visitedRoleIds, depth + 1));
         }
         return allPerms;
     }

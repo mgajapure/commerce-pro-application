@@ -95,9 +95,9 @@ dependencies {
 	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
 	
 	// =============================================
-	// Mail (Optional - for order notifications)
+	// Mail (for identity notifications - password reset, MFA alerts, account lock)
 	// =============================================
-	// implementation 'org.springframework.boot:spring-boot-starter-mail'
+	implementation 'org.springframework.boot:spring-boot-starter-mail'
 	
 	// =============================================
 	// Development Tools

@@ -24,10 +24,12 @@ import com.commerce_pro_backend.user_identity.dto.RoleTemplateDTO;
 import com.commerce_pro_backend.user_identity.dto.UpdateRoleRequest;
 import com.commerce_pro_backend.user_identity.entity.Permission;
 import com.commerce_pro_backend.user_identity.entity.Role;
+import com.commerce_pro_backend.user_identity.entity.User;
 import com.commerce_pro_backend.user_identity.enums.AuditAction;
 import com.commerce_pro_backend.user_identity.enums.RoleType;
 import com.commerce_pro_backend.user_identity.repository.PermissionRepository;
 import com.commerce_pro_backend.user_identity.repository.RoleRepository;
+import com.commerce_pro_backend.user_identity.repository.UserRepository;
 import com.commerce_pro_backend.user_identity.repository.UserRoleAssignmentRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -38,6 +40,7 @@ public class RoleService {
 
     private final RoleRepository roleRepository;
     private final PermissionRepository permissionRepository;
+    private final UserRepository userRepository;
     private final UserRoleAssignmentRepository assignmentRepository;
     private final AuditService auditService;
     private final RoleHierarchyConfig hierarchyConfig;
@@ -74,7 +77,7 @@ public class RoleService {
         Role saved = roleRepository.save(role);
 
         auditService.log(adminId, AuditAction.ROLE_CREATED, "ROLE", saved.getId(), 
-            saved.getCode(), null, "Created role: " + saved.getName(), true);
+            saved.getCode(), resolveUsername(adminId), null, "Created role: " + saved.getName(), true);
 
         return mapToDTO(saved);
     }
@@ -120,7 +123,7 @@ public class RoleService {
             saved.getName(), saved.getRequiresMfa(), saved.getSessionTimeoutMinutes());
 
         auditService.log(adminId, AuditAction.ROLE_UPDATED, "ROLE", id, 
-            saved.getCode(), oldValue, newValue, true);
+            saved.getCode(), resolveUsername(adminId), oldValue, newValue, true);
 
         return mapToDTO(saved);
     }
@@ -142,7 +145,7 @@ public class RoleService {
         roleRepository.delete(role);
 
         auditService.log(adminId, AuditAction.ROLE_DELETED, "ROLE", id, 
-            role.getCode(), null, "Deleted role with " + assignmentCount + " assignments", true);
+            role.getCode(), resolveUsername(adminId), null, "Deleted role with " + assignmentCount + " assignments", true);
     }
 
     @Transactional
@@ -158,7 +161,7 @@ public class RoleService {
         roleRepository.save(role);
 
         auditService.log(adminId, AuditAction.PERMISSION_GRANTED, "ROLE", roleId, 
-            role.getCode(), null, "Granted permissions: " + String.join(", ", permissionCodes), true);
+            role.getCode(), resolveUsername(adminId), null, "Granted permissions: " + String.join(", ", permissionCodes), true);
     }
 
     @Transactional
@@ -173,7 +176,7 @@ public class RoleService {
         roleRepository.save(role);
 
         auditService.log(adminId, AuditAction.PERMISSION_REVOKED, "ROLE", roleId, 
-            role.getCode(), null, "Revoked permissions: " + String.join(", ", permissionCodes), true);
+            role.getCode(), resolveUsername(adminId), null, "Revoked permissions: " + String.join(", ", permissionCodes), true);
     }
 
     @Transactional
@@ -194,7 +197,7 @@ public class RoleService {
         roleRepository.save(role);
 
         auditService.log(adminId, AuditAction.ROLE_UPDATED, "ROLE", roleId, 
-            role.getCode(), null, "Set parent role to: " + parent.getCode(), true);
+            role.getCode(), resolveUsername(adminId), null, "Set parent role to: " + parent.getCode(), true);
     }
 
     @Transactional(readOnly = true)
@@ -217,6 +220,13 @@ public class RoleService {
                 .maxAssignments(entry.getValue().getMaxAssignments())
                 .build())
             .collect(Collectors.toList());
+    }
+
+    private String resolveUsername(String userId) {
+        if (userId == null) return null;
+        return userRepository.findById(userId)
+            .map(User::getUsername)
+            .orElse(userId);
     }
 
     private boolean wouldCreateCycle(Role role, Role newParent) {

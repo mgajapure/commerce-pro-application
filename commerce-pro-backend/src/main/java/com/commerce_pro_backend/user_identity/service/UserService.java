@@ -45,6 +45,7 @@ public class UserService {
     private final AuditService auditService;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider tokenProvider;
+    private final EmailNotificationService emailNotificationService;
 
     @Transactional
     public UserDTO createUser(CreateUserRequest request, String adminId) {
@@ -55,8 +56,8 @@ public class UserService {
             throw ApiException.conflict("Email already exists");
         }
 
+        // Issue 9 FIX: removed manual .id(UUID...) — @GeneratedValue(UUID) handles this
         User user = User.builder()
-            .id(UUID.randomUUID().toString())
             .username(request.getUsername())
             .email(request.getEmail())
             .passwordHash(passwordEncoder.encode(request.getPassword()))
@@ -65,7 +66,7 @@ public class UserService {
             .phone(request.getPhone())
             .isActive(true)
             .isEmailVerified(false)
-            .mustChangePassword(false)
+            .mustChangePassword(true)  // Force password change on first login
             .createdBy(adminId)
             .build();
 
@@ -80,8 +81,13 @@ public class UserService {
             }
         }
 
-        auditService.log(adminId, AuditAction.USER_CREATED, "USER", saved.getId(), 
-            request.getUsername(), null, "Created user: " + request.getUsername(), true);
+        String adminUsername = resolveUsername(adminId);
+        auditService.log(adminId, AuditAction.USER_CREATED, "USER", saved.getId(),
+            request.getUsername(), adminUsername, null, "Created user: " + request.getUsername(), true);
+
+        // Issue 10 FIX: send welcome email with temporary password
+        emailNotificationService.sendWelcomeEmail(
+            saved.getEmail(), saved.getUsername(), request.getPassword());
 
         return mapToDTO(saved);
     }
@@ -128,8 +134,9 @@ public class UserService {
         String newValue = String.format("email=%s, firstName=%s, lastName=%s, active=%s",
             saved.getEmail(), saved.getFirstName(), saved.getLastName(), saved.getIsActive());
 
-        auditService.log(adminId, AuditAction.USER_UPDATED, "USER", id, 
-            saved.getUsername(), oldValue, newValue, true);
+        String adminUsername = resolveUsername(adminId);
+        auditService.log(adminId, AuditAction.USER_UPDATED, "USER", id,
+            saved.getUsername(), adminUsername, oldValue, newValue, true);
 
         return mapToDTO(saved);
     }
@@ -139,14 +146,14 @@ public class UserService {
         User user = userRepository.findById(id)
             .orElseThrow(() -> ApiException.notFound("User", id));
 
-        // Soft delete - deactivate and mark
         user.setIsActive(false);
         user.setUpdatedBy(adminId);
         user.setUpdatedAt(LocalDateTime.now());
         userRepository.save(user);
 
-        auditService.log(adminId, AuditAction.USER_DELETED, "USER", id, 
-            user.getUsername(), null, "Reason: " + reason, true);
+        String adminUsername = resolveUsername(adminId);
+        auditService.log(adminId, AuditAction.USER_DELETED, "USER", id,
+            user.getUsername(), adminUsername, null, "Reason: " + reason, true);
     }
 
     @Transactional
@@ -157,8 +164,9 @@ public class UserService {
         user.setUpdatedBy(adminId);
         userRepository.save(user);
 
-        auditService.log(adminId, AuditAction.USER_ACTIVATED, "USER", id, 
-            user.getUsername(), null, null, true);
+        String adminUsername = resolveUsername(adminId);
+        auditService.log(adminId, AuditAction.USER_ACTIVATED, "USER", id,
+            user.getUsername(), adminUsername, null, null, true);
     }
 
     @Transactional
@@ -169,15 +177,16 @@ public class UserService {
         user.setUpdatedBy(adminId);
         userRepository.save(user);
 
-        auditService.log(adminId, AuditAction.USER_DEACTIVATED, "USER", id, 
-            user.getUsername(), null, "Reason: " + reason, true);
+        String adminUsername = resolveUsername(adminId);
+        auditService.log(adminId, AuditAction.USER_DEACTIVATED, "USER", id,
+            user.getUsername(), adminUsername, null, "Reason: " + reason, true);
     }
 
     @Transactional
     public void resetPassword(String id, String adminId, boolean notifyUser) {
         User user = userRepository.findById(id)
             .orElseThrow(() -> ApiException.notFound("User", id));
-        
+
         String tempPassword = generateTempPassword();
         user.setPasswordHash(passwordEncoder.encode(tempPassword));
         user.setMustChangePassword(true);
@@ -185,10 +194,15 @@ public class UserService {
         user.setUpdatedBy(adminId);
         userRepository.save(user);
 
-        auditService.log(adminId, AuditAction.PASSWORD_RESET, "USER", id, 
-            user.getUsername(), null, "Password reset by admin", true);
+        String adminUsername = resolveUsername(adminId);
+        auditService.log(adminId, AuditAction.PASSWORD_RESET, "USER", id,
+            user.getUsername(), adminUsername, null, "Password reset by admin", true);
 
-        // TODO: Send email with temp password if notifyUser is true
+        // Issue 10 FIX: Send email with temp password
+        if (notifyUser) {
+            emailNotificationService.sendPasswordResetNotification(
+                user.getEmail(), user.getUsername(), tempPassword);
+        }
     }
 
     @Transactional
@@ -200,17 +214,26 @@ public class UserService {
         user.setUpdatedBy(adminId);
         userRepository.save(user);
 
-        auditService.log(adminId, AuditAction.USER_UNLOCKED, "USER", id, 
-            user.getUsername(), null, null, true);
+        String adminUsername = resolveUsername(adminId);
+        auditService.log(adminId, AuditAction.USER_UNLOCKED, "USER", id,
+            user.getUsername(), adminUsername, null, null, true);
     }
 
     @Transactional
     public void assignRole(String userId, RoleAssignmentRequest request, String adminId) {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> ApiException.notFound("User", userId));
-        
+
         Role role = roleRepository.findByCode(request.getRoleCode())
             .orElseThrow(() -> ApiException.badRequest("Role not found: " + request.getRoleCode()));
+
+        // Issue 6 FIX: Prevent duplicate active role assignments
+        boolean alreadyAssigned = user.getRoleAssignments().stream()
+            .anyMatch(a -> a.getRole().getCode().equals(request.getRoleCode())
+                       && a.getStatus() == AssignmentStatus.ACTIVE);
+        if (alreadyAssigned) {
+            throw ApiException.conflict("Role " + request.getRoleCode() + " is already actively assigned to this user");
+        }
 
         LocalDateTime validFrom = parseIsoDateTimeOrNull(request.getValidFrom(), "validFrom");
         LocalDateTime validUntil = parseIsoDateTimeOrNull(request.getValidUntil(), "validUntil");
@@ -222,8 +245,9 @@ public class UserService {
         user.assignRole(role, adminId, validFrom, validUntil);
         userRepository.save(user);
 
-        auditService.log(adminId, AuditAction.ROLE_ASSIGNED, "USER", userId, 
-            user.getUsername(), null, "Assigned role: " + role.getCode(), true);
+        String adminUsername = resolveUsername(adminId);
+        auditService.log(adminId, AuditAction.ROLE_ASSIGNED, "USER", userId,
+            user.getUsername(), adminUsername, null, "Assigned role: " + role.getCode(), true);
     }
 
     @Transactional
@@ -241,8 +265,9 @@ public class UserService {
         assignment.setRevocationReason(reason);
         assignmentRepository.save(assignment);
 
-        auditService.log(adminId, AuditAction.ROLE_REVOKED, "USER", userId, 
-            assignment.getUser().getUsername(), null, 
+        String adminUsername = resolveUsername(adminId);
+        auditService.log(adminId, AuditAction.ROLE_REVOKED, "USER", userId,
+            assignment.getUser().getUsername(), adminUsername, null,
             "Revoked role: " + assignment.getRole().getCode() + ". Reason: " + reason, true);
     }
 
@@ -255,7 +280,7 @@ public class UserService {
     public ImpersonationToken startImpersonation(String targetUserId, String adminId) {
         User target = userRepository.findById(targetUserId)
             .orElseThrow(() -> ApiException.notFound("User", targetUserId));
-        
+
         User admin = userRepository.findById(adminId)
             .orElseThrow(() -> ApiException.notFound("Admin", adminId));
 
@@ -266,8 +291,8 @@ public class UserService {
         String token = tokenProvider.generateImpersonationToken(
             admin.getUsername(), targetUserId, target.getUsername());
 
-        auditService.log(adminId, AuditAction.USER_IMPERSONATED, "USER", targetUserId, 
-            target.getUsername(), null, "Started impersonation session", true);
+        auditService.log(adminId, AuditAction.USER_IMPERSONATED, "USER", targetUserId,
+            target.getUsername(), admin.getUsername(), null, "Started impersonation session", true);
 
         return ImpersonationToken.builder()
             .token(token)
@@ -276,6 +301,21 @@ public class UserService {
             .originalAdminId(adminId)
             .expiresAt(LocalDateTime.now().plusMinutes(30))
             .build();
+    }
+
+    // -------------------------------------------------------------------------
+    // Private helpers
+    // -------------------------------------------------------------------------
+
+    /**
+     * Resolve admin username from their ID for audit log snapshots.
+     * Falls back to the ID string if the user cannot be found.
+     */
+    private String resolveUsername(String userId) {
+        if (userId == null) return null;
+        return userRepository.findById(userId)
+            .map(User::getUsername)
+            .orElse(userId);
     }
 
     private UserDTO mapToDTO(User user) {
@@ -299,7 +339,6 @@ public class UserService {
 
     private UserDetailDTO mapToDetailDTO(User user) {
         UserDetailDTO dto = new UserDetailDTO();
-        // Copy base fields
         dto.setId(user.getId());
         dto.setUsername(user.getUsername());
         dto.setEmail(user.getEmail());
@@ -343,13 +382,12 @@ public class UserService {
     }
 
     private String generateTempPassword() {
-        return UUID.randomUUID().toString().substring(0, 12);
+        // Use UUID-based secure random — sufficient for a one-time temp password
+        return UUID.randomUUID().toString().replace("-", "").substring(0, 12);
     }
 
     private LocalDateTime parseIsoDateTimeOrNull(String value, String fieldName) {
-        if (value == null) {
-            return null;
-        }
+        if (value == null) return null;
         try {
             return LocalDateTime.parse(value, DateTimeFormatter.ISO_DATE_TIME);
         } catch (DateTimeParseException ex) {

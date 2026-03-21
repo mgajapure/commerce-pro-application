@@ -34,11 +34,13 @@ public class AuditService {
 
     @Transactional
     public void log(String actorId, AuditAction action, String targetType, String targetId,
-                    String targetIdentifier, String oldValue, String newValue, boolean success) {
-        
+                    String targetIdentifier, String actorUsername, String oldValue,
+                    String newValue, boolean success) {
+
         AuditLog log = AuditLog.builder()
             .action(action)
             .actorId(actorId)
+            .actorUsername(actorUsername)   // Issue 8 FIX: snapshot username at write time
             .targetType(targetType)
             .targetId(targetId)
             .targetIdentifier(targetIdentifier)
@@ -66,9 +68,9 @@ public class AuditService {
     }
 
     @Transactional
-    public void logConfigChange(String actorId, String configType, Object newConfig) {
+    public void logConfigChange(String actorId, String actorUsername, String configType, Object newConfig) {
         log(actorId, AuditAction.CONFIG_UPDATED, "CONFIGURATION", configType,
-            configType, null, newConfig.toString(), true);
+            configType, actorUsername, null, newConfig.toString(), true);
     }
 
     @Transactional(readOnly = true)
@@ -96,7 +98,7 @@ public class AuditService {
         // Implementation would generate file and return download URL
         // This is a placeholder
         log(adminId, AuditAction.AUDIT_EXPORTED, "AUDIT", "EXPORT", 
-            "Bulk Export", null, "Exported logs from " + request.getFrom() + " to " + request.getTo(), true);
+            "Bulk Export", null, null, "Exported logs from " + request.getFrom() + " to " + request.getTo(), true);
 
         return ExportResult.builder()
             .downloadUrl("/api/v1/downloads/audit-export-" + System.currentTimeMillis() + ".csv")
@@ -114,7 +116,7 @@ public class AuditService {
         if (!dryRun) {
             int deleted = auditLogRepository.deleteOlderThan(before);
             log(adminId, AuditAction.AUDIT_PURGED, "AUDIT", "PURGE", 
-                "Bulk Delete", null, "Purged " + deleted + " logs before " + before, true);
+                "Bulk Delete", null, null, "Purged " + deleted + " logs before " + before, true);
         }
 
         return PurgeResult.builder()
@@ -153,7 +155,7 @@ public class AuditService {
             .id(log.getId())
             .action(log.getAction().name())
             .actorId(log.getActorId())
-            .actorUsername(log.getActorId()) // Could lookup actual username
+            .actorUsername(log.getActorUsername())  // Issue 8 FIX: use snapshotted username
             .targetType(log.getTargetType())
             .targetId(log.getTargetId())
             .targetIdentifier(log.getTargetIdentifier())

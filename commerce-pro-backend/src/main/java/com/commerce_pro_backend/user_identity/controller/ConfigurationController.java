@@ -2,6 +2,8 @@ package com.commerce_pro_backend.user_identity.controller;
 
 import java.util.Map;
 
+import com.commerce_pro_backend.user_identity.entity.User;
+import com.commerce_pro_backend.user_identity.repository.UserRepository;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -30,6 +32,12 @@ public class ConfigurationController {
 
     private final SuperAdminConfig superAdminConfig;
     private final AuditService auditService;
+    private final UserRepository userRepository;
+
+    private String resolveUsername(String userId) {
+        if (userId == null) return null;
+        return userRepository.findById(userId).map(User::getUsername).orElse(userId);
+    }
 
     @GetMapping("/superadmin")
     @PreAuthorize("hasAuthority('identity:config:read')")
@@ -51,7 +59,8 @@ public class ConfigurationController {
         superAdminConfig.getSecurityPolicy().setMaxConcurrentSessions(policy.getMaxConcurrentSessions());
         superAdminConfig.getSecurityPolicy().setAllowedIpRanges(policy.getAllowedIpRanges());
         
-        auditService.logConfigChange(adminId, "SECURITY_POLICY", policy);
+        //auditService.logConfigChange(adminId, "SECURITY_POLICY", policy);
+        auditService.logConfigChange(adminId, resolveUsername(adminId), "SECURITY_POLICY", policy);
         
         return ApiResponse.success("Security policy updated successfully");
     }
@@ -67,8 +76,8 @@ public class ConfigurationController {
         superAdminConfig.getConfigManagement().setCanModifyOwnRole(config.isCanModifyOwnRole());
         superAdminConfig.getConfigManagement().setMinSuperAdmins(config.getMinSuperAdmins());
         
-        auditService.logConfigChange(adminId, "CONFIG_MANAGEMENT", config);
-        
+//        auditService.logConfigChange(adminId, "CONFIG_MANAGEMENT", config);
+        auditService.logConfigChange(adminId, resolveUsername(adminId), "CONFIG_MANAGEMENT", config);
         return ApiResponse.success("Configuration management settings updated");
     }
 
@@ -87,8 +96,8 @@ public class ConfigurationController {
             @RequestHeader("X-Admin-Id") String adminId) {
         
         superAdminConfig.getConfigManagement().getDefaultSettings().putAll(settings);
-        auditService.logConfigChange(adminId, "SYSTEM_SETTINGS", settings);
-        
+//        auditService.logConfigChange(adminId, "SYSTEM_SETTINGS", settings);
+        auditService.logConfigChange(adminId, resolveUsername(adminId), "SYSTEM_SETTINGS", settings);
         return ApiResponse.success("System settings updated");
     }
 
@@ -100,8 +109,10 @@ public class ConfigurationController {
             return ApiResponse.error("Remote configuration reload is disabled");
         }
         
+//        // Trigger configuration reload
+//        auditService.logConfigChange(adminId, "CONFIG_RELOAD", Map.of("timestamp", System.currentTimeMillis()));
         // Trigger configuration reload
-        auditService.logConfigChange(adminId, "CONFIG_RELOAD", Map.of("timestamp", System.currentTimeMillis()));
+        auditService.logConfigChange(adminId, resolveUsername(adminId), "CONFIG_RELOAD", Map.of("timestamp", System.currentTimeMillis()));
         
         return ApiResponse.success("Configuration reloaded successfully");
     }
