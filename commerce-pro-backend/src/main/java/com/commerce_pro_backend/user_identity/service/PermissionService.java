@@ -17,9 +17,11 @@ import com.commerce_pro_backend.user_identity.dto.PermissionDTO;
 import com.commerce_pro_backend.user_identity.dto.SyncResult;
 import com.commerce_pro_backend.user_identity.dto.UpdatePermissionRequest;
 import com.commerce_pro_backend.user_identity.entity.Permission;
+import com.commerce_pro_backend.user_identity.entity.User;
 import com.commerce_pro_backend.user_identity.enums.AuditAction;
 import com.commerce_pro_backend.user_identity.enums.PermissionCategory;
 import com.commerce_pro_backend.user_identity.repository.PermissionRepository;
+import com.commerce_pro_backend.user_identity.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -30,6 +32,7 @@ public class PermissionService {
     private final PermissionRepository permissionRepository;
     private final PermissionRegistry permissionRegistry;
     private final AuditService auditService;
+    private final UserRepository userRepository;
 
     @Transactional(readOnly = true)
     public Page<PermissionDTO> findPermissions(PermissionCategory category, Boolean systemOnly, Pageable pageable) {
@@ -58,7 +61,7 @@ public class PermissionService {
         Permission saved = permissionRepository.save(permission);
 
         auditService.log(adminId, AuditAction.PERMISSION_CREATED, "PERMISSION", saved.getCode(), 
-            saved.getName(), null, "Created custom permission", true);
+            saved.getName(), resolveUsername(adminId), null, "Created custom permission", true);
 
         return mapToDTO(saved);
     }
@@ -84,7 +87,7 @@ public class PermissionService {
         Permission saved = permissionRepository.save(permission);
 
         auditService.log(adminId, AuditAction.PERMISSION_UPDATED, "PERMISSION", code, 
-            saved.getName(), null, "Updated permission", true);
+            saved.getName(), resolveUsername(adminId), null, "Updated permission", true);
 
         return mapToDTO(saved);
     }
@@ -106,7 +109,7 @@ public class PermissionService {
         permissionRepository.delete(permission);
 
         auditService.log(adminId, AuditAction.PERMISSION_DELETED, "PERMISSION", code, 
-            permission.getName(), null, "Deleted permission", true);
+            permission.getName(), resolveUsername(adminId), null, "Deleted permission", true);
     }
 
     @Transactional
@@ -164,7 +167,7 @@ public class PermissionService {
         }
 
         auditService.log(adminId, AuditAction.CONFIG_UPDATED, "SYSTEM", "PERMISSION_REGISTRY", 
-            "Sync", null, String.format("Created: %d, Updated: %d, Unchanged: %d", created, updated, unchanged), true);
+            "Sync", resolveUsername(adminId), null, String.format("Created: %d, Updated: %d, Unchanged: %d", created, updated, unchanged), true);
 
         return SyncResult.builder()
             .created(created)
@@ -173,6 +176,13 @@ public class PermissionService {
             .failed(0)
             .executionTimeMs(0) // Calculate if needed
             .build();
+    }
+
+    private String resolveUsername(String userId) {
+        if (userId == null) return null;
+        return userRepository.findById(userId)
+            .map(User::getUsername)
+            .orElse(userId);
     }
 
     private PermissionDTO mapToDTO(Permission permission) {

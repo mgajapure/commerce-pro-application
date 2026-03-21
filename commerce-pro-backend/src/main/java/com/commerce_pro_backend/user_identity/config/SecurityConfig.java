@@ -1,5 +1,6 @@
 package com.commerce_pro_backend.user_identity.config;
 
+import com.commerce_pro_backend.user_identity.service.RateLimitFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -33,6 +34,7 @@ public class SecurityConfig {
     private final JwtTokenProvider jwtTokenProvider;
     private final UserDetailsService userDetailsService;
     private final SuperAdminAuthorizationFilter superAdminFilter;
+    private final RateLimitFilter rateLimitFilter;
 
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
@@ -182,7 +184,9 @@ public class SecurityConfig {
                         // All other requests need authentication
                         .anyRequest().authenticated())
                 .addFilterBefore(superAdminFilter, UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
+                // Rate limit runs first — before JWT auth so locked-out IPs never reach token parsing
+                .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

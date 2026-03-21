@@ -9,8 +9,11 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import com.commerce_pro_backend.user_identity.enums.AssignmentStatus;
 
+import com.commerce_pro_backend.user_identity.config.MfaSecretEncryptor;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -63,7 +66,8 @@ public class User {
     @Builder.Default
     private Boolean mfaEnabled = false;
 
-    @Column(name = "mfa_secret", length = 255)
+    @Convert(converter = MfaSecretEncryptor.class)
+    @Column(name = "mfa_secret", length = 512) // longer to accommodate encrypted+base64 value
     private String mfaSecret;
 
     @Column(name = "failed_login_attempts", nullable = false)

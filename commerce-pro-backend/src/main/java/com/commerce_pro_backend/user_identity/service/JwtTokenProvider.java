@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 
 import javax.crypto.SecretKey;
 
+import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -30,6 +31,7 @@ public class JwtTokenProvider {
 
     private final String jwtSecret;
     private final long jwtExpirationMs;
+    @Getter
     private final long refreshExpirationMs;
     
     private SecretKey key;
@@ -45,14 +47,23 @@ public class JwtTokenProvider {
 
     @PostConstruct
     public void init() {
-        // Ensure key is at least 256 bits for HS256
+        if (jwtSecret == null || jwtSecret.isBlank()) {
+            throw new IllegalStateException(
+                "app.jwt.secret must be configured. Set JWT_SECRET environment variable.");
+        }
+        // Reject the default placeholder — forces developers to set a real secret
+        if (jwtSecret.startsWith("your-256-bit-secret-key")) {
+            throw new IllegalStateException(
+                "JWT secret is using the default placeholder value. " +
+                "Set a secure JWT_SECRET environment variable before starting the application.");
+        }
         byte[] keyBytes = jwtSecret.getBytes();
         if (keyBytes.length < 32) {
-            // Pad or use base64 decoding if secret is base64 encoded
-            key = Keys.hmacShaKeyFor(jwtSecret.getBytes());
-        } else {
-            key = Keys.hmacShaKeyFor(keyBytes);
+            throw new IllegalStateException(
+                "JWT secret must be at least 32 characters long for HS256 (got " + keyBytes.length + ").");
         }
+        key = Keys.hmacShaKeyFor(keyBytes);
+        log.info("JWT token provider initialized with key length: {} bytes", keyBytes.length);
     }
 
     public String generateToken(Authentication authentication, boolean isSuperAdmin) {
@@ -163,4 +174,23 @@ public class JwtTokenProvider {
         Claims claims = parseToken(token);
         return claims.get("jti", String.class);
     }
+
+    /**
+     * Returns SHA-256 hex hash of the raw token string.
+     * Used to store/look up refresh tokens without persisting the raw value.
+     */
+    public String hashToken(String rawToken) {
+        try {
+            java.security.MessageDigest digest = java.security.MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(rawToken.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder();
+            for (byte b : hash) {
+                sb.append(String.format("%02x", b));
+            }
+            return sb.toString();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to hash token", e);
+        }
+    }
+
 }
