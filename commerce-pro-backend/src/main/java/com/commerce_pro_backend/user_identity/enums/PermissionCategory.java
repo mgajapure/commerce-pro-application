@@ -10,5 +10,6 @@ public enum PermissionCategory {
     INTEGRATION_CONFIG,     // SSO, LDAP, external IdPs
     ORDER_MANAGEMENT,       // Orders, fulfilment, cancellations
     FULFILLMENT_MANAGEMENT, // Pick lists, shipments, carriers, shipping rules
-    CUSTOMER_MANAGEMENT     //
+    CUSTOMER_MANAGEMENT,     //
+    ANALYTICS_REPORTING     // Analytics, reports, KPIs
 }

@@ -1,1 +1,147 @@
-<p>custom-reports works!</p>
+<app-alert></app-alert>
+<div class="min-h-screen bg-gray-50/50 p-4 sm:p-6 lg:p-8">
+  <div class="max-w-[1600px] mx-auto space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-gray-700 rounded-xl flex items-center justify-center"><i class="bi bi-sliders text-white text-lg"></i></div>
+        <div><h1 class="text-2xl font-bold text-gray-900">Custom Report Builder</h1><p class="text-gray-500 text-sm">Build and export any report combination on demand</p></div>
+      </div>
+      <div class="flex items-center gap-2">
+        <a routerLink="/analytics/saved-reports" class="px-3 py-2 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:border-indigo-300 hover:text-indigo-600 transition-all flex items-center gap-2 shadow-sm">
+          <i class="bi bi-bookmark"></i> Saved Reports
+        </a>
+        <a routerLink="/analytics/execution-history" class="px-3 py-2 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:border-indigo-300 hover:text-indigo-600 transition-all flex items-center gap-2 shadow-sm">
+          <i class="bi bi-clock-history"></i> History
+        </a>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Builder Panel -->
+      <div class="lg:col-span-1 space-y-4">
+        <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+          <h2 class="text-lg font-semibold text-gray-900 mb-5">Report Configuration</h2>
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1.5">Report Type *</label>
+              <select [(ngModel)]="filter.reportType"
+                class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
+                @for (group of groupedReportTypes(); track group.group) {
+                  <optgroup [label]="group.group">
+                    @for (t of group.types; track t.value) { <option [value]="t.value">{{ t.label }}</option> }
+                  </optgroup>
+                }
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1.5">Date Range</label>
+              <select [(ngModel)]="filter.datePreset"
+                class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
+                @for (p of datePresets; track p.value) { <option [value]="p.value">{{ p.label }}</option> }
+              </select>
+            </div>
+            @if (filter.datePreset === 'CUSTOM') {
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-xs text-gray-500 mb-1">From</label>
+                  <input type="date" [(ngModel)]="filter.dateFrom" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20">
+                </div>
+                <div>
+                  <label class="block text-xs text-gray-500 mb-1">To</label>
+                  <input type="date" [(ngModel)]="filter.dateTo" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20">
+                </div>
+              </div>
+            }
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1.5">Group By</label>
+              <select [(ngModel)]="filter.groupBy"
+                class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
+                @for (g of groupByOptions; track g.value) { <option [value]="g.value">{{ g.label }}</option> }
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1.5">Export Format</label>
+              <div class="flex gap-2">
+                @for (f of formats; track f.value) {
+                  <button (click)="filter.exportFormat = f.value"
+                    class="flex-1 px-3 py-2 rounded-xl text-xs font-medium border transition-all"
+                    [class.bg-indigo-600]="filter.exportFormat === f.value" [class.text-white]="filter.exportFormat === f.value"
+                    [class.border-indigo-600]="filter.exportFormat === f.value"
+                    [class.bg-gray-50]="filter.exportFormat !== f.value" [class.text-gray-600]="filter.exportFormat !== f.value"
+                    [class.border-gray-200]="filter.exportFormat !== f.value">
+                    {{ f.label }}
+                  </button>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+        <button (click)="runReport()" [disabled]="isRunning()"
+          class="w-full py-3 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 disabled:opacity-60 flex items-center justify-center gap-2">
+          @if (isRunning()) {
+            <i class="bi bi-arrow-clockwise animate-spin"></i> Generating Report…
+          } @else {
+            <i class="bi bi-play-fill"></i> Generate Report
+          }
+        </button>
+        <button (click)="saveReport()" class="w-full py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl font-medium hover:border-indigo-300 hover:text-indigo-600 transition-all flex items-center justify-center gap-2">
+          <i class="bi bi-bookmark-plus"></i> Save This Configuration
+        </button>
+      </div>
+
+      <!-- Result Panel -->
+      <div class="lg:col-span-2">
+        @if (error()) {
+          <div class="bg-red-50 border border-red-200 rounded-2xl p-6 flex items-start gap-4">
+            <i class="bi bi-exclamation-circle-fill text-red-500 text-xl flex-shrink-0"></i>
+            <div>
+              <p class="font-semibold text-red-800">Report failed</p>
+              <p class="text-sm text-red-600 mt-1">{{ error() }}</p>
+              <button (click)="runReport()" class="mt-3 text-sm text-red-700 underline font-medium">Try again</button>
+            </div>
+          </div>
+        } @else if (execution() && execution()!.status === 'COMPLETED') {
+          <div class="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm text-center">
+            <div class="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <i class="bi bi-check-circle-fill text-green-600 text-3xl"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-900 mb-2">Report Generated!</h3>
+            <p class="text-gray-500 mb-1">{{ execution()!.fileName }}</p>
+            <p class="text-sm text-gray-400 mb-6">{{ execution()!.rowCount | number }} rows • {{ formatSize(execution()!.fileSizeBytes) }} • {{ execution()!.durationMs }}ms</p>
+            <button (click)="download()"
+              class="px-8 py-3 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 flex items-center gap-2 mx-auto">
+              <i class="bi bi-download"></i> Download {{ execution()!.format }}
+            </button>
+          </div>
+        } @else if (isRunning()) {
+          <div class="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm text-center">
+            <div class="w-16 h-16 bg-indigo-100 rounded-2xl flex items-center justify-center mx-auto mb-4 animate-pulse">
+              <i class="bi bi-gear-fill text-indigo-600 text-3xl animate-spin"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-900 mb-2">Generating Report…</h3>
+            <p class="text-gray-500 text-sm">Querying data and building your export file</p>
+          </div>
+        } @else {
+          <div class="bg-white rounded-2xl p-12 border border-gray-100 shadow-sm text-center h-full flex flex-col items-center justify-center">
+            <div class="w-20 h-20 bg-gray-100 rounded-2xl flex items-center justify-center mb-5">
+              <i class="bi bi-sliders text-5xl text-gray-300"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-gray-700 mb-2">Configure and run a report</h3>
+            <p class="text-gray-400 text-sm max-w-sm">Select your report type, date range, grouping and export format, then click Generate Report.</p>
+            <div class="mt-8 grid grid-cols-3 gap-3 w-full max-w-sm">
+              @for (hint of [
+                {icon:'calendar3',text:'Date Ranges'}, {icon:'funnel',text:'Filters'}, {icon:'download',text:'Export'}
+              ]; track hint.text) {
+                <div class="bg-gray-50 rounded-xl p-3 text-center">
+                  <i class="bi bi-{{ hint.icon }} text-xl text-gray-400 block mb-1"></i>
+                  <span class="text-xs text-gray-500">{{ hint.text }}</span>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</div>

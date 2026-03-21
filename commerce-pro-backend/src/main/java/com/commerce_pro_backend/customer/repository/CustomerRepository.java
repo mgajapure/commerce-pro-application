@@ -78,4 +78,10 @@ public interface CustomerRepository extends JpaRepository<Customer, String>,
     List<Customer> findEligibleForTierUpgrade(@Param("tier") CustomerTier tier,
                                                @Param("spend") BigDecimal spend,
                                                @Param("orders") int orders);
+
+    // ── Analytics ────────────────────────────────────────────────────────────
+
+    @Query("SELECT c FROM Customer c WHERE c.createdAt BETWEEN :from AND :to")
+    List<Customer> findByCreatedAtBetween(@Param("from") java.time.LocalDateTime from,
+                                          @Param("to")   java.time.LocalDateTime to);
 }

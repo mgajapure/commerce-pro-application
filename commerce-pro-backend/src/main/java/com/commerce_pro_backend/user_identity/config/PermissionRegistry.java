@@ -119,6 +119,20 @@ public class PermissionRegistry {
          register("customer:group:update",            "Update Customer Group",        PermissionCategory.CUSTOMER_MANAGEMENT, 2);
          register("customer:group:delete",            "Delete Customer Group",        PermissionCategory.CUSTOMER_MANAGEMENT, 3);
 
+         // Analytics & Reporting Permissions
+        register("analytics:dashboard:read",    "View Analytics Dashboard",          PermissionCategory.ANALYTICS_REPORTING, 1);
+        register("analytics:sales:read",        "View Sales Reports",                PermissionCategory.ANALYTICS_REPORTING, 1);
+        register("analytics:inventory:read",    "View Inventory Reports",            PermissionCategory.ANALYTICS_REPORTING, 1);
+        register("analytics:orders:read",       "View Order Reports",                PermissionCategory.ANALYTICS_REPORTING, 1);
+        register("analytics:customers:read",    "View Customer Reports",             PermissionCategory.ANALYTICS_REPORTING, 1);
+        register("analytics:financial:read",    "View Financial Reports",            PermissionCategory.ANALYTICS_REPORTING, 2);
+        register("analytics:shipping:read",     "View Shipping Reports",             PermissionCategory.ANALYTICS_REPORTING, 1);
+        register("analytics:returns:read",      "View Returns Reports",              PermissionCategory.ANALYTICS_REPORTING, 1);
+        register("analytics:reports:read",      "View Saved & Scheduled Reports",    PermissionCategory.ANALYTICS_REPORTING, 1);
+        register("analytics:reports:run",       "Run / Export Reports",              PermissionCategory.ANALYTICS_REPORTING, 2);
+        register("analytics:reports:manage",    "Create & Manage Saved/Scheduled Reports", PermissionCategory.ANALYTICS_REPORTING, 2);
+
+
         log.info("Registered {} system permissions", systemPermissions.size());
     }
 

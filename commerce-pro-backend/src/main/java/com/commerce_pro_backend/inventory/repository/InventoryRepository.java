@@ -46,4 +46,9 @@ public interface InventoryRepository extends JpaRepository<Inventory, String>, J
     List<Object[]> getStatsByWarehouse();
 
     boolean existsByProductIdAndWarehouseId(String productId, String warehouseId);
+
+    // ── Analytics ────────────────────────────────────────────────────────────
+
+    @Query("SELECT i FROM Inventory i WHERE i.warehouse.id IN :warehouseIds")
+    List<Inventory> findByWarehouseIdIn(@Param("warehouseIds") List<String> warehouseIds);
 }

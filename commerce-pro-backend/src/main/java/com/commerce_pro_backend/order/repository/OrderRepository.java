@@ -77,4 +77,43 @@ public interface OrderRepository extends JpaRepository<Order, String>, JpaSpecif
             OR LOWER(o.customerEmail) LIKE LOWER(CONCAT('%',:q,'%')))
         """)
     Page<Order> search(@Param("q") String query, Pageable pageable);
+
+    // ── Analytics queries ────────────────────────────────────────────────────
+
+    @Query("SELECT o FROM Order o WHERE o.createdAt BETWEEN :from AND :to AND o.status NOT IN :excluded")
+    List<Order> findByCreatedAtBetweenAndStatusNotIn(
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime to,
+            @Param("excluded") List<OrderStatus> excluded);
+
+    @Query("SELECT o FROM Order o WHERE o.createdAt BETWEEN :from AND :to")
+    List<Order> findAllByCreatedAtBetween(
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime to);
+
+    /** Returns Object[]{statusString, count} grouped by status in range */
+    @Query("SELECT CAST(o.status AS string), COUNT(o) FROM Order o WHERE o.createdAt BETWEEN :from AND :to GROUP BY o.status")
+    List<Object[]> countByStatusInRange(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
+
+    /** Returns Object[]{sourceString, count} grouped by source in range */
+    @Query("SELECT CAST(o.source AS string), COUNT(o) FROM Order o WHERE o.createdAt BETWEEN :from AND :to GROUP BY o.source")
+    List<Object[]> countBySourceInRange(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
+
+    @Query("SELECT COUNT(o) FROM Order o WHERE o.status IN :statuses AND o.createdAt BETWEEN :from AND :to")
+    long countByStatusInAndCreatedAtBetween(
+            @Param("statuses") List<OrderStatus> statuses,
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime to);
+
+    @Query("SELECT COALESCE(SUM(o.totalAmount), 0) FROM Order o WHERE o.status NOT IN :excluded AND o.createdAt BETWEEN :from AND :to")
+    BigDecimal sumRevenueInRange(
+            @Param("excluded") List<OrderStatus> excluded,
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime to);
+
+    @Query("SELECT COALESCE(SUM(o.taxAmount), 0) FROM Order o WHERE o.status NOT IN :excluded AND o.createdAt BETWEEN :from AND :to")
+    BigDecimal sumTaxInRange(
+            @Param("excluded") List<OrderStatus> excluded,
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime to);
 }

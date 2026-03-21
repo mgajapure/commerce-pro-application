@@ -1,1 +1,168 @@
-<p>financial works!</p>
+<app-alert></app-alert>
+<div class="min-h-screen bg-gray-50/50 p-4 sm:p-6 lg:p-8">
+  <div class="max-w-[1600px] mx-auto space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center"><i class="bi bi-cash-stack text-white text-lg"></i></div>
+        <div><h1 class="text-2xl font-bold text-gray-900">Financial Reports</h1><p class="text-gray-500 text-sm">Revenue, COGS, margin and tax analysis</p></div>
+      </div>
+      <div class="flex flex-wrap items-center gap-3">
+        <select [ngModel]="datePreset()" (ngModelChange)="datePreset.set($event); loadData()"
+          class="px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-700 shadow-sm">
+          @for (p of datePresets; track p.value) { <option [value]="p.value">{{ p.label }}</option> }
+        </select>
+        <select [ngModel]="groupBy()" (ngModelChange)="groupBy.set($event); loadData()"
+          class="px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-700 shadow-sm">
+          @for (g of groupByOptions; track g.value) { <option [value]="g.value">{{ g.label }}</option> }
+        </select>
+        <app-dropdown label="Export" [items]="exportItems" [showChevron]="true" (itemSelected)="onExport($event)"></app-dropdown>
+      </div>
+    </div>
+    <!-- Tabs -->
+    <div class="bg-white rounded-2xl p-2 shadow-sm border border-gray-100">
+      <div class="flex gap-1.5">
+        @for (tab of tabs; track tab.id) {
+          <button (click)="setTab(tab.id)" class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all"
+            [class.bg-emerald-600]="activeTab() === tab.id" [class.text-white]="activeTab() === tab.id"
+            [class.shadow-md]="activeTab() === tab.id" [class.bg-gray-50]="activeTab() !== tab.id"
+            [class.text-gray-600]="activeTab() !== tab.id">
+            <i class="bi bi-{{ tab.icon }}"></i>{{ tab.label }}
+          </button>
+        }
+      </div>
+    </div>
+    @if (error()) {
+      <div class="bg-red-50 border border-red-200 rounded-2xl p-5 flex items-center gap-4">
+        <i class="bi bi-exclamation-circle-fill text-red-500 text-xl"></i>
+        <p class="text-red-800 font-medium">{{ error() }}</p>
+        <button (click)="loadData()" class="ml-auto text-sm text-red-700 underline">Retry</button>
+      </div>
+    }
+    @if (isLoading()) {
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        @for (i of [1,2,3,4]; track i) { <div class="bg-white rounded-2xl p-5 border border-gray-100 animate-pulse h-24"></div> }
+      </div>
+    }
+    @if (!isLoading() && report()) {
+      <!-- P&L Summary -->
+      @if (activeTab() === 'summary') {
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Gross Revenue</p>
+            <p class="text-2xl font-bold text-gray-900">{{ fmt(report()!.grossRevenue) }}</p>
+            @if (report()!.revenueChangePct != null) {
+              <span class="mt-2 inline-block text-xs font-medium px-2 py-0.5 rounded-full {{ growthClass(report()!.revenueChangePct) }}">
+                {{ report()!.revenueChangePct! >= 0 ? '+' : '' }}{{ report()!.revenueChangePct | number:'1.1-1' }}%
+              </span>
+            }
+          </div>
+          <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Net Revenue</p>
+            <p class="text-2xl font-bold text-gray-900">{{ fmt(report()!.netRevenue) }}</p>
+          </div>
+          <div class="bg-emerald-50 p-5 rounded-2xl border border-emerald-200 shadow-sm">
+            <p class="text-xs font-medium text-emerald-700 uppercase tracking-wider mb-1">Gross Profit</p>
+            <p class="text-2xl font-bold text-emerald-700">{{ fmt(report()!.grossProfit) }}</p>
+            <p class="text-xs text-emerald-600 mt-1">{{ report()!.grossMarginPct | number:'1.1-1' }}% margin</p>
+          </div>
+          <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Total COGS</p>
+            <p class="text-2xl font-bold text-red-600">{{ fmt(report()!.totalCogs) }}</p>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm"><p class="text-sm text-gray-500 mb-1">Total Tax Collected</p><p class="text-xl font-bold text-gray-900">{{ fmt(report()!.totalTax) }}</p></div>
+          <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm"><p class="text-sm text-gray-500 mb-1">Total Discounts</p><p class="text-xl font-bold text-yellow-600">{{ fmt(report()!.totalDiscount) }}</p></div>
+          <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm"><p class="text-sm text-gray-500 mb-1">Total Refunds</p><p class="text-xl font-bold text-red-600">{{ fmt(report()!.totalRefunds) }}</p></div>
+        </div>
+        <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+          <div class="flex items-center justify-between mb-5">
+            <h2 class="text-lg font-semibold text-gray-900">Revenue vs COGS vs Profit Trend</h2>
+          </div>
+          <div class="h-72"><canvas #revenueChart></canvas></div>
+        </div>
+      }
+      <!-- Margin Analysis -->
+      @if (activeTab() === 'margin' && report()!.marginRows?.length) {
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <div class="p-5 border-b border-gray-100 flex items-center justify-between">
+            <h2 class="text-lg font-semibold text-gray-900">Margin by Product</h2>
+            <span class="text-sm text-gray-500">{{ report()!.marginRows.length }} products</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead><tr class="bg-gray-50 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th class="px-5 py-3 text-left">Product</th><th class="px-5 py-3 text-right">Revenue</th>
+                <th class="px-5 py-3 text-right">COGS</th><th class="px-5 py-3 text-right">Gross Profit</th>
+                <th class="px-5 py-3 text-right">Margin %</th><th class="px-5 py-3 text-right">Units</th>
+              </tr></thead>
+              <tbody class="divide-y divide-gray-50">
+                @for (row of report()!.marginRows.slice(0, 50); track row.dimensionId) {
+                  <tr class="hover:bg-gray-50/50 transition-colors">
+                    <td class="px-5 py-3.5 font-medium text-gray-900">{{ row.dimension }}</td>
+                    <td class="px-5 py-3.5 text-right font-semibold">{{ fmt(row.revenue) }}</td>
+                    <td class="px-5 py-3.5 text-right text-red-600">{{ fmt(row.cogs) }}</td>
+                    <td class="px-5 py-3.5 text-right text-emerald-600 font-semibold">{{ fmt(row.grossProfit) }}</td>
+                    <td class="px-5 py-3.5 text-right">
+                      <span class="px-2.5 py-1 rounded-full text-xs font-bold"
+                        [class.bg-green-100]="row.marginPct >= 30" [class.text-green-800]="row.marginPct >= 30"
+                        [class.bg-yellow-100]="row.marginPct >= 15 && row.marginPct < 30" [class.text-yellow-800]="row.marginPct >= 15 && row.marginPct < 30"
+                        [class.bg-red-100]="row.marginPct < 15" [class.text-red-800]="row.marginPct < 15">
+                        {{ row.marginPct | number:'1.1-1' }}%
+                      </span>
+                    </td>
+                    <td class="px-5 py-3.5 text-right text-gray-600">{{ row.unitsSold | number }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+      <!-- Tax Summary -->
+      @if (activeTab() === 'tax') {
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Tax by Period</h2>
+            @if (report()!.taxSummaryRows?.length) {
+              <table class="w-full text-sm">
+                <thead><tr class="bg-gray-50 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th class="px-3 py-2 text-left">Period</th><th class="px-3 py-2 text-right">Orders</th>
+                  <th class="px-3 py-2 text-right">Taxable Revenue</th><th class="px-3 py-2 text-right">Tax Collected</th>
+                  <th class="px-3 py-2 text-right">Eff. Rate</th>
+                </tr></thead>
+                <tbody class="divide-y divide-gray-50">
+                  @for (row of report()!.taxSummaryRows; track row.period) {
+                    <tr class="hover:bg-gray-50/50">
+                      <td class="px-3 py-2.5 font-medium">{{ row.period }}</td>
+                      <td class="px-3 py-2.5 text-right text-gray-600">{{ row.orders | number }}</td>
+                      <td class="px-3 py-2.5 text-right">{{ fmt(row.taxableRevenue) }}</td>
+                      <td class="px-3 py-2.5 text-right font-semibold text-emerald-700">{{ fmt(row.taxCollected) }}</td>
+                      <td class="px-3 py-2.5 text-right text-gray-600">{{ row.effectiveTaxRate | number:'1.1-1' }}%</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            }
+          </div>
+          <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Tax by Rate</h2>
+            <div class="space-y-3">
+              @for (entry of (report()!.taxByRate | keyvalue); track entry.key) {
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                  <span class="text-sm font-medium text-gray-700">Rate: {{ entry.key }}</span>
+                  <span class="text-sm font-bold text-gray-900">{{ fmt(+entry.value) }}</span>
+                </div>
+              }
+            </div>
+            <div class="mt-4 pt-4 border-t border-gray-100 flex justify-between">
+              <span class="font-semibold text-gray-700">Total Tax Collected</span>
+              <span class="font-bold text-emerald-700 text-lg">{{ fmt(report()!.totalTaxCollected) }}</span>
+            </div>
+          </div>
+        </div>
+      }
+    }
+  </div>
+</div>

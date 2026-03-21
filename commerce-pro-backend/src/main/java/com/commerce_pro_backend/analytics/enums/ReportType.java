@@ -1,0 +1,42 @@
+package com.commerce_pro_backend.analytics.enums;
+
+public enum ReportType {
+    // Sales
+    SALES_OVERVIEW,
+    SALES_BY_PRODUCT,
+    SALES_BY_CATEGORY,
+    SALES_BY_CHANNEL,
+    SALES_BY_DATE,
+
+    // Inventory
+    INVENTORY_STOCK_VALUE,
+    INVENTORY_MOVEMENT,
+    INVENTORY_AGEING,
+
+    // Orders
+    ORDER_FULFILLMENT_RATE,
+    ORDER_CANCELLATION_RATE,
+    ORDER_SUMMARY,
+
+    // Customers
+    CUSTOMER_LTV,
+    CUSTOMER_COHORT,
+    CUSTOMER_CHURN,
+    CUSTOMER_ACQUISITION,
+
+    // Financial
+    FINANCIAL_REVENUE,
+    FINANCIAL_MARGIN,
+    FINANCIAL_TAX_SUMMARY,
+
+    // Shipping
+    SHIPPING_ON_TIME_DELIVERY,
+    SHIPPING_CARRIER_PERFORMANCE,
+
+    // Returns
+    RETURN_RATE,
+    RETURN_REASON_ANALYSIS,
+
+    // Custom
+    CUSTOM
+}
