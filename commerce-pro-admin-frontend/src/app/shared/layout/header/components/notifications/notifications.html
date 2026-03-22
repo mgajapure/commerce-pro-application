@@ -10,29 +10,39 @@
     <div OutsideClickDirective (appOutsideClick)="toggle()" class="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-gray-100 z-50 animate-dropdown">
         <div class="p-4 border-b border-gray-100 flex items-center justify-between">
             <h3 class="font-semibold text-gray-900">Notifications</h3>
-            <button (click)="markAllRead()" class="text-xs text-indigo-600 font-medium hover:underline">Mark all
-                read</button>
+            @if (unreadCount() > 0) {
+            <button (click)="markAllRead()" class="text-xs text-indigo-600 font-medium hover:underline">Mark all read</button>
+            }
         </div>
         <div class="max-h-96 overflow-y-auto">
-            @for (notification of notifications(); track notification.id) {
-            <div class="p-4 hover:bg-gray-50 cursor-pointer border-l-2" [class.border-indigo-500]="!notification.read"
-                [class.bg-indigo-50]="!notification.read" [class.border-transparent]="notification.read">
+            @for (notification of notifications().slice(0, 8); track notification.id) {
+            <div class="p-4 hover:bg-gray-50 cursor-pointer border-l-2 transition-colors"
+                [class.border-indigo-500]="!notification.isRead"
+                [class.bg-indigo-50/50]="!notification.isRead"
+                [class.border-transparent]="notification.isRead"
+                (click)="!notification.isRead && markAsRead(notification.id)">
                 <div class="flex gap-3">
                     <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
                         [class]="getIconBg(notification.type)">
-                        <i class="bi bi-{{getIcon(notification.type)}} {{getIconColor(notification.type)}}"></i>
+                        <i class="bi bi-{{ getIcon(notification.type) }} {{ getIconColor(notification.type) }}"></i>
                     </div>
-                    <div>
-                        <p class="text-sm font-medium text-gray-900">{{ notification.title }}</p>
-                        <p class="text-xs text-gray-500 mt-0.5">{{ notification.message }}</p>
-                        <p class="text-xs text-gray-400 mt-1">{{ notification.timestamp | date:'shortTime' }}</p>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-gray-900 truncate" [class.font-semibold]="!notification.isRead">{{ notification.title }}</p>
+                        <p class="text-xs text-gray-500 mt-0.5 line-clamp-2">{{ notification.message }}</p>
+                        <p class="text-xs text-gray-400 mt-1">{{ timeAgo(notification.createdAt) }}</p>
                     </div>
                 </div>
             </div>
             }
+            @if (notifications().length === 0) {
+            <div class="p-8 text-center">
+                <i class="bi bi-bell-slash text-gray-300 text-2xl"></i>
+                <p class="text-sm text-gray-400 mt-2">No notifications</p>
+            </div>
+            }
         </div>
         <div class="p-3 border-t border-gray-100 text-center">
-            <a href="#" class="text-sm text-indigo-600 font-medium hover:underline">View all notifications</a>
+            <a routerLink="/notifications" (click)="toggle()" class="text-sm text-indigo-600 font-medium hover:underline">View all notifications</a>
         </div>
     </div>
     }

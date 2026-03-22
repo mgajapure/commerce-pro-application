@@ -59,7 +59,7 @@ export interface DemandForecast {
   trend: 'up' | 'down' | 'stable';
   trendPercentage?: number;
   alertLevel: 'none' | 'low' | 'medium' | 'high';
-  forecasts: ForecastData[];
+  forecasts?: ForecastData[];
   forecastHorizon: number;
   currentStock: number;
 }

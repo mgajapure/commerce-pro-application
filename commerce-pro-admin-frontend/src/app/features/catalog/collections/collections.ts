@@ -12,8 +12,8 @@ import {
   CollectionCondition,
   CollectionConditionField,
   CollectionConditionRelation 
-} from '../../../core/models/collection.model';
-import { CollectionService } from '../../../core/services/collection.service';
+} from '../../../core/models/catalog/collection.model';
+import { CollectionService } from '../../../core/services/catalog/collection.service';
 import { AlertService } from '../../../shared/services/alert.service';
 
 @Component({

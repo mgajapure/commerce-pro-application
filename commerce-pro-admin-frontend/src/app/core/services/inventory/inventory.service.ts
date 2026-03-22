@@ -25,13 +25,13 @@ import {
 
 // API Configuration
 const API_CONFIG = {
-  baseUrl: 'http://localhost:8080/api',  // Proxy to Spring Boot backend
+  baseUrl: 'http://localhost:8080/api',
   endpoints: {
-    inventory: '/inventory',
-    warehouses: '/inventory/warehouses',
-    stock: '/inventory/stock',
-    stats: '/inventory/stats',
-    transfer: '/inventory/transfer'
+    inventory: '/v1/inventory',
+    warehouses: '/v1/inventory/warehouses',
+    stock: '/v1/inventory/stock',
+    stats: '/v1/inventory/stats',
+    transfer: '/v1/inventory/transfer'
   }
 };
 

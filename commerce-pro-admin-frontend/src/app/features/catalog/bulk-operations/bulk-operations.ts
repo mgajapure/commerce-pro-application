@@ -18,9 +18,9 @@ import {
   ImportPreviewRow
 } from '../../../core/models';
 import { ProductService } from '../../../core/services/catalog/product.service';
-import { BulkOperationService } from '../../../core/services/bulk-operation.service';
+import { BulkOperationService } from '../../../core/services/catalog/bulk-operation.service';
 import { CategoryService } from '../../../core/services/catalog/category.service';
-import { BrandService } from '../../../core/services/brand.service';
+import { BrandService } from '../../../core/services/catalog/brand.service';
 import { AlertService } from '../../../shared/services/alert.service';
 
 @Component({

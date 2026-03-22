@@ -169,7 +169,7 @@ public class OrderService {
         Order saved = orderRepository.save(order);
 
         auditService.log(actorId, AuditAction.ORDER_CREATED,
-                "ORDER", saved.getId(), saved.getOrderNumber(), null, null, true);
+                "ORDER", saved.getId(), saved.getOrderNumber(), null, null, null, true);
 
         log.info("Created order {} for customer {}", saved.getOrderNumber(), saved.getCustomerEmail());
         return orderMapper.toResponseDTO(saved);
@@ -217,7 +217,7 @@ public class OrderService {
         Order saved = orderRepository.save(order);
 
         auditService.log(actorId, AuditAction.ORDER_UPDATED,
-                "ORDER", saved.getId(), saved.getOrderNumber(), oldValue, "UPDATED", true);
+                "ORDER", saved.getId(), saved.getOrderNumber(), null, oldValue, "UPDATED", true);
 
         return orderMapper.toResponseDTO(saved);
     }
@@ -243,7 +243,7 @@ public class OrderService {
 
         Order saved = orderRepository.save(order);
         auditService.log(actorId, AuditAction.ORDER_CONFIRMED,
-                "ORDER", saved.getId(), saved.getOrderNumber(), OrderStatus.PENDING_PAYMENT.name(), OrderStatus.CONFIRMED.name(), true);
+                "ORDER", saved.getId(), saved.getOrderNumber(), null, OrderStatus.PENDING_PAYMENT.name(), OrderStatus.CONFIRMED.name(), true);
         return orderMapper.toResponseDTO(saved);
     }
 
@@ -258,7 +258,7 @@ public class OrderService {
 
         Order saved = orderRepository.save(order);
         auditService.log(actorId, AuditAction.ORDER_STATUS_CHANGED,
-                "ORDER", saved.getId(), saved.getOrderNumber(), null, OrderStatus.PROCESSING.name(), true);
+                "ORDER", saved.getId(), saved.getOrderNumber(), null, null, OrderStatus.PROCESSING.name(), true);
         return orderMapper.toResponseDTO(saved);
     }
 
@@ -278,7 +278,7 @@ public class OrderService {
 
         Order saved = orderRepository.save(order);
         auditService.log(actorId, AuditAction.ORDER_SHIPPED,
-                "ORDER", saved.getId(), saved.getOrderNumber(), null, OrderStatus.SHIPPED.name(), true);
+                "ORDER", saved.getId(), saved.getOrderNumber(), null, null, OrderStatus.SHIPPED.name(), true);
         return orderMapper.toResponseDTO(saved);
     }
 
@@ -293,7 +293,7 @@ public class OrderService {
 
         Order saved = orderRepository.save(order);
         auditService.log(actorId, AuditAction.ORDER_DELIVERED,
-                "ORDER", saved.getId(), saved.getOrderNumber(), null, OrderStatus.DELIVERED.name(), true);
+                "ORDER", saved.getId(), saved.getOrderNumber(), null, null, OrderStatus.DELIVERED.name(), true);
         return orderMapper.toResponseDTO(saved);
     }
 
@@ -315,7 +315,7 @@ public class OrderService {
 
         Order saved = orderRepository.save(order);
         auditService.log(actorId, AuditAction.ORDER_HELD,
-                "ORDER", saved.getId(), saved.getOrderNumber(), null, request.getReason(), true);
+                "ORDER", saved.getId(), saved.getOrderNumber(), null, null, request.getReason(), true);
         return orderMapper.toResponseDTO(saved);
     }
 
@@ -334,7 +334,7 @@ public class OrderService {
 
         Order saved = orderRepository.save(order);
         auditService.log(actorId, AuditAction.ORDER_HOLD_RELEASED,
-                "ORDER", saved.getId(), saved.getOrderNumber(), OrderStatus.ON_HOLD.name(), OrderStatus.CONFIRMED.name(), true);
+                "ORDER", saved.getId(), saved.getOrderNumber(), null, OrderStatus.ON_HOLD.name(), OrderStatus.CONFIRMED.name(), true);
         return orderMapper.toResponseDTO(saved);
     }
 
@@ -361,7 +361,7 @@ public class OrderService {
 
         Order saved = orderRepository.save(order);
         auditService.log(actorId, AuditAction.ORDER_CANCELLED,
-                "ORDER", saved.getId(), saved.getOrderNumber(), null, request.getReason(), true);
+                "ORDER", saved.getId(), saved.getOrderNumber(), null, null, request.getReason(), true);
         return orderMapper.toResponseDTO(saved);
     }
 
@@ -377,7 +377,7 @@ public class OrderService {
         Order saved = orderRepository.save(order);
         auditService.log(actorId, AuditAction.ORDER_TRACKING_UPDATED,
                 "ORDER", saved.getId(), saved.getOrderNumber(), null,
-                request.getTrackingNumber(), true);
+                null, request.getTrackingNumber(), true);
         return orderMapper.toResponseDTO(saved);
     }
 
@@ -394,7 +394,7 @@ public class OrderService {
 
         Order saved = orderRepository.save(order);
         auditService.log(actorId, AuditAction.ORDER_CLOSED,
-                "ORDER", saved.getId(), saved.getOrderNumber(), null, OrderStatus.CLOSED.name(), true);
+                "ORDER", saved.getId(), saved.getOrderNumber(), null, null, OrderStatus.CLOSED.name(), true);
         return orderMapper.toResponseDTO(saved);
     }
 
@@ -432,7 +432,7 @@ public class OrderService {
 
         auditService.log(actorId, AuditAction.ORDER_BULK_ACTION,
                 "ORDER", "BULK", request.getTargetStatus().name(),
-                null, "Processed " + request.getOrderIds().size() + " orders", true);
+                null, null, "Processed " + request.getOrderIds().size() + " orders", true);
 
         return failed;
     }

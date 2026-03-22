@@ -48,6 +48,11 @@ export const routes: Routes = [
     loadChildren: () => import('./features/fulfillment/fulfillment.route').then(m => m.FULFILLMENT_ROUTES)
   },
   {
+    path: 'notifications',
+    canActivate: [authGuard],
+    loadChildren: () => import('./features/notifications/notifications.route').then(m => m.NOTIFICATIONS_ROUTES)
+  },
+  {
     path: 'identity',
     canActivate: [authGuard],
     loadChildren: () => import('./features/identity/identity.route').then(m => m.IDENTITY_ROUTES)

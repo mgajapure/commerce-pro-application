@@ -18,7 +18,7 @@ import {
 const API_CONFIG = {
   baseUrl: 'http://localhost:8080/api',
   endpoints: {
-    warehouses: '/inventory/warehouses'
+    warehouses: '/v1/inventory/warehouses'
   }
 };
 

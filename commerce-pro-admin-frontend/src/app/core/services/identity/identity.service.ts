@@ -24,7 +24,7 @@ export class IdentityService {
   private readonly http = inject(HttpClient);
   private readonly authService = inject(AuthService);
 
-  private readonly baseUrl = 'http://localhost:8080/api/api/v1/identity';
+  private readonly baseUrl = 'http://localhost:8080/api/v1/identity';
 
   private adminHeaders(): HttpHeaders {
     const userId = this.authService.getCurrentUserId() ?? 'ui-admin';

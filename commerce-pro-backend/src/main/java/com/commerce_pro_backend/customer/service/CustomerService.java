@@ -103,7 +103,7 @@ public class CustomerService {
         if (group != null) groupRepo.refreshMemberCount(group.getId());
 
         auditService.log(actorId, AuditAction.CUSTOMER_CREATED,
-                "CUSTOMER", saved.getId(), saved.getEmail(), null, null, true);
+                "CUSTOMER", saved.getId(), saved.getEmail(), null, null, null, true);
         return mapper.toResponseDTO(saved);
     }
 
@@ -137,7 +137,7 @@ public class CustomerService {
         if (newGroup != null)   groupRepo.refreshMemberCount(newGroup.getId());
 
         auditService.log(actorId, AuditAction.CUSTOMER_UPDATED,
-                "CUSTOMER", saved.getId(), saved.getEmail(), null, null, true);
+                "CUSTOMER", saved.getId(), saved.getEmail(), null, null, null, true);
         return mapper.toResponseDTO(saved);
     }
 
@@ -149,7 +149,7 @@ public class CustomerService {
         customerRepo.delete(c);
         if (groupId != null) groupRepo.refreshMemberCount(groupId);
         auditService.log(actorId, AuditAction.CUSTOMER_DELETED,
-                "CUSTOMER", id, c.getEmail(), null, null, true);
+                "CUSTOMER", id, c.getEmail(), null, null, null, true);
     }
 
     // ── Status ────────────────────────────────────────────────────────────
@@ -164,7 +164,7 @@ public class CustomerService {
         c.setUpdatedBy(actorId);
         customerRepo.save(c);
         auditService.log(actorId, AuditAction.CUSTOMER_STATUS_CHANGED,
-                "CUSTOMER", id, c.getEmail(), old, newStatus.name(), true);
+                "CUSTOMER", id, c.getEmail(), null, old, newStatus.name(), true);
         return mapper.toResponseDTO(c);
     }
 
@@ -181,7 +181,7 @@ public class CustomerService {
             c.setUpdatedBy(actorId);
             customerRepo.save(c);
             auditService.log(actorId, AuditAction.CUSTOMER_TIER_CHANGED,
-                    "CUSTOMER", id, c.getEmail(), old, evaluated.name(), true);
+                    "CUSTOMER", id, c.getEmail(), null, old, evaluated.name(), true);
         }
         return mapper.toResponseDTO(c);
     }
@@ -200,7 +200,7 @@ public class CustomerService {
         c.setUpdatedBy(actorId);
         customerRepo.save(c);
         auditService.log(actorId, AuditAction.CUSTOMER_BLACKLISTED,
-                "CUSTOMER", id, c.getEmail(), null, req.getReason(), true);
+                "CUSTOMER", id, c.getEmail(), null, null, req.getReason(), true);
         return mapper.toResponseDTO(c);
     }
 
@@ -216,7 +216,7 @@ public class CustomerService {
         c.setUpdatedBy(actorId);
         customerRepo.save(c);
         auditService.log(actorId, AuditAction.CUSTOMER_UNBLACKLISTED,
-                "CUSTOMER", id, c.getEmail(), null, reason, true);
+                "CUSTOMER", id, c.getEmail(), null, null, reason, true);
         return mapper.toResponseDTO(c);
     }
 
@@ -235,7 +235,7 @@ public class CustomerService {
         c.setUpdatedBy(actorId);
         customerRepo.save(c);
         auditService.log(actorId, AuditAction.CUSTOMER_FRAUD_FLAGGED,
-                "CUSTOMER", id, c.getEmail(), null, req.getReason(), true);
+                "CUSTOMER", id, c.getEmail(), null, null, req.getReason(), true);
         return mapper.toResponseDTO(c);
     }
 
@@ -250,7 +250,7 @@ public class CustomerService {
         c.setUpdatedBy(actorId);
         customerRepo.save(c);
         auditService.log(actorId, AuditAction.CUSTOMER_FRAUD_RESOLVED,
-                "CUSTOMER", id, c.getEmail(), null, req.getResolution(), true);
+                "CUSTOMER", id, c.getEmail(), null, null, req.getResolution(), true);
         return mapper.toResponseDTO(c);
     }
 
@@ -266,7 +266,7 @@ public class CustomerService {
         c.setUpdatedBy(actorId);
         customerRepo.save(c);
         auditService.log(actorId, AuditAction.CUSTOMER_LOYALTY_ADJUSTED,
-                "CUSTOMER", id, c.getEmail(), String.valueOf(before), String.valueOf(after), true);
+                "CUSTOMER", id, c.getEmail(), null, String.valueOf(before), String.valueOf(after), true);
         return mapper.toResponseDTO(c);
     }
 

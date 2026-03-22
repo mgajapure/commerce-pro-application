@@ -8,22 +8,22 @@ export * from './catalog/product.model';
 export * from './catalog/category.model';
 
 // Attribute models
-export * from './attribute.model';
+export * from './catalog/attribute.model';
 
 // Brand models
-export * from './brand.model';
+export * from './catalog/brand.model';
 
 // Collection models
-export * from './collection.model';
+export * from './catalog/collection.model';
 
 // Review models
-export * from './review.model';
+export * from './catalog/review.model';
 
 // SEO models
-export * from './seo.model';
+export * from './catalog/seo.model';
 
 // Catalog shared models (bulk operations, etc.)
-export * from './catalog-shared.model';
+export * from './catalog/catalog-shared.model';
 
 // Common/Shared API models (ApiResponse, Pagination, etc.)
 export * from './common';
@@ -33,7 +33,7 @@ export * from './catalog/product-request.model';
 export * from './catalog/product-response.model';
 
 // Dashboard models
-export * from './dashboard.model';
+export * from './dashboard/dashboard.model';
 
 // Inventory models
 export * from './inventory';

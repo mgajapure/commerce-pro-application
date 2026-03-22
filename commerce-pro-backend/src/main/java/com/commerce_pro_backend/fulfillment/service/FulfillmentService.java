@@ -141,7 +141,7 @@ public class FulfillmentService {
 
         PickList saved = pickListRepository.save(pickList);
         auditService.log(actorId, AuditAction.FULFILLMENT_PICKLIST_CREATED,
-                "PICK_LIST", saved.getId(), saved.getPickListNumber(), null, null, true);
+                "PICK_LIST", saved.getId(), saved.getPickListNumber(), null, null, null, true);
 
         log.info("Generated pick list {} for {} orders", saved.getPickListNumber(), request.getOrderIds().size());
         return fulfillmentMapper.toDTO(saved);
@@ -169,7 +169,7 @@ public class FulfillmentService {
         PickList saved = pickListRepository.save(pl);
         auditService.log(actorId, AuditAction.FULFILLMENT_PICKLIST_ASSIGNED,
                 "PICK_LIST", saved.getId(), saved.getPickListNumber(),
-                PickListStatus.GENERATED.name(), PickListStatus.ASSIGNED.name(), true);
+                null, PickListStatus.GENERATED.name(), PickListStatus.ASSIGNED.name(), true);
         return fulfillmentMapper.toDTO(saved);
     }
 
@@ -188,7 +188,7 @@ public class FulfillmentService {
 
         PickList saved = pickListRepository.save(pl);
         auditService.log(actorId, AuditAction.FULFILLMENT_PICKLIST_STARTED,
-                "PICK_LIST", saved.getId(), saved.getPickListNumber(), null, PickListStatus.IN_PROGRESS.name(), true);
+                "PICK_LIST", saved.getId(), saved.getPickListNumber(), null, null, PickListStatus.IN_PROGRESS.name(), true);
         return fulfillmentMapper.toDTO(saved);
     }
 
@@ -244,7 +244,7 @@ public class FulfillmentService {
         PickList saved = pickListRepository.save(pl);
         auditService.log(actorId, AuditAction.FULFILLMENT_PICKLIST_COMPLETED,
                 "PICK_LIST", saved.getId(), saved.getPickListNumber(),
-                PickListStatus.IN_PROGRESS.name(), PickListStatus.COMPLETED.name(), true);
+                null, PickListStatus.IN_PROGRESS.name(), PickListStatus.COMPLETED.name(), true);
         log.info("Completed pick list {}", saved.getPickListNumber());
         return fulfillmentMapper.toDTO(saved);
     }
@@ -263,7 +263,7 @@ public class FulfillmentService {
         PickList saved = pickListRepository.save(pl);
         auditService.log(actorId, AuditAction.FULFILLMENT_PICKLIST_CANCELLED,
                 "PICK_LIST", saved.getId(), saved.getPickListNumber(),
-                null, PickListStatus.CANCELLED.name(), true);
+                null, null, PickListStatus.CANCELLED.name(), true);
         return fulfillmentMapper.toDTO(saved);
     }
 
@@ -297,7 +297,7 @@ public class FulfillmentService {
 
         Carrier saved = carrierRepository.save(carrier);
         auditService.log(actorId, AuditAction.FULFILLMENT_CARRIER_CREATED,
-                "CARRIER", saved.getId(), saved.getCode(), null, null, true);
+                "CARRIER", saved.getId(), saved.getCode(), null, null, null, true);
         return fulfillmentMapper.toCarrierDTO(saved);
     }
 
@@ -322,7 +322,7 @@ public class FulfillmentService {
 
         Carrier saved = carrierRepository.save(carrier);
         auditService.log(actorId, AuditAction.FULFILLMENT_CARRIER_UPDATED,
-                "CARRIER", saved.getId(), saved.getCode(), null, null, true);
+                "CARRIER", saved.getId(), saved.getCode(), null, null, null, true);
         return fulfillmentMapper.toCarrierDTO(saved);
     }
 
@@ -333,7 +333,7 @@ public class FulfillmentService {
                 .orElseThrow(() -> ApiException.notFound("Carrier", id));
         carrierRepository.delete(carrier);
         auditService.log(actorId, AuditAction.FULFILLMENT_CARRIER_DELETED,
-                "CARRIER", id, carrier.getCode(), null, null, true);
+                "CARRIER", id, carrier.getCode(), null, null, null, true);
     }
 
     // ══════════════════════════════════════════════════════════════════════════
@@ -368,7 +368,7 @@ public class FulfillmentService {
 
         ShippingRule saved = shippingRuleRepository.save(rule);
         auditService.log(actorId, AuditAction.FULFILLMENT_RULE_CREATED,
-                "SHIPPING_RULE", saved.getId(), saved.getName(), null, null, true);
+                "SHIPPING_RULE", saved.getId(), saved.getName(), null, null, null, true);
         return fulfillmentMapper.toRuleDTO(saved);
     }
 
@@ -395,7 +395,7 @@ public class FulfillmentService {
 
         ShippingRule saved = shippingRuleRepository.save(rule);
         auditService.log(actorId, AuditAction.FULFILLMENT_RULE_UPDATED,
-                "SHIPPING_RULE", saved.getId(), saved.getName(), null, null, true);
+                "SHIPPING_RULE", saved.getId(), saved.getName(), null, null, null, true);
         return fulfillmentMapper.toRuleDTO(saved);
     }
 
@@ -406,7 +406,7 @@ public class FulfillmentService {
                 .orElseThrow(() -> ApiException.notFound("ShippingRule", id));
         shippingRuleRepository.delete(rule);
         auditService.log(actorId, AuditAction.FULFILLMENT_RULE_DELETED,
-                "SHIPPING_RULE", id, rule.getName(), null, null, true);
+                "SHIPPING_RULE", id, rule.getName(), null, null, null, true);
     }
 
     // ══════════════════════════════════════════════════════════════════════════

@@ -25,9 +25,9 @@ import { ProductRequest } from '../../../core/models/catalog/product-request.mod
 // Import services
 import { ProductService } from '../../../core/services/catalog/product.service';
 import { CategoryService } from '../../../core/services/catalog/category.service';
-import { BrandService } from '../../../core/services/brand.service';
-import { CollectionService } from '../../../core/services/collection.service';
-import { AttributeService } from '../../../core/services/attribute.service';
+import { BrandService } from '../../../core/services/catalog/brand.service';
+import { CollectionService } from '../../../core/services/catalog/collection.service';
+import { AttributeService } from '../../../core/services/catalog/attribute.service';
 import { AlertService } from '../../../shared/services/alert.service';
 
 @Component({
