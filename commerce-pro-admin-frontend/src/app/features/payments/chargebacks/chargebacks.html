@@ -1,0 +1,347 @@
+<div class="min-h-screen bg-gray-50/50 p-4 sm:p-6 lg:p-8">
+  <div class="max-w-[1600px] mx-auto space-y-6">
+
+    <!-- Header -->
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+      <div>
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-red-600 rounded-xl flex items-center justify-center">
+            <i class="bi bi-shield-exclamation text-white text-lg"></i>
+          </div>
+          <h1 class="text-2xl font-bold text-gray-900">Chargebacks & Disputes</h1>
+          <span class="px-3 py-1 bg-gray-100 text-gray-600 text-sm font-medium rounded-full">{{ totalElements() | number }}</span>
+        </div>
+        <p class="text-gray-500 mt-1 text-sm">Manage disputed transactions and submit evidence to win chargebacks</p>
+      </div>
+      <button (click)="showIntakeModal.set(true)"
+        class="px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 flex items-center gap-2 shadow-lg shadow-indigo-200">
+        <i class="bi bi-plus-lg"></i> Record Chargeback
+      </button>
+    </div>
+
+    <!-- Deadline Alert -->
+    @if (deadlines().length > 0) {
+      <div class="bg-red-50 border border-red-200 rounded-2xl p-4">
+        <div class="flex items-start gap-4">
+          <div class="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5">
+            <i class="bi bi-alarm-fill text-red-600"></i>
+          </div>
+          <div class="flex-1">
+            <p class="font-semibold text-red-800 mb-2">⚡ {{ deadlines().length }} dispute{{ deadlines().length !== 1 ? 's' : '' }} with evidence deadline within 3 days</p>
+            <div class="space-y-1.5">
+              @for (d of deadlines(); track d.id) {
+                <div class="flex items-center justify-between bg-white rounded-xl p-3 border border-red-100 cursor-pointer hover:border-red-300 transition-colors" (click)="openDetail(d.id)">
+                  <span class="font-mono text-sm font-semibold text-red-800">{{ d.disputeRef }}</span>
+                  <span class="text-xs font-bold text-red-700 bg-red-100 px-2 py-0.5 rounded-full">{{ daysRemaining(d.responseDeadline) }}d left</span>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Status Tabs -->
+    <div class="bg-white rounded-2xl p-2 shadow-sm border border-gray-100 overflow-x-auto">
+      <div class="flex gap-1.5 min-w-max">
+        @for (tab of statusTabs; track tab.value) {
+          <button (click)="setTab(tab.value)"
+            class="px-4 py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap"
+            [class.bg-indigo-600]="filterStatus() === tab.value" [class.text-white]="filterStatus() === tab.value"
+            [class.bg-gray-50]="filterStatus() !== tab.value" [class.text-gray-700]="filterStatus() !== tab.value">
+            {{ tab.label }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Loading skeleton -->
+    @if (isLoading()) {
+      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 space-y-4 animate-pulse">
+        @for (i of [1,2,3,4]; track i) { <div class="h-16 bg-gray-100 rounded-xl"></div> }
+      </div>
+    }
+
+    <!-- Table -->
+    @if (!isLoading()) {
+      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead class="bg-gray-50/50 border-b border-gray-100">
+              <tr>
+                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Dispute Ref</th>
+                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Customer / Order</th>
+                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Reason</th>
+                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Amount</th>
+                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Deadline</th>
+                <th class="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+              @for (d of disputes(); track d.id) {
+                <tr class="group hover:bg-gray-50/50 transition-colors cursor-pointer"
+                  [class.bg-red-50/30]="d.deadlineApproaching"
+                  (click)="openDetail(d.id)">
+                  <td class="px-6 py-4">
+                    <div class="flex items-center gap-2">
+                      @if (d.deadlineApproaching) { <i class="bi bi-alarm-fill text-red-500 text-xs animate-pulse"></i> }
+                      <p class="font-semibold text-gray-900 text-sm font-mono">{{ d.disputeRef }}</p>
+                    </div>
+                    <p class="text-xs text-gray-400">{{ fmtDate(d.createdAt) }}</p>
+                  </td>
+                  <td class="px-6 py-4">
+                    <p class="font-medium text-gray-900 text-sm">{{ d.customerName || '—' }}</p>
+                    <p class="text-xs text-gray-400 font-mono">{{ d.orderNumber }}</p>
+                  </td>
+                  <td class="px-6 py-4">
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium {{ getStatusConfig(d.status).badge }}">
+                      <span class="w-1.5 h-1.5 rounded-full {{ getStatusConfig(d.status).dot }}"></span>
+                      {{ getStatusConfig(d.status).label }}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4">
+                    <span class="text-sm text-gray-600">{{ reasonLabels[d.reason] || d.reason }}</span>
+                  </td>
+                  <td class="px-6 py-4">
+                    <p class="font-bold text-red-600">{{ fmt(d.disputedAmount) }}</p>
+                  </td>
+                  <td class="px-6 py-4">
+                    @if (d.responseDeadline) {
+                      <div [class.text-red-600]="d.deadlineApproaching" [class.font-semibold]="d.deadlineApproaching" [class.text-gray-500]="!d.deadlineApproaching">
+                        <p class="text-sm">{{ fmtDate(d.responseDeadline) }}</p>
+                        @if (daysRemaining(d.responseDeadline) !== null) {
+                          <p class="text-xs font-mono" [class.text-red-600]="d.deadlineApproaching" [class.text-gray-400]="!d.deadlineApproaching">{{ daysRemaining(d.responseDeadline) }}d remaining</p>
+                        }
+                      </div>
+                    } @else { <span class="text-gray-400 text-sm">—</span> }
+                  </td>
+                  <td class="px-6 py-4 text-right" (click)="$event.stopPropagation()">
+                    <div class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      @if (d.status === 'EVIDENCE_REQUIRED' || d.status === 'UNDER_REVIEW') {
+                        <button (click)="showEvidenceModal.set(d.id); evidenceForm.set({})"
+                          class="px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-medium hover:bg-indigo-700">
+                          Submit Evidence
+                        </button>
+                      }
+                      @if (d.status !== 'WON' && d.status !== 'LOST' && d.status !== 'ACCEPTED' && d.status !== 'WITHDRAWN') {
+                        <button (click)="showResolveModal.set(d.id); resolveForm.set({})"
+                          class="px-3 py-1.5 bg-gray-200 text-gray-700 rounded-lg text-xs font-medium hover:bg-gray-300">
+                          Resolve
+                        </button>
+                      }
+                    </div>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="7" class="px-6 py-16 text-center">
+                    <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                      <i class="bi bi-shield-check text-2xl text-gray-400"></i>
+                    </div>
+                    <h3 class="text-lg font-medium text-gray-900 mb-1">No disputes found</h3>
+                    <p class="text-gray-500 text-sm">{{ filterStatus() ? 'No disputes with this status' : 'No chargebacks recorded' }}</p>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        @if (totalPages() > 1) {
+          <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
+            <p class="text-sm text-gray-500">{{ totalElements() | number }} total</p>
+            <div class="flex items-center gap-1.5">
+              <button (click)="prevPage()" [disabled]="currentPage() === 1" class="p-2 rounded-lg border border-gray-200 disabled:opacity-40"><i class="bi bi-chevron-left"></i></button>
+              @for (p of visiblePages(); track p) {
+                @if (p === '...') { <span class="px-2 text-gray-400">…</span> }
+                @else { <button (click)="goToPage(+p)" class="px-3 py-1.5 rounded-lg text-sm" [class.bg-indigo-600]="currentPage() === p" [class.text-white]="currentPage() === p" [class.text-gray-700]="currentPage() !== p">{{ p }}</button> }
+              }
+              <button (click)="nextPage()" [disabled]="currentPage() === totalPages()" class="p-2 rounded-lg border border-gray-200 disabled:opacity-40"><i class="bi bi-chevron-right"></i></button>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>
+
+<!-- Detail Drawer -->
+@if (showDetail() && detail()) {
+  <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg animate-slide-up max-h-[90vh] overflow-y-auto">
+      <div class="sticky top-0 bg-white px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+        <div>
+          <h2 class="text-lg font-semibold text-gray-900">{{ detail()!.disputeRef }}</h2>
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium {{ getStatusConfig(detail()!.status).badge }}">{{ getStatusConfig(detail()!.status).label }}</span>
+        </div>
+        <button (click)="showDetail.set(false)" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="p-6 space-y-4">
+        <div class="grid grid-cols-2 gap-3">
+          <div class="bg-gray-50 rounded-xl p-3"><p class="text-xs text-gray-500 mb-1">Disputed Amount</p><p class="font-bold text-lg text-red-600">{{ fmt(detail()!.disputedAmount) }}</p></div>
+          <div class="bg-gray-50 rounded-xl p-3"><p class="text-xs text-gray-500 mb-1">Reason</p><p class="font-medium text-sm">{{ reasonLabels[detail()!.reason] }}</p></div>
+          <div class="bg-gray-50 rounded-xl p-3"><p class="text-xs text-gray-500 mb-1">Order</p><p class="font-mono font-semibold text-sm">{{ detail()!.orderNumber || '—' }}</p></div>
+          <div class="bg-gray-50 rounded-xl p-3"><p class="text-xs text-gray-500 mb-1">Response Deadline</p><p class="text-sm" [class.text-red-600]="detail()!.deadlineApproaching">{{ fmtDate(detail()!.responseDeadline) }}</p></div>
+        </div>
+        @if (detail()!.evidenceNotes) {
+          <div class="bg-blue-50 rounded-xl p-3 border border-blue-100"><p class="text-xs text-blue-600 mb-1">Evidence Notes</p><p class="text-sm text-blue-800">{{ detail()!.evidenceNotes }}</p></div>
+        }
+        @if (detail()!.resolutionNotes) {
+          <div class="rounded-xl p-3 border" [class.bg-green-50]="detail()!.isWon" [class.border-green-100]="detail()!.isWon" [class.bg-red-50]="!detail()!.isWon" [class.border-red-100]="!detail()!.isWon">
+            <p class="text-xs mb-1" [class.text-green-600]="detail()!.isWon" [class.text-red-600]="!detail()!.isWon">Resolution Notes</p>
+            <p class="text-sm">{{ detail()!.resolutionNotes }}</p>
+          </div>
+        }
+      </div>
+      @if (detail()!.status === 'EVIDENCE_REQUIRED' || detail()!.status === 'UNDER_REVIEW' || (detail()!.status !== 'WON' && detail()!.status !== 'LOST' && detail()!.status !== 'ACCEPTED')) {
+        <div class="sticky bottom-0 bg-white px-6 py-4 border-t border-gray-100 flex gap-3 flex-wrap">
+          @if (detail()!.status === 'EVIDENCE_REQUIRED' || detail()!.status === 'UNDER_REVIEW') {
+            <button (click)="showEvidenceModal.set(detail()!.id); evidenceForm.set({})" class="flex-1 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700">Submit Evidence</button>
+          }
+          @if (detail()!.status !== 'WON' && detail()!.status !== 'LOST' && detail()!.status !== 'ACCEPTED' && detail()!.status !== 'WITHDRAWN') {
+            <button (click)="accept(detail()!.id)" [disabled]="actionLoading() !== null" class="flex-1 py-2.5 bg-gray-200 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-300 disabled:opacity-50">Accept Loss</button>
+            <button (click)="showResolveModal.set(detail()!.id); resolveForm.set({})" class="flex-1 py-2.5 bg-green-600 text-white rounded-xl text-sm font-medium hover:bg-green-700">Mark Resolution</button>
+          }
+        </div>
+      }
+    </div>
+  </div>
+}
+
+<!-- Evidence Modal -->
+@if (showEvidenceModal()) {
+  <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4 animate-fade-in">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md animate-slide-up">
+      <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+        <h2 class="text-lg font-semibold text-gray-900">Submit Evidence</h2>
+        <button (click)="showEvidenceModal.set(null)" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="p-6 space-y-4">
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1.5 uppercase tracking-wider">Evidence Notes *</label>
+          <textarea [value]="evidenceForm().evidenceNotes || ''" (input)="patchEvidence({ evidenceNotes: $any($event.target).value })" rows="4"
+            placeholder="Describe your evidence — order details, delivery confirmation, customer communication..."
+            class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm resize-none"></textarea>
+        </div>
+        <div class="bg-amber-50 border border-amber-200 rounded-xl p-3">
+          <p class="text-xs text-amber-700 flex items-start gap-2">
+            <i class="bi bi-info-circle-fill mt-0.5 flex-shrink-0"></i>
+            Attach supporting documentation via the file storage system. Reference file paths in your notes above.
+          </p>
+        </div>
+      </div>
+      <div class="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
+        <button (click)="showEvidenceModal.set(null)" class="px-4 py-2 border border-gray-200 rounded-xl text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
+        <button (click)="submitEvidence()" [disabled]="actionLoading() !== null || !evidenceForm().evidenceNotes"
+          class="px-6 py-2 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-2">
+          @if (actionLoading()) { <i class="bi bi-arrow-repeat animate-spin"></i> }
+          Submit to Bank
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Resolve Modal -->
+@if (showResolveModal()) {
+  <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4 animate-fade-in">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md animate-slide-up">
+      <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+        <h2 class="text-lg font-semibold text-gray-900">Record Bank Decision</h2>
+        <button (click)="showResolveModal.set(null)" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="p-6 space-y-4">
+        <div class="grid grid-cols-2 gap-3">
+          <button (click)="patchResolve({ won: true })"
+            class="py-3 rounded-xl border-2 text-sm font-medium transition-all flex flex-col items-center gap-1"
+            [class.border-green-500]="resolveForm().won === true" [class.bg-green-50]="resolveForm().won === true" [class.text-green-700]="resolveForm().won === true"
+            [class.border-gray-200]="resolveForm().won !== true" [class.text-gray-600]="resolveForm().won !== true">
+            <i class="bi bi-trophy-fill text-xl"></i> Merchant Won
+          </button>
+          <button (click)="patchResolve({ won: false })"
+            class="py-3 rounded-xl border-2 text-sm font-medium transition-all flex flex-col items-center gap-1"
+            [class.border-red-500]="resolveForm().won === false" [class.bg-red-50]="resolveForm().won === false" [class.text-red-700]="resolveForm().won === false"
+            [class.border-gray-200]="resolveForm().won !== false" [class.text-gray-600]="resolveForm().won !== false">
+            <i class="bi bi-x-circle-fill text-xl"></i> Customer Won
+          </button>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1.5 uppercase tracking-wider">Resolution Notes</label>
+          <textarea [value]="resolveForm().notes || ''" (input)="patchResolve({ notes: $any($event.target).value })" rows="3"
+            placeholder="Bank decision details..."
+            class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm resize-none"></textarea>
+        </div>
+      </div>
+      <div class="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
+        <button (click)="showResolveModal.set(null)" class="px-4 py-2 border border-gray-200 rounded-xl text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
+        <button (click)="submitResolve()" [disabled]="actionLoading() !== null || resolveForm().won === undefined"
+          class="px-6 py-2 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-2">
+          @if (actionLoading()) { <i class="bi bi-arrow-repeat animate-spin"></i> }
+          Record Decision
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Intake Modal -->
+@if (showIntakeModal()) {
+  <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg animate-slide-up max-h-[90vh] overflow-y-auto">
+      <div class="sticky top-0 bg-white px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+        <h2 class="text-lg font-semibold text-gray-900">Record New Chargeback</h2>
+        <button (click)="showIntakeModal.set(false)" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="p-6 space-y-4">
+        <div class="grid grid-cols-2 gap-4">
+          <div class="col-span-2">
+            <label class="block text-xs font-medium text-gray-600 mb-1.5 uppercase tracking-wider">Order ID *</label>
+            <input type="text" [value]="newDispute().orderId || ''" (input)="patchNew({ orderId: $any($event.target).value })" placeholder="Order UUID"
+              class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm font-mono">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1.5 uppercase tracking-wider">Disputed Amount *</label>
+            <div class="relative">
+              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+              <input type="number" [value]="newDispute().disputedAmount || ''" (input)="patchNew({ disputedAmount: parseFloat($any($event.target).value) })" step="0.01" min="0.01"
+                class="w-full pl-8 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm">
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1.5 uppercase tracking-wider">Reason *</label>
+            <select [value]="newDispute().reason || ''" (change)="patchNew({ reason: $any($event.target).value })"
+              class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm">
+              <option value="">Select reason</option>
+              @for (entry of $any(Object.entries(reasonLabels)); track entry[0]) {
+                <option [value]="entry[0]">{{ entry[1] }}</option>
+              }
+            </select>
+          </div>
+          <div class="col-span-2">
+            <label class="block text-xs font-medium text-gray-600 mb-1.5 uppercase tracking-wider">Response Deadline *</label>
+            <input type="datetime-local" [value]="newDispute().responseDeadline || ''" (input)="patchNew({ responseDeadline: $any($event.target).value })"
+              class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1.5 uppercase tracking-wider">Reason Code</label>
+            <input type="text" [value]="newDispute().reasonCode || ''" (input)="patchNew({ reasonCode: $any($event.target).value })" placeholder="e.g. 4853"
+              class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1.5 uppercase tracking-wider">Gateway Dispute ID</label>
+            <input type="text" [value]="newDispute().gatewayDisputeId || ''" (input)="patchNew({ gatewayDisputeId: $any($event.target).value })" placeholder="Gateway reference"
+              class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm">
+          </div>
+        </div>
+      </div>
+      <div class="sticky bottom-0 bg-white px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
+        <button (click)="showIntakeModal.set(false)" class="px-4 py-2 border border-gray-200 rounded-xl text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
+        <button (click)="submitIntake()" [disabled]="actionLoading() !== null || !newDispute().orderId || !newDispute().reason || !newDispute().disputedAmount || !newDispute().responseDeadline"
+          class="px-6 py-2 bg-red-600 text-white rounded-xl text-sm font-medium hover:bg-red-700 disabled:opacity-50 flex items-center gap-2">
+          @if (actionLoading() === 'intake') { <i class="bi bi-arrow-repeat animate-spin"></i> }
+          Record Chargeback
+        </button>
+      </div>
+    </div>
+  </div>
+}

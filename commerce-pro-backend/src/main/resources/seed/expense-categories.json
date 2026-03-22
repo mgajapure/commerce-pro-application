@@ -1,0 +1,10 @@
+[
+  { "categoryCode": "SAAS",      "name": "Software & SaaS",         "glAccountCode": "6100", "budgetDefault": "2500.00" },
+  { "categoryCode": "MARKETING", "name": "Marketing & Advertising",  "glAccountCode": "6200", "budgetDefault": "5000.00" },
+  { "categoryCode": "LOGISTICS", "name": "Logistics & Shipping",     "glAccountCode": "6300", "budgetDefault": "3000.00" },
+  { "categoryCode": "OFFICE",    "name": "Office & Administration",  "glAccountCode": "6400", "budgetDefault": "1000.00" },
+  { "categoryCode": "LEGAL",     "name": "Legal & Professional",     "glAccountCode": "6500", "budgetDefault": "2000.00" },
+  { "categoryCode": "PAYROLL",   "name": "Payroll & Benefits",       "glAccountCode": "6600", "budgetDefault": "50000.00" },
+  { "categoryCode": "TRAVEL",    "name": "Travel & Entertainment",   "glAccountCode": "6700", "budgetDefault": "1500.00" },
+  { "categoryCode": "INFRA",     "name": "Infrastructure & Hosting", "glAccountCode": "6800", "budgetDefault": "1200.00" }
+]

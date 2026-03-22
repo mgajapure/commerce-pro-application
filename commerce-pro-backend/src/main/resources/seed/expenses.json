@@ -1,0 +1,15 @@
+[
+  { "title": "GitHub Enterprise License",   "categoryCode": "SAAS",      "amount": "299.00",  "daysAgo": 20, "status": "PAID",     "rejectReason": null },
+  { "title": "Google Ads Campaign Q4",      "categoryCode": "MARKETING", "amount": "1500.00", "daysAgo": 18, "status": "PAID",     "rejectReason": null },
+  { "title": "FedEx Shipping — Week 42",    "categoryCode": "LOGISTICS", "amount": "340.00",  "daysAgo": 14, "status": "PAID",     "rejectReason": null },
+  { "title": "Office Supplies",             "categoryCode": "OFFICE",    "amount": "85.00",   "daysAgo": 12, "status": "PAID",     "rejectReason": null },
+  { "title": "Slack Business Subscription", "categoryCode": "SAAS",      "amount": "240.00",  "daysAgo": 10, "status": "PAID",     "rejectReason": null },
+  { "title": "SEO Consultant",              "categoryCode": "MARKETING", "amount": "800.00",  "daysAgo":  8, "status": "APPROVED", "rejectReason": null },
+  { "title": "Courier Services",            "categoryCode": "LOGISTICS", "amount": "125.00",  "daysAgo":  6, "status": "APPROVED", "rejectReason": null },
+  { "title": "Figma Pro Annual",            "categoryCode": "SAAS",      "amount": "156.00",  "daysAgo":  5, "status": "APPROVED", "rejectReason": null },
+  { "title": "Contract Legal Review",       "categoryCode": "LEGAL",     "amount": "750.00",  "daysAgo":  4, "status": "APPROVED", "rejectReason": null },
+  { "title": "LinkedIn Ads Q4 Campaign",    "categoryCode": "MARKETING", "amount": "2200.00", "daysAgo":  3, "status": "PENDING",  "rejectReason": null },
+  { "title": "Zoom Pro Subscription",       "categoryCode": "SAAS",      "amount": "199.00",  "daysAgo":  2, "status": "PENDING",  "rejectReason": null },
+  { "title": "Conference Room Rental",      "categoryCode": "OFFICE",    "amount": "350.00",  "daysAgo":  1, "status": "PENDING",  "rejectReason": null },
+  { "title": "Executive Team Retreat",      "categoryCode": "OFFICE",    "amount": "8500.00", "daysAgo": 15, "status": "REJECTED", "rejectReason": "Over budget threshold — requires board approval" }
+]

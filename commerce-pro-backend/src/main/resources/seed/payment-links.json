@@ -1,0 +1,15 @@
+[
+  {
+    "slug": "promo-spring-sale-2024",
+    "title": "Spring Sale 2024 — Custom Payment",
+    "status": "EXPIRED",
+    "amount": "150.00",
+    "currency": "USD",
+    "isOneTime": false,
+    "maxUses": 50,
+    "usesCount": 12,
+    "expiredDaysAgo": 30,
+    "description": "Promotional payment link for Spring Sale campaign",
+    "linkToOrder": false
+  }
+]

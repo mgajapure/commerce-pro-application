@@ -1,0 +1,7 @@
+[
+  { "name": "Amazon Web Services",  "email": "aws@amazon.com",            "paymentTerms": "Net 30", "paymentTermsDays": 30, "category": "INFRA",     "preferredCurrency": "USD" },
+  { "name": "Google LLC",           "email": "billing@google.com",        "paymentTerms": "Net 30", "paymentTermsDays": 30, "category": "SAAS",      "preferredCurrency": "USD" },
+  { "name": "DHL Express",          "email": "accounts@dhl.com",          "paymentTerms": "Net 15", "paymentTermsDays": 15, "category": "LOGISTICS", "preferredCurrency": "USD" },
+  { "name": "Shopify Inc.",         "email": "billing@shopify.com",       "paymentTerms": "Net 30", "paymentTermsDays": 30, "category": "SAAS",      "preferredCurrency": "USD" },
+  { "name": "Baker McKenzie LLP",   "email": "invoices@bakermckenzie.com","paymentTerms": "Net 60", "paymentTermsDays": 60, "category": "LEGAL",     "preferredCurrency": "USD" }
+]

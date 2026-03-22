@@ -1,0 +1,10 @@
+[
+  { "vendorName": "Amazon",  "vendorReference": "AWS-INV-0042",       "totalAmount": "1850.00", "receivedDaysAgo": 25, "dueDaysAgo":  5, "status": "PAID",     "rejectReason": null },
+  { "vendorName": "Google",  "vendorReference": "GOOG-2024-0312",     "totalAmount": "420.00",  "receivedDaysAgo": 20, "dueDaysAgo":  2, "status": "PAID",     "rejectReason": null },
+  { "vendorName": "DHL",     "vendorReference": "DHL-2024-8821",      "totalAmount": "950.00",  "receivedDaysAgo": 18, "dueDaysAgo":  3, "status": "PAID",     "rejectReason": null },
+  { "vendorName": "Shopify", "vendorReference": "SHOP-INV-2024-031",  "totalAmount": "299.00",  "receivedDaysAgo":  8, "dueDaysFromNow": 22, "status": "APPROVED", "rejectReason": null },
+  { "vendorName": "Amazon",  "vendorReference": "AWS-INV-0043",       "totalAmount": "2340.00", "receivedDaysAgo":  5, "dueDaysFromNow": 25, "status": "APPROVED", "rejectReason": null },
+  { "vendorName": "Baker",   "vendorReference": "BM-2024-0078",       "totalAmount": "5500.00", "receivedDaysAgo":  3, "dueDaysFromNow": 57, "status": "RECEIVED", "rejectReason": null },
+  { "vendorName": "Google",  "vendorReference": "GOOG-2024-0315",     "totalAmount": "380.00",  "receivedDaysAgo":  2, "dueDaysFromNow": 28, "status": "RECEIVED", "rejectReason": null },
+  { "vendorName": "DHL",     "vendorReference": "DHL-2024-8822",      "totalAmount": "1200.00", "receivedDaysAgo": 10, "dueDaysFromNow":  5, "status": "REJECTED", "rejectReason": "Incorrect billing amount — awaiting revised invoice" }
+]

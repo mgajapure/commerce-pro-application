@@ -1,0 +1,192 @@
+<div class="min-h-screen bg-gray-50/50 p-4 sm:p-6 lg:p-8">
+  <div class="max-w-[1600px] mx-auto space-y-6">
+
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+      <div>
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-teal-600 rounded-xl flex items-center justify-center">
+            <i class="bi bi-journal-check text-white text-lg"></i>
+          </div>
+          <h1 class="text-2xl font-bold text-gray-900">Payment Reconciliation</h1>
+        </div>
+        <p class="text-gray-500 mt-1 text-sm">Match internal ledger totals against gateway settlement data</p>
+      </div>
+      <button (click)="showGenModal.set(true)"
+        class="px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 flex items-center gap-2 shadow-lg shadow-indigo-200">
+        <i class="bi bi-plus-lg"></i> Generate Report
+      </button>
+    </div>
+
+    @if (isLoading()) {
+      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 space-y-4 animate-pulse">
+        @for (i of [1,2,3]; track i) { <div class="h-20 bg-gray-100 rounded-xl"></div> }
+      </div>
+    }
+
+    @if (!isLoading()) {
+      <div class="space-y-4">
+        @for (r of reports(); track r.id) {
+          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all cursor-pointer p-6" (click)="openDetail(r.id)"
+            [class.border-orange-200]="r.status === 'COMPLETED_WITH_VARIANCE'">
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+              <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl flex items-center justify-center"
+                  [class.bg-green-100]="r.status === 'COMPLETED'" [class.bg-orange-100]="r.status === 'COMPLETED_WITH_VARIANCE'"
+                  [class.bg-gray-100]="r.status !== 'COMPLETED' && r.status !== 'COMPLETED_WITH_VARIANCE'">
+                  <i class="bi text-xl"
+                    [class.bi-check-circle-fill]="r.status === 'COMPLETED'" [class.text-green-600]="r.status === 'COMPLETED'"
+                    [class.bi-exclamation-circle-fill]="r.status === 'COMPLETED_WITH_VARIANCE'" [class.text-orange-600]="r.status === 'COMPLETED_WITH_VARIANCE'"
+                    [class.bi-journal-check]="r.status !== 'COMPLETED' && r.status !== 'COMPLETED_WITH_VARIANCE'" [class.text-gray-500]="r.status !== 'COMPLETED' && r.status !== 'COMPLETED_WITH_VARIANCE'"></i>
+                </div>
+                <div>
+                  <div class="flex items-center gap-2">
+                    <p class="font-semibold text-gray-900 font-mono">{{ r.reportRef }}</p>
+                    <span class="px-2 py-0.5 rounded-full text-xs font-medium {{ getStatusConfig(r.status).badge }}">{{ getStatusConfig(r.status).label }}</span>
+                  </div>
+                  <p class="text-sm text-gray-500">{{ fmtPeriod(r.periodStart, r.periodEnd) }}</p>
+                </div>
+              </div>
+              <div class="grid grid-cols-4 gap-6 text-right">
+                <div><p class="text-xs text-gray-500 uppercase tracking-wider">Transactions</p><p class="font-bold text-gray-900">{{ r.totalTransactions | number }}</p></div>
+                <div><p class="text-xs text-gray-500 uppercase tracking-wider">Net Revenue</p><p class="font-bold text-emerald-600">{{ fmt(r.netRevenue) }}</p></div>
+                <div><p class="text-xs text-gray-500 uppercase tracking-wider">Matched</p><p class="font-bold text-green-600">{{ r.totalTransactions - r.unmatchedCount | number }}</p></div>
+                <div><p class="text-xs text-gray-500 uppercase tracking-wider">Unmatched</p><p class="font-bold" [class.text-orange-600]="r.unmatchedCount > 0" [class.text-gray-400]="r.unmatchedCount === 0">{{ r.unmatchedCount | number }}</p></div>
+              </div>
+            </div>
+          </div>
+        } @empty {
+          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-16 text-center">
+            <div class="w-16 h-16 bg-teal-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <i class="bi bi-journal-check text-2xl text-teal-600"></i>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">No reconciliation reports yet</h3>
+            <p class="text-gray-500 text-sm mb-6">Generate your first report to match ledger totals against gateway data</p>
+            <button (click)="showGenModal.set(true)" class="px-6 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700">Generate First Report</button>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>
+
+<!-- Detail Modal -->
+@if (showDetail() && detail()) {
+  <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl animate-slide-up max-h-[90vh] overflow-y-auto">
+      <div class="sticky top-0 bg-white px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+        <div>
+          <h2 class="text-lg font-semibold text-gray-900">{{ detail()!.reportRef }}</h2>
+          <p class="text-sm text-gray-500">{{ fmtPeriod(detail()!.periodStart, detail()!.periodEnd) }}</p>
+        </div>
+        <button (click)="showDetail.set(false)" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="p-6 space-y-6">
+        <!-- Summary cards -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div class="bg-emerald-50 rounded-xl p-3 text-center border border-emerald-100">
+            <p class="text-xs text-emerald-600 uppercase tracking-wider mb-1">Revenue</p>
+            <p class="font-bold text-emerald-700">{{ fmt(detail()!.totalRevenue) }}</p>
+          </div>
+          <div class="bg-purple-50 rounded-xl p-3 text-center border border-purple-100">
+            <p class="text-xs text-purple-600 uppercase tracking-wider mb-1">Refunds</p>
+            <p class="font-bold text-purple-700">{{ fmt(detail()!.totalRefunds) }}</p>
+          </div>
+          <div class="bg-gray-50 rounded-xl p-3 text-center border border-gray-200">
+            <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Fees</p>
+            <p class="font-bold text-gray-700">{{ fmt(detail()!.totalFees) }}</p>
+          </div>
+          <div class="bg-blue-50 rounded-xl p-3 text-center border border-blue-100">
+            <p class="text-xs text-blue-600 uppercase tracking-wider mb-1">Net</p>
+            <p class="font-bold text-blue-700">{{ fmt(detail()!.netRevenue) }}</p>
+          </div>
+        </div>
+
+        <!-- Match summary -->
+        <div class="bg-gray-50 rounded-xl p-4">
+          <div class="flex items-center justify-between mb-3">
+            <p class="font-semibold text-gray-900">Match Summary</p>
+            @if (detail()!.varianceAmount !== 0) {
+              <span class="px-2 py-1 bg-orange-100 text-orange-700 rounded-lg text-xs font-medium">Variance: {{ fmt(detail()!.varianceAmount) }}</span>
+            }
+          </div>
+          <div class="flex gap-4">
+            <div class="flex items-center gap-2">
+              <div class="w-3 h-3 rounded-full bg-green-500"></div>
+              <span class="text-sm text-gray-600">{{ detail()!.matchedCount | number }} matched</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="w-3 h-3 rounded-full bg-orange-500"></div>
+              <span class="text-sm text-gray-600">{{ detail()!.unmatchedCount | number }} unmatched</span>
+            </div>
+          </div>
+          <!-- Progress bar -->
+          <div class="mt-3 h-2 bg-gray-200 rounded-full overflow-hidden">
+            @if (detail()!.totalTransactions > 0) {
+              <div class="h-full bg-green-500 rounded-full transition-all"
+                [style.width.%]="(detail()!.matchedCount / detail()!.totalTransactions) * 100"></div>
+            }
+          </div>
+        </div>
+
+        @if (detail()!.notes) {
+          <div class="bg-gray-50 rounded-xl p-3">
+            <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Notes</p>
+            <p class="text-sm text-gray-700">{{ detail()!.notes }}</p>
+          </div>
+        }
+      </div>
+      @if (detail()!.status !== 'COMPLETED' && detail()!.status !== 'FAILED') {
+        <div class="sticky bottom-0 bg-white px-6 py-4 border-t border-gray-100 flex justify-end">
+          <button (click)="close(detail()!.id)" [disabled]="actionLoading() !== null"
+            class="px-6 py-2.5 bg-teal-600 text-white rounded-xl text-sm font-medium hover:bg-teal-700 disabled:opacity-50 flex items-center gap-2">
+            @if (actionLoading()) { <i class="bi bi-arrow-repeat animate-spin"></i> }
+            Close & Finalize Report
+          </button>
+        </div>
+      }
+    </div>
+  </div>
+}
+
+<!-- Generate Modal -->
+@if (showGenModal()) {
+  <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md animate-slide-up">
+      <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+        <h2 class="text-lg font-semibold text-gray-900">Generate Reconciliation Report</h2>
+        <button (click)="showGenModal.set(false)" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="p-6 space-y-4">
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1.5 uppercase tracking-wider">Period Start *</label>
+          <input type="datetime-local" [value]="genForm().periodStart || ''" (input)="patchGen({ periodStart: $any($event.target).value })"
+            class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1.5 uppercase tracking-wider">Period End *</label>
+          <input type="datetime-local" [value]="genForm().periodEnd || ''" (input)="patchGen({ periodEnd: $any($event.target).value })"
+            class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1.5 uppercase tracking-wider">Notes</label>
+          <input type="text" [value]="genForm().notes || ''" (input)="patchGen({ notes: $any($event.target).value })" placeholder="Optional notes..."
+            class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm">
+        </div>
+        <div class="bg-blue-50 border border-blue-200 rounded-xl p-3">
+          <p class="text-xs text-blue-700 flex items-start gap-2">
+            <i class="bi bi-info-circle-fill mt-0.5 flex-shrink-0"></i>
+            This will aggregate all settled transactions within the period and match them against gateway totals. Large periods may take a moment to process.
+          </p>
+        </div>
+      </div>
+      <div class="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
+        <button (click)="showGenModal.set(false)" class="px-4 py-2 border border-gray-200 rounded-xl text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
+        <button (click)="generate()" [disabled]="actionLoading() !== null || !genForm().periodStart || !genForm().periodEnd"
+          class="px-6 py-2 bg-teal-600 text-white rounded-xl text-sm font-medium hover:bg-teal-700 disabled:opacity-50 flex items-center gap-2">
+          @if (actionLoading() === 'gen') { <i class="bi bi-arrow-repeat animate-spin"></i> }
+          Generate Report
+        </button>
+      </div>
+    </div>
+  </div>
+}

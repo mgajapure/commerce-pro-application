@@ -399,6 +399,8 @@ export class Sidebar implements OnInit {
       roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STAFF', 'VIEWER'],
       description: 'Executive overview and real-time metrics'
     },
+    
+    // ANALYTICS AND REPORTING MANAGEMENT SECTION
     {
       id: 'analytics',
       label: 'menu.analytics',
@@ -518,127 +520,132 @@ export class Sidebar implements OnInit {
       ]
     },
 
-    // CRM & LOYALTY SECTION
-    {
-      id: 'crm',
-      label: 'menu.crm',
-      icon: 'heart',
-      permissions: ['manage_loyalty'],
-      description: 'Loyalty programs and customer retention',
-      children: [
-        { id: 'crm-loyalty', label: 'menu.crm.loyalty', route: '/crm/loyalty', permissions: ['manage_loyalty'] },
-        { id: 'crm-points', label: 'menu.crm.points', route: '/crm/points', permissions: ['manage_loyalty'] },
-        { id: 'crm-rewards', label: 'menu.crm.rewards', route: '/crm/rewards', permissions: ['manage_loyalty'] },
-        { id: 'crm-memberships', label: 'menu.crm.memberships', route: '/crm/memberships', permissions: ['manage_loyalty'] },
-        { id: 'crm-gift-cards', label: 'menu.crm.gift_cards', route: '/crm/gift-cards', permissions: ['manage_loyalty'] },
-        { id: 'crm-referrals', label: 'menu.crm.referrals', route: '/crm/referrals', permissions: ['manage_loyalty'] }
-      ]
-    },
+    // // CRM & LOYALTY SECTION
+    // {
+    //   id: 'crm',
+    //   label: 'menu.crm',
+    //   icon: 'heart',
+    //   permissions: ['manage_loyalty'],
+    //   description: 'Loyalty programs and customer retention',
+    //   children: [
+    //     { id: 'crm-loyalty', label: 'menu.crm.loyalty', route: '/crm/loyalty', permissions: ['manage_loyalty'] },
+    //     { id: 'crm-points', label: 'menu.crm.points', route: '/crm/points', permissions: ['manage_loyalty'] },
+    //     { id: 'crm-rewards', label: 'menu.crm.rewards', route: '/crm/rewards', permissions: ['manage_loyalty'] },
+    //     { id: 'crm-memberships', label: 'menu.crm.memberships', route: '/crm/memberships', permissions: ['manage_loyalty'] },
+    //     { id: 'crm-gift-cards', label: 'menu.crm.gift_cards', route: '/crm/gift-cards', permissions: ['manage_loyalty'] },
+    //     { id: 'crm-referrals', label: 'menu.crm.referrals', route: '/crm/referrals', permissions: ['manage_loyalty'] }
+    //   ]
+    // },
 
-    // MARKETING SECTION
-    {
-      id: 'marketing',
-      label: 'menu.marketing',
-      icon: 'megaphone',
-      permissions: ['manage_marketing'],
-      description: 'Campaigns and promotional activities',
-      children: [
-        { id: 'marketing-campaigns', label: 'menu.marketing.campaigns', route: '/marketing/campaigns', permissions: ['manage_marketing'] },
-        { id: 'marketing-promotions', label: 'menu.marketing.promotions', route: '/marketing/promotions', permissions: ['manage_promotions'] },
-        { id: 'marketing-coupons', label: 'menu.marketing.coupons', route: '/marketing/coupons', permissions: ['manage_coupons'] },
-        { id: 'marketing-email', label: 'menu.marketing.email', route: '/marketing/email', permissions: ['manage_email_campaigns'] },
-        { id: 'marketing-automation', label: 'menu.marketing.automation', route: '/marketing/automation', permissions: ['manage_marketing'] },
-        { id: 'marketing-affiliates', label: 'menu.marketing.affiliates', route: '/marketing/affiliates', permissions: ['manage_affiliates'] },
-        { id: 'marketing-influencers', label: 'menu.marketing.influencers', route: '/marketing/influencers', permissions: ['manage_marketing'] },
-        { id: 'marketing-retargeting', label: 'menu.marketing.retargeting', route: '/marketing/retargeting', permissions: ['manage_marketing'] }
-      ]
-    },
+    // // MARKETING SECTION
+    // {
+    //   id: 'marketing',
+    //   label: 'menu.marketing',
+    //   icon: 'megaphone',
+    //   permissions: ['manage_marketing'],
+    //   description: 'Campaigns and promotional activities',
+    //   children: [
+    //     { id: 'marketing-campaigns', label: 'menu.marketing.campaigns', route: '/marketing/campaigns', permissions: ['manage_marketing'] },
+    //     { id: 'marketing-promotions', label: 'menu.marketing.promotions', route: '/marketing/promotions', permissions: ['manage_promotions'] },
+    //     { id: 'marketing-coupons', label: 'menu.marketing.coupons', route: '/marketing/coupons', permissions: ['manage_coupons'] },
+    //     { id: 'marketing-email', label: 'menu.marketing.email', route: '/marketing/email', permissions: ['manage_email_campaigns'] },
+    //     { id: 'marketing-automation', label: 'menu.marketing.automation', route: '/marketing/automation', permissions: ['manage_marketing'] },
+    //     { id: 'marketing-affiliates', label: 'menu.marketing.affiliates', route: '/marketing/affiliates', permissions: ['manage_affiliates'] },
+    //     { id: 'marketing-influencers', label: 'menu.marketing.influencers', route: '/marketing/influencers', permissions: ['manage_marketing'] },
+    //     { id: 'marketing-retargeting', label: 'menu.marketing.retargeting', route: '/marketing/retargeting', permissions: ['manage_marketing'] }
+    //   ]
+    // },
 
-    // CONTENT MANAGEMENT SECTION
-    {
-      id: 'content',
-      label: 'menu.content',
-      icon: 'file-earmark-text',
-      permissions: ['manage_cms_content'],
-      description: 'Website content and design management',
-      children: [
-        { id: 'content-pages', label: 'menu.content.pages', route: '/content/pages', permissions: ['manage_cms_content'] },
-        { id: 'content-blog', label: 'menu.content.blog', route: '/content/blog', permissions: ['manage_cms_content'] },
-        { id: 'content-media', label: 'menu.content.media', route: '/content/media', permissions: ['manage_cms_content'] },
-        { id: 'content-menus', label: 'menu.content.menus', route: '/content/menus', permissions: ['manage_cms_content'] },
-        { id: 'content-themes', label: 'menu.content.themes', route: '/content/themes', permissions: ['manage_cms_content'] },
-        { id: 'content-widgets', label: 'menu.content.widgets', route: '/content/widgets', permissions: ['manage_cms_content'] },
-        { id: 'content-landing', label: 'menu.content.landing', route: '/content/landing-pages', permissions: ['manage_cms_content'] }
-      ]
-    },
+    // // CONTENT MANAGEMENT SECTION
+    // {
+    //   id: 'content',
+    //   label: 'menu.content',
+    //   icon: 'file-earmark-text',
+    //   permissions: ['manage_cms_content'],
+    //   description: 'Website content and design management',
+    //   children: [
+    //     { id: 'content-pages', label: 'menu.content.pages', route: '/content/pages', permissions: ['manage_cms_content'] },
+    //     { id: 'content-blog', label: 'menu.content.blog', route: '/content/blog', permissions: ['manage_cms_content'] },
+    //     { id: 'content-media', label: 'menu.content.media', route: '/content/media', permissions: ['manage_cms_content'] },
+    //     { id: 'content-menus', label: 'menu.content.menus', route: '/content/menus', permissions: ['manage_cms_content'] },
+    //     { id: 'content-themes', label: 'menu.content.themes', route: '/content/themes', permissions: ['manage_cms_content'] },
+    //     { id: 'content-widgets', label: 'menu.content.widgets', route: '/content/widgets', permissions: ['manage_cms_content'] },
+    //     { id: 'content-landing', label: 'menu.content.landing', route: '/content/landing-pages', permissions: ['manage_cms_content'] }
+    //   ]
+    // },
 
-    // MULTI-CHANNEL SECTION
-    {
-      id: 'channels',
-      label: 'menu.channels',
-      icon: 'diagram-3',
-      permissions: ['manage_channels'],
-      description: 'Sales channels and omnichannel management',
-      children: [
-        { id: 'channels-overview', label: 'menu.channels.overview', route: '/channels/overview', permissions: ['manage_channels'] },
-        { id: 'channels-mobile', label: 'menu.channels.mobile_app', route: '/channels/mobile-app', permissions: ['manage_channels'] },
-        { id: 'channels-social', label: 'menu.channels.social', route: '/channels/social', permissions: ['manage_social_commerce'] },
-        { id: 'channels-pos', label: 'menu.channels.pos', route: '/channels/pos', permissions: ['manage_pos'] },
-        { id: 'channels-b2b', label: 'menu.channels.b2b_portal', route: '/channels/b2b', permissions: ['manage_channels'] },
-        { id: 'channels-api', label: 'menu.channels.api', route: '/channels/api', permissions: ['manage_integrations'] }
-      ]
-    },
+    // // MULTI-CHANNEL SECTION
+    // {
+    //   id: 'channels',
+    //   label: 'menu.channels',
+    //   icon: 'diagram-3',
+    //   permissions: ['manage_channels'],
+    //   description: 'Sales channels and omnichannel management',
+    //   children: [
+    //     { id: 'channels-overview', label: 'menu.channels.overview', route: '/channels/overview', permissions: ['manage_channels'] },
+    //     { id: 'channels-mobile', label: 'menu.channels.mobile_app', route: '/channels/mobile-app', permissions: ['manage_channels'] },
+    //     { id: 'channels-social', label: 'menu.channels.social', route: '/channels/social', permissions: ['manage_social_commerce'] },
+    //     { id: 'channels-pos', label: 'menu.channels.pos', route: '/channels/pos', permissions: ['manage_pos'] },
+    //     { id: 'channels-b2b', label: 'menu.channels.b2b_portal', route: '/channels/b2b', permissions: ['manage_channels'] },
+    //     { id: 'channels-api', label: 'menu.channels.api', route: '/channels/api', permissions: ['manage_integrations'] }
+    //   ]
+    // },
 
-    // MARKETPLACES SECTION
-    {
-      id: 'marketplaces',
-      label: 'menu.marketplaces',
-      icon: 'shop',
-      permissions: ['manage_marketplaces'],
-      description: 'Third-party marketplace integrations',
-      children: [
-        { id: 'marketplaces-overview', label: 'menu.channels.marketplaces', route: '/marketplaces', permissions: ['manage_marketplaces'] },
-        { id: 'marketplaces-amazon', label: 'menu.marketplaces.amazon', route: '/marketplaces/amazon', permissions: ['manage_marketplaces'] },
-        { id: 'marketplaces-ebay', label: 'menu.marketplaces.ebay', route: '/marketplaces/ebay', permissions: ['manage_marketplaces'] },
-        { id: 'marketplaces-walmart', label: 'menu.marketplaces.walmart', route: '/marketplaces/walmart', permissions: ['manage_marketplaces'] },
-        { id: 'marketplaces-etsy', label: 'menu.marketplaces.etsy', route: '/marketplaces/etsy', permissions: ['manage_marketplaces'] },
-        { id: 'marketplaces-alibaba', label: 'menu.marketplaces.alibaba', route: '/marketplaces/alibaba', permissions: ['manage_marketplaces'] },
-        { id: 'marketplaces-sync', label: 'menu.marketplaces.sync', route: '/marketplaces/sync', permissions: ['manage_marketplaces'] }
-      ]
-    },
+    // // MARKETPLACES SECTION
+    // {
+    //   id: 'marketplaces',
+    //   label: 'menu.marketplaces',
+    //   icon: 'shop',
+    //   permissions: ['manage_marketplaces'],
+    //   description: 'Third-party marketplace integrations',
+    //   children: [
+    //     { id: 'marketplaces-overview', label: 'menu.channels.marketplaces', route: '/marketplaces', permissions: ['manage_marketplaces'] },
+    //     { id: 'marketplaces-amazon', label: 'menu.marketplaces.amazon', route: '/marketplaces/amazon', permissions: ['manage_marketplaces'] },
+    //     { id: 'marketplaces-ebay', label: 'menu.marketplaces.ebay', route: '/marketplaces/ebay', permissions: ['manage_marketplaces'] },
+    //     { id: 'marketplaces-walmart', label: 'menu.marketplaces.walmart', route: '/marketplaces/walmart', permissions: ['manage_marketplaces'] },
+    //     { id: 'marketplaces-etsy', label: 'menu.marketplaces.etsy', route: '/marketplaces/etsy', permissions: ['manage_marketplaces'] },
+    //     { id: 'marketplaces-alibaba', label: 'menu.marketplaces.alibaba', route: '/marketplaces/alibaba', permissions: ['manage_marketplaces'] },
+    //     { id: 'marketplaces-sync', label: 'menu.marketplaces.sync', route: '/marketplaces/sync', permissions: ['manage_marketplaces'] }
+    //   ]
+    // },
 
-    // FINANCE SECTION
-    {
-      id: 'finance',
-      label: 'menu.finance',
-      icon: 'cash-stack',
-      permissions: ['view_revenue'],
-      description: 'Financial operations and accounting',
-      children: [
-        { id: 'finance-transactions', label: 'menu.finance.transactions', route: '/finance/transactions', permissions: ['view_revenue'] },
-        { id: 'finance-payouts', label: 'menu.finance.payouts', route: '/finance/payouts', permissions: ['view_revenue'] },
-        { id: 'finance-invoices', label: 'menu.finance.invoices', route: '/finance/invoices', permissions: ['manage_invoicing'] },
-        { id: 'finance-refunds', label: 'menu.finance.refunds', route: '/finance/refunds', permissions: ['manage_refunds'] },
-        { id: 'finance-reconciliation', label: 'menu.finance.reconciliation', route: '/finance/reconciliation', permissions: ['view_revenue'] },
-        { id: 'finance-taxes', label: 'menu.finance.taxes', route: '/finance/taxes', permissions: ['manage_taxes'] },
-        { id: 'finance-currency', label: 'menu.finance.currency', route: '/finance/currency', permissions: ['manage_currency'] },
-        { id: 'finance-commissions', label: 'menu.finance.commissions', route: '/finance/commissions', permissions: ['manage_commissions'] }
-      ]
-    },
-
-    // PAYMENTS SECTION
+    // PAYMENTS CONFIG SECTION — gateway & method config
     {
       id: 'payments',
       label: 'menu.payments',
       icon: 'credit-card',
       permissions: ['manage_payments'],
-      description: 'Payment processing configuration',
+      description: 'Payment gateway and method configuration',
       children: [
         { id: 'payments-methods', label: 'menu.payments.methods', route: '/payments/methods', permissions: ['manage_payments'] },
         { id: 'payments-gateways', label: 'menu.payments.gateways', route: '/payments/gateways', permissions: ['manage_payments'] },
         { id: 'payments-fraud', label: 'menu.payments.fraud', route: '/payments/fraud', permissions: ['manage_payments'] },
         { id: 'payments-subscriptions', label: 'menu.payments.subscriptions', route: '/payments/subscriptions', permissions: ['manage_payments'] },
         { id: 'payments-installments', label: 'menu.payments.installments', route: '/payments/installments', permissions: ['manage_payments'] }
+      ]
+    },
+
+    // FINANCE SECTION — Finance module (/finance/*)
+    {
+      id: 'finance',
+      label: 'Finance',
+      icon: 'cash-stack',
+      permissions: ['view_revenue', 'manage_payments'],
+      description: 'Financial management — AR, AP, P&L, Tax, Expenses',
+      children: [
+        { id: 'finance-overview',       label: 'Overview & P&L',            route: '/finance/overview',       permissions: ['view_revenue'] },
+        { id: 'finance-invoices',       label: 'Customer Invoices (AR)',     route: '/finance/invoices',       permissions: ['view_revenue'] },
+        { id: 'finance-ar',             label: 'AR Aging',                  route: '/finance/ar',             permissions: ['view_revenue'] },
+        { id: 'finance-vendors',        label: 'Vendors',                   route: '/finance/vendors',        permissions: ['manage_payments'] },
+        { id: 'finance-vendor-invoices',label: 'Vendor Bills (AP)',         route: '/finance/vendor-invoices',permissions: ['manage_payments'] },
+        { id: 'finance-ap',             label: 'AP Aging',                  route: '/finance/ap',             permissions: ['manage_payments'] },
+        { id: 'finance-tax',            label: 'Tax Management',            route: '/finance/tax',            permissions: ['view_revenue'] },
+        { id: 'finance-expenses',       label: 'Expenses',                  route: '/finance/expenses',       permissions: ['manage_payments'] },
+        { id: 'finance-journal',        label: 'Journal Entries',           route: '/finance/journal',        permissions: ['view_revenue'] },
+        { id: 'finance-periods',        label: 'Financial Periods',         route: '/finance/periods',        permissions: ['view_revenue'] },
+        { id: 'finance-budgets',        label: 'Budgets',                   route: '/finance/budgets',        permissions: ['view_revenue'] },
+        { id: 'finance-cashflow',       label: 'Cash Flow Forecast',        route: '/finance/cashflow',       permissions: ['view_revenue'] },
+        { id: 'finance-fx',             label: 'Exchange Rates',            route: '/finance/exchange-rates', permissions: ['view_revenue'] },
       ]
     },
 
@@ -663,21 +670,21 @@ export class Sidebar implements OnInit {
     { id: 'divider-1', label: '', icon: '', divider: true, section: 'Administration' },
 
     // GLOBAL SETTINGS SECTION
-    {
-      id: 'global',
-      label: 'menu.global',
-      icon: 'globe',
-      roles: ['SUPER_ADMIN', 'ADMIN'],
-      description: 'Internationalization and regional settings',
-      children: [
-        { id: 'global-languages', label: 'menu.global.languages', route: '/global/languages', permissions: ['manage_multi_language'] },
-        { id: 'global-currencies', label: 'menu.global.currencies', route: '/global/currencies', permissions: ['manage_multi_currency'] },
-        { id: 'global-regions', label: 'menu.global.regions', route: '/global/regions', permissions: ['manage_regions'] },
-        { id: 'global-tax', label: 'menu.global.tax', route: '/global/tax-rules', permissions: ['manage_tax_rules'] },
-        { id: 'global-shipping', label: 'menu.global.shipping_zones', route: '/global/shipping-zones', permissions: ['manage_shipping'] },
-        { id: 'global-localization', label: 'menu.global.localization', route: '/global/localization', permissions: ['manage_multi_language'] }
-      ]
-    },
+    // {
+    //   id: 'global',
+    //   label: 'menu.global',
+    //   icon: 'globe',
+    //   roles: ['SUPER_ADMIN', 'ADMIN'],
+    //   description: 'Internationalization and regional settings',
+    //   children: [
+    //     { id: 'global-languages', label: 'menu.global.languages', route: '/global/languages', permissions: ['manage_multi_language'] },
+    //     { id: 'global-currencies', label: 'menu.global.currencies', route: '/global/currencies', permissions: ['manage_multi_currency'] },
+    //     { id: 'global-regions', label: 'menu.global.regions', route: '/global/regions', permissions: ['manage_regions'] },
+    //     { id: 'global-tax', label: 'menu.global.tax', route: '/global/tax-rules', permissions: ['manage_tax_rules'] },
+    //     { id: 'global-shipping', label: 'menu.global.shipping_zones', route: '/global/shipping-zones', permissions: ['manage_shipping'] },
+    //     { id: 'global-localization', label: 'menu.global.localization', route: '/global/localization', permissions: ['manage_multi_language'] }
+    //   ]
+    // },
 
     // SYSTEM ADMINISTRATION SECTION
     {

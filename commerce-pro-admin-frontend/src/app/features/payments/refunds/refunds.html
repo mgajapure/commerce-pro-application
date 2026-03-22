@@ -1,0 +1,288 @@
+<div class="min-h-screen bg-gray-50/50 p-4 sm:p-6 lg:p-8">
+  <div class="max-w-[1600px] mx-auto space-y-6">
+
+    <!-- Header -->
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+      <div>
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-purple-600 rounded-xl flex items-center justify-center">
+            <i class="bi bi-arrow-counterclockwise text-white text-lg"></i>
+          </div>
+          <h1 class="text-2xl font-bold text-gray-900">Refunds</h1>
+          <span class="px-3 py-1 bg-gray-100 text-gray-600 text-sm font-medium rounded-full">{{ totalElements() | number }}</span>
+        </div>
+        <p class="text-gray-500 mt-1 text-sm">Manage refund requests through the full approval workflow</p>
+      </div>
+      <button (click)="showCreateModal.set(true)"
+        class="px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 flex items-center gap-2 shadow-lg shadow-indigo-200">
+        <i class="bi bi-plus-lg"></i> New Refund Request
+      </button>
+    </div>
+
+    <!-- Status Tabs -->
+    <div class="bg-white rounded-2xl p-2 shadow-sm border border-gray-100 overflow-x-auto">
+      <div class="flex gap-1.5 min-w-max">
+        @for (tab of statusTabs; track tab.value) {
+          <button (click)="setTab(tab.value)"
+            class="px-4 py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap"
+            [class.bg-indigo-600]="filterStatus() === tab.value" [class.text-white]="filterStatus() === tab.value"
+            [class.bg-gray-50]="filterStatus() !== tab.value" [class.text-gray-700]="filterStatus() !== tab.value">
+            {{ tab.label }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Loading -->
+    @if (isLoading()) {
+      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 space-y-4 animate-pulse">
+        @for (i of [1,2,3,4,5]; track i) { <div class="h-14 bg-gray-100 rounded-xl"></div> }
+      </div>
+    }
+
+    <!-- Table -->
+    @if (!isLoading()) {
+      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead class="bg-gray-50/50 border-b border-gray-100">
+              <tr>
+                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Reference</th>
+                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Customer / Order</th>
+                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Reason</th>
+                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Amount</th>
+                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Requested</th>
+                <th class="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+              @for (r of refunds(); track r.id) {
+                <tr class="group hover:bg-gray-50/50 transition-colors cursor-pointer" (click)="openDetail(r.id)">
+                  <td class="px-6 py-4">
+                    <p class="font-semibold text-gray-900 text-sm font-mono">{{ r.refundRef }}</p>
+                  </td>
+                  <td class="px-6 py-4">
+                    <p class="font-medium text-gray-900 text-sm">{{ r.customerName || '—' }}</p>
+                    <p class="text-xs text-gray-400 font-mono">{{ r.orderNumber }}</p>
+                  </td>
+                  <td class="px-6 py-4">
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium {{ getStatusConfig(r.status).badge }}">
+                      <span class="w-1.5 h-1.5 rounded-full {{ getStatusConfig(r.status).dot }}"></span>
+                      {{ getStatusConfig(r.status).label }}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4">
+                    <span class="text-sm text-gray-600">{{ reasonLabels[r.reason] || r.reason }}</span>
+                  </td>
+                  <td class="px-6 py-4">
+                    <p class="font-bold text-gray-900">{{ fmt(r.refundAmount) }}</p>
+                    <p class="text-xs text-gray-400">{{ r.currency }}</p>
+                  </td>
+                  <td class="px-6 py-4">
+                    <p class="text-sm text-gray-500">{{ fmtDate(r.createdAt) }}</p>
+                  </td>
+                  <td class="px-6 py-4 text-right" (click)="$event.stopPropagation()">
+                    <div class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      @if (r.status === 'PENDING' || r.status === 'UNDER_REVIEW') {
+                        <button (click)="openReview(r.id, 'approve')" class="px-3 py-1.5 bg-green-600 text-white rounded-lg text-xs font-medium hover:bg-green-700">Approve</button>
+                        <button (click)="openReview(r.id, 'reject')" class="px-3 py-1.5 bg-red-100 text-red-700 rounded-lg text-xs font-medium hover:bg-red-200">Reject</button>
+                      }
+                      @if (r.status === 'APPROVED') {
+                        <button (click)="openProcessConfirm(r.id)" [disabled]="actionLoading() !== null"
+                          class="px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-medium hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-1">
+                          @if (actionLoading() === r.id) { <i class="bi bi-arrow-repeat animate-spin"></i> }
+                          Process
+                        </button>
+                      }
+                    </div>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="7" class="px-6 py-16 text-center">
+                    <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                      <i class="bi bi-arrow-counterclockwise text-2xl text-gray-400"></i>
+                    </div>
+                    <h3 class="text-lg font-medium text-gray-900 mb-1">No refund requests</h3>
+                    <p class="text-gray-500 text-sm">{{ filterStatus() ? 'No refunds with this status' : 'No refunds have been submitted yet' }}</p>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        @if (totalPages() > 1) {
+          <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
+            <p class="text-sm text-gray-500">{{ totalElements() | number }} total</p>
+            <div class="flex items-center gap-1.5">
+              <button (click)="prevPage()" [disabled]="currentPage() === 1" class="p-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40">
+                <i class="bi bi-chevron-left"></i>
+              </button>
+              @for (page of visiblePages(); track page) {
+                @if (page === '...') { <span class="px-2 text-gray-400">…</span> }
+                @else { <button (click)="goToPage(+page)" class="px-3 py-1.5 rounded-lg text-sm font-medium" [class.bg-indigo-600]="currentPage() === page" [class.text-white]="currentPage() === page" [class.text-gray-700]="currentPage() !== page">{{ page }}</button> }
+              }
+              <button (click)="nextPage()" [disabled]="currentPage() === totalPages()" class="p-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40">
+                <i class="bi bi-chevron-right"></i>
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>
+
+<!-- Detail Drawer -->
+@if (showDetail() && detail()) {
+  <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4 animate-fade-in">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg animate-slide-up max-h-[90vh] overflow-y-auto">
+      <div class="sticky top-0 bg-white px-6 py-4 border-b border-gray-100 flex items-center justify-between z-10">
+        <div>
+          <h2 class="text-lg font-semibold text-gray-900">{{ detail()!.refundRef }}</h2>
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium {{ getStatusConfig(detail()!.status).badge }}">
+            {{ getStatusConfig(detail()!.status).label }}
+          </span>
+        </div>
+        <button (click)="showDetail.set(false); detail.set(null)" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="p-6 space-y-4">
+        <div class="grid grid-cols-2 gap-4">
+          <div class="bg-gray-50 rounded-xl p-3"><p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Order</p><p class="font-mono font-semibold text-sm">{{ detail()!.orderNumber }}</p></div>
+          <div class="bg-gray-50 rounded-xl p-3"><p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Amount</p><p class="font-bold text-lg text-gray-900">{{ fmt(detail()!.refundAmount) }}</p></div>
+          <div class="bg-gray-50 rounded-xl p-3"><p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Reason</p><p class="font-medium text-sm">{{ reasonLabels[detail()!.reason] }}</p></div>
+          <div class="bg-gray-50 rounded-xl p-3"><p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Requested</p><p class="text-sm">{{ fmtDate(detail()!.createdAt) }}</p></div>
+        </div>
+        @if (detail()!.reasonDetail) {
+          <div class="bg-gray-50 rounded-xl p-3"><p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Details</p><p class="text-sm text-gray-700">{{ detail()!.reasonDetail }}</p></div>
+        }
+        @if (detail()!.reviewNotes) {
+          <div class="bg-blue-50 rounded-xl p-3 border border-blue-100"><p class="text-xs text-blue-600 uppercase tracking-wider mb-1">Review Notes</p><p class="text-sm text-blue-800">{{ detail()!.reviewNotes }}</p></div>
+        }
+        @if (detail()!.processedAt) {
+          <div class="bg-green-50 rounded-xl p-3 border border-green-100"><p class="text-xs text-green-600 uppercase tracking-wider mb-1">Processed</p><p class="text-sm text-green-800">{{ fmtDate(detail()!.processedAt) }}</p><p class="text-xs text-green-600 font-mono">{{ detail()!.gatewayRefundId }}</p></div>
+        }
+        @if (detail()!.failureReason) {
+          <div class="bg-red-50 rounded-xl p-3 border border-red-100"><p class="text-xs text-red-600 uppercase tracking-wider mb-1">Failure Reason</p><p class="text-sm text-red-800">{{ detail()!.failureReason }}</p></div>
+        }
+      </div>
+      @if (detail()!.status === 'PENDING' || detail()!.status === 'UNDER_REVIEW' || detail()!.status === 'APPROVED') {
+        <div class="sticky bottom-0 bg-white px-6 py-4 border-t border-gray-100 flex gap-3">
+          @if (detail()!.status === 'PENDING' || detail()!.status === 'UNDER_REVIEW') {
+            <button (click)="openReview(detail()!.id, 'approve')" class="flex-1 py-2.5 bg-green-600 text-white rounded-xl text-sm font-medium hover:bg-green-700">Approve</button>
+            <button (click)="openReview(detail()!.id, 'reject')" class="flex-1 py-2.5 bg-red-100 text-red-700 rounded-xl text-sm font-medium hover:bg-red-200">Reject</button>
+          }
+          @if (detail()!.status === 'APPROVED') {
+            <button (click)="openProcessConfirm(detail()!.id)" class="flex-1 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700">Process on Gateway</button>
+          }
+        </div>
+      }
+    </div>
+  </div>
+}
+
+<!-- Review Modal -->
+@if (showReviewModal()) {
+  <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4 animate-fade-in">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md animate-slide-up">
+      <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+        <h2 class="text-lg font-semibold text-gray-900">{{ showReviewModal() === 'approve' ? 'Approve Refund' : 'Reject Refund' }}</h2>
+        <button (click)="showReviewModal.set(null)" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="p-6">
+        <label class="block text-sm font-medium text-gray-700 mb-1.5">Notes (optional)</label>
+        <textarea [(ngModel)]="reviewNotes" rows="3" [placeholder]="showReviewModal() === 'approve' ? 'Approval notes...' : 'Reason for rejection...'"
+          class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm resize-none"></textarea>
+      </div>
+      <div class="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
+        <button (click)="showReviewModal.set(null)" class="px-4 py-2 border border-gray-200 rounded-xl text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
+        <button (click)="submitReview()" [disabled]="actionLoading() !== null"
+          class="px-6 py-2 rounded-xl text-sm font-medium text-white disabled:opacity-50 flex items-center gap-2"
+          [class.bg-green-600]="showReviewModal() === 'approve'" [class.hover:bg-green-700]="showReviewModal() === 'approve'"
+          [class.bg-red-600]="showReviewModal() === 'reject'" [class.hover:bg-red-700]="showReviewModal() === 'reject'">
+          @if (actionLoading()) { <i class="bi bi-arrow-repeat animate-spin"></i> }
+          {{ showReviewModal() === 'approve' ? 'Approve' : 'Reject' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Process Confirm -->
+@if (showProcessConfirm()) {
+  <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4 animate-fade-in">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md animate-slide-up">
+      <div class="p-6 text-center">
+        <div class="w-14 h-14 bg-indigo-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <i class="bi bi-arrow-counterclockwise text-indigo-600 text-2xl"></i>
+        </div>
+        <h2 class="text-lg font-semibold text-gray-900 mb-2">Process Refund</h2>
+        <p class="text-gray-600 text-sm">This will submit the refund to the payment gateway. Funds will be returned to the customer's original payment method.</p>
+      </div>
+      <div class="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
+        <button (click)="showProcessConfirm.set(false)" class="px-4 py-2 border border-gray-200 rounded-xl text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
+        <button (click)="confirmProcess()" [disabled]="actionLoading() !== null"
+          class="px-6 py-2 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-2">
+          @if (actionLoading()) { <i class="bi bi-arrow-repeat animate-spin"></i> }
+          Process Refund
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Create Refund Modal -->
+@if (showCreateModal()) {
+  <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg animate-slide-up">
+      <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+        <h2 class="text-lg font-semibold text-gray-900">New Refund Request</h2>
+        <button (click)="showCreateModal.set(false)" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="p-6 space-y-4">
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1.5 uppercase tracking-wider">Payment Transaction ID *</label>
+          <input type="text" [value]="newRefund().paymentTransactionId || ''" (input)="patchNew({ paymentTransactionId: $any($event.target).value })"
+            placeholder="Transaction UUID"
+            class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm font-mono">
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1.5 uppercase tracking-wider">Refund Amount *</label>
+            <div class="relative">
+              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+              <input type="number" [value]="newRefund().refundAmount || ''" (input)="patchNew({ refundAmount: parseFloat($any($event.target).value) })"
+                step="0.01" min="0.01" placeholder="0.00"
+                class="w-full pl-8 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm">
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1.5 uppercase tracking-wider">Reason *</label>
+            <select [value]="newRefund().reason || ''" (change)="patchNew({ reason: $any($event.target).value })"
+              class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm">
+              <option value="">Select reason</option>
+              @for (entry of $any(Object.entries(reasonLabels)); track entry[0]) {
+                <option [value]="entry[0]">{{ entry[1] }}</option>
+              }
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1.5 uppercase tracking-wider">Additional Details</label>
+          <textarea [value]="newRefund().reasonDetail || ''" (input)="patchNew({ reasonDetail: $any($event.target).value })"
+            rows="2" placeholder="Optional context..."
+            class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm resize-none"></textarea>
+        </div>
+      </div>
+      <div class="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
+        <button (click)="showCreateModal.set(false)" class="px-4 py-2 border border-gray-200 rounded-xl text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
+        <button (click)="submitCreate()" [disabled]="actionLoading() !== null || !newRefund().paymentTransactionId || !newRefund().refundAmount || !newRefund().reason"
+          class="px-6 py-2 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-2">
+          @if (actionLoading() === 'create') { <i class="bi bi-arrow-repeat animate-spin"></i> }
+          Submit Request
+        </button>
+      </div>
+    </div>
+  </div>
+}

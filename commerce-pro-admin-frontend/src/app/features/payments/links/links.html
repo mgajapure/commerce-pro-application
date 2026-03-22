@@ -1,0 +1,289 @@
+<div class="min-h-screen bg-gray-50/50 p-4 sm:p-6 lg:p-8">
+  <div class="max-w-[1600px] mx-auto space-y-6">
+
+    <!-- Header -->
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+      <div>
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-violet-600 rounded-xl flex items-center justify-center">
+            <i class="bi bi-link-45deg text-white text-lg"></i>
+          </div>
+          <h1 class="text-2xl font-bold text-gray-900">Payment Links</h1>
+          <span class="px-3 py-1 bg-gray-100 text-gray-600 text-sm font-medium rounded-full">{{ totalElements() | number }}</span>
+        </div>
+        <p class="text-gray-500 mt-1 text-sm">Create shareable payment URLs — send to customers via email, SMS, or social</p>
+      </div>
+      <button (click)="showCreateModal.set(true)"
+        class="px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 flex items-center gap-2 shadow-lg shadow-indigo-200">
+        <i class="bi bi-plus-lg"></i> Create Link
+      </button>
+    </div>
+
+    <!-- Status Tabs -->
+    <div class="bg-white rounded-2xl p-2 shadow-sm border border-gray-100 overflow-x-auto">
+      <div class="flex gap-1.5 min-w-max">
+        @for (tab of statusTabs; track tab.value) {
+          <button (click)="setTab(tab.value)"
+            class="px-4 py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap"
+            [class.bg-indigo-600]="filterStatus() === tab.value" [class.text-white]="filterStatus() === tab.value"
+            [class.bg-gray-50]="filterStatus() !== tab.value" [class.text-gray-700]="filterStatus() !== tab.value">
+            {{ tab.label }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Loading -->
+    @if (isLoading()) {
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        @for (i of [1,2,3,4,5,6]; track i) {
+          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 h-40 animate-pulse">
+            <div class="h-4 bg-gray-100 rounded w-3/4 mb-3"></div>
+            <div class="h-8 bg-gray-100 rounded w-1/2 mb-3"></div>
+            <div class="h-3 bg-gray-100 rounded w-full"></div>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Links Grid -->
+    @if (!isLoading()) {
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        @for (link of links(); track link.id) {
+          <div class="bg-white rounded-2xl border shadow-sm hover:shadow-md transition-all cursor-pointer group"
+            [class.border-gray-100]="link.status === 'ACTIVE'"
+            [class.border-blue-200]="link.status === 'PAID'"
+            [class.border-yellow-200]="link.status === 'EXPIRED'"
+            [class.border-gray-200]="link.status === 'CANCELLED'"
+            (click)="openDetail(link.id)">
+            <div class="p-5">
+              <div class="flex items-start justify-between mb-3">
+                <div class="flex-1 min-w-0">
+                  <p class="font-semibold text-gray-900 truncate">{{ link.title }}</p>
+                  <p class="text-xs text-gray-400 font-mono mt-0.5">{{ link.slug }}</p>
+                </div>
+                <span class="ml-2 flex-shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium {{ getStatusConfig(link.status).badge }}">
+                  <span class="w-1.5 h-1.5 rounded-full {{ getStatusConfig(link.status).dot }}" [class.animate-pulse]="link.status === 'ACTIVE'"></span>
+                  {{ getStatusConfig(link.status).label }}
+                </span>
+              </div>
+
+              <p class="text-2xl font-bold text-gray-900 mb-3">{{ fmt(link.amount) }} <span class="text-sm font-normal text-gray-400">{{ link.currency }}</span></p>
+
+              <div class="flex items-center justify-between text-xs text-gray-400">
+                <span class="flex items-center gap-1">
+                  <i class="bi bi-cursor-fill text-indigo-400"></i>
+                  {{ link.usesCount }}{{ link.maxUses ? '/' + link.maxUses : '' }} uses
+                </span>
+                @if (link.expiresAt) {
+                  <span class="flex items-center gap-1" [class.text-orange-500]="(expiresInDays(link.expiresAt) ?? 999) <= 3 && link.status === 'ACTIVE'">
+                    <i class="bi bi-clock"></i>
+                    @if (link.status === 'ACTIVE' && (expiresInDays(link.expiresAt) ?? 999) <= 3) {
+                      {{ expiresInDays(link.expiresAt) }}d left
+                    } @else {
+                      Exp. {{ fmtDate(link.expiresAt) }}
+                    }
+                  </span>
+                }
+                <span class="text-gray-300">{{ fmtDate(link.createdAt) }}</span>
+              </div>
+            </div>
+
+            <!-- Actions bar -->
+            <div class="px-5 pb-4 flex gap-2">
+              @if (link.status === 'ACTIVE') {
+                <button (click)="copyUrl('http://localhost:4200/pay/' + link.slug, link.id, $event)"
+                  class="flex-1 py-2 rounded-xl text-xs font-medium transition-all flex items-center justify-center gap-1.5"
+                  [class.bg-green-600]="copiedId() === link.id" [class.text-white]="copiedId() === link.id"
+                  [class.bg-indigo-50]="copiedId() !== link.id" [class.text-indigo-700]="copiedId() !== link.id"
+                  [class.hover:bg-indigo-100]="copiedId() !== link.id">
+                  <i class="bi bi-{{ copiedId() === link.id ? 'check-lg' : 'clipboard' }}"></i>
+                  {{ copiedId() === link.id ? 'Copied!' : 'Copy URL' }}
+                </button>
+                <button (click)="deactivate(link.id, $event)" [disabled]="actionLoading() === link.id"
+                  class="px-3 py-2 bg-gray-100 text-gray-600 rounded-xl text-xs font-medium hover:bg-gray-200 disabled:opacity-50">
+                  @if (actionLoading() === link.id) { <i class="bi bi-arrow-repeat animate-spin"></i> }
+                  @else { <i class="bi bi-x-lg"></i> }
+                </button>
+              }
+            </div>
+          </div>
+        } @empty {
+          <div class="col-span-3 bg-white rounded-2xl border border-gray-100 shadow-sm p-16 text-center">
+            <div class="w-16 h-16 bg-violet-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <i class="bi bi-link-45deg text-2xl text-violet-600"></i>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">No payment links yet</h3>
+            <p class="text-gray-500 text-sm mb-6">Create shareable payment URLs to collect payments from customers</p>
+            <button (click)="showCreateModal.set(true)" class="px-6 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700">Create First Link</button>
+          </div>
+        }
+      </div>
+
+      @if (totalPages() > 1) {
+        <div class="flex items-center justify-center gap-1.5 mt-4">
+          <button (click)="prevPage()" [disabled]="currentPage() === 1" class="p-2 rounded-lg border border-gray-200 disabled:opacity-40"><i class="bi bi-chevron-left"></i></button>
+          @for (page of visiblePages(); track page) {
+            @if (page === '...') { <span class="px-2 text-gray-400">…</span> }
+            @else { <button (click)="goToPage(+page)" class="px-3 py-1.5 rounded-lg text-sm" [class.bg-indigo-600]="currentPage() === page" [class.text-white]="currentPage() === page" [class.text-gray-700]="currentPage() !== page">{{ page }}</button> }
+          }
+          <button (click)="nextPage()" [disabled]="currentPage() === totalPages()" class="p-2 rounded-lg border border-gray-200 disabled:opacity-40"><i class="bi bi-chevron-right"></i></button>
+        </div>
+      }
+    }
+  </div>
+</div>
+
+<!-- Detail Modal -->
+@if (showDetail() && detail()) {
+  <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md animate-slide-up">
+      <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+        <div>
+          <h2 class="text-lg font-semibold text-gray-900">{{ detail()!.title }}</h2>
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium {{ getStatusConfig(detail()!.status).badge }}">{{ getStatusConfig(detail()!.status).label }}</span>
+        </div>
+        <button (click)="showDetail.set(false)" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="p-6 space-y-4">
+        <!-- URL box -->
+        <div class="bg-gray-50 rounded-xl p-4 border border-gray-200">
+          <p class="text-xs text-gray-500 uppercase tracking-wider mb-2">Payment URL</p>
+          <div class="flex items-center gap-2">
+            <p class="font-mono text-sm text-indigo-600 flex-1 truncate">{{ detail()!.payUrl }}</p>
+            <button (click)="copyUrl(detail()!.payUrl, detail()!.id, $event)"
+              class="flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+              [class.bg-green-600]="copiedId() === detail()!.id" [class.text-white]="copiedId() === detail()!.id"
+              [class.bg-indigo-600]="copiedId() !== detail()!.id" [class.text-white]="copiedId() !== detail()!.id"
+              [class.hover:bg-indigo-700]="copiedId() !== detail()!.id">
+              <i class="bi bi-{{ copiedId() === detail()!.id ? 'check-lg' : 'clipboard' }}"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div class="bg-gray-50 rounded-xl p-3"><p class="text-xs text-gray-500 mb-1">Amount</p><p class="text-xl font-bold text-gray-900">{{ fmt(detail()!.amount) }}</p></div>
+          <div class="bg-gray-50 rounded-xl p-3"><p class="text-xs text-gray-500 mb-1">Uses</p><p class="font-bold text-gray-900">{{ detail()!.usesCount }}{{ detail()!.maxUses ? ' / ' + detail()!.maxUses : ' / ∞' }}</p></div>
+          <div class="bg-gray-50 rounded-xl p-3"><p class="text-xs text-gray-500 mb-1">Type</p><p class="font-medium text-sm">{{ detail()!.isOneTime ? 'One-time' : 'Reusable' }}</p></div>
+          <div class="bg-gray-50 rounded-xl p-3"><p class="text-xs text-gray-500 mb-1">Expires</p><p class="font-medium text-sm">{{ fmtDate(detail()!.expiresAt) }}</p></div>
+        </div>
+
+        @if (detail()!.description) {
+          <div class="bg-gray-50 rounded-xl p-3"><p class="text-xs text-gray-500 mb-1">Description</p><p class="text-sm text-gray-700">{{ detail()!.description }}</p></div>
+        }
+
+        @if (detail()!.paidAt) {
+          <div class="bg-green-50 rounded-xl p-3 border border-green-100">
+            <p class="text-xs text-green-600 mb-1">Paid At</p>
+            <p class="font-medium text-green-800">{{ fmtDate(detail()!.paidAt) }}</p>
+          </div>
+        }
+      </div>
+
+      @if (detail()!.status === 'ACTIVE') {
+        <div class="px-6 py-4 border-t border-gray-100 flex gap-3">
+          <button (click)="copyUrl(detail()!.payUrl, detail()!.id, $event)"
+            class="flex-1 py-2.5 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2"
+            [class.bg-green-600]="copiedId() === detail()!.id" [class.text-white]="copiedId() === detail()!.id"
+            [class.bg-indigo-600]="copiedId() !== detail()!.id" [class.text-white]="copiedId() !== detail()!.id">
+            <i class="bi bi-{{ copiedId() === detail()!.id ? 'check-lg' : 'clipboard' }}"></i>
+            {{ copiedId() === detail()!.id ? 'Copied!' : 'Copy URL' }}
+          </button>
+          <button (click)="deactivate(detail()!.id, $event)" [disabled]="actionLoading() !== null"
+            class="px-5 py-2.5 bg-gray-200 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-300 disabled:opacity-50">
+            Deactivate
+          </button>
+        </div>
+      }
+    </div>
+  </div>
+}
+
+<!-- Create Modal -->
+@if (showCreateModal()) {
+  <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg animate-slide-up max-h-[90vh] overflow-y-auto">
+      <div class="sticky top-0 bg-white px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+        <h2 class="text-lg font-semibold text-gray-900">Create Payment Link</h2>
+        <button (click)="showCreateModal.set(false)" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="p-6 space-y-4">
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1.5 uppercase tracking-wider">Title *</label>
+          <input type="text" [value]="newLink().title || ''" (input)="patchNew({ title: $any($event.target).value })" placeholder="e.g. Payment for Order #ORD-000042"
+            class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm">
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1.5 uppercase tracking-wider">Amount *</label>
+            <div class="relative">
+              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+              <input type="number" [value]="newLink().amount || ''" (input)="patchNew({ amount: parseFloat($any($event.target).value) })" step="0.01" min="0.01"
+                class="w-full pl-8 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm">
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1.5 uppercase tracking-wider">Currency</label>
+            <select [value]="newLink().currency || 'USD'" (change)="patchNew({ currency: $any($event.target).value })"
+              class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm">
+              <option value="USD">USD</option><option value="EUR">EUR</option><option value="GBP">GBP</option><option value="INR">INR</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1.5 uppercase tracking-wider">Customer Email</label>
+          <input type="email" [value]="newLink().customerEmail || ''" (input)="patchNew({ customerEmail: $any($event.target).value })" placeholder="customer@example.com"
+            class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm">
+        </div>
+
+        <!-- Type toggle -->
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-2 uppercase tracking-wider">Link Type</label>
+          <div class="grid grid-cols-2 gap-3">
+            <button (click)="patchNew({ isOneTime: true })"
+              class="py-3 rounded-xl border-2 text-sm font-medium transition-all flex flex-col items-center gap-1"
+              [class.border-indigo-500]="newLink().isOneTime === true" [class.bg-indigo-50]="newLink().isOneTime === true" [class.text-indigo-700]="newLink().isOneTime === true"
+              [class.border-gray-200]="newLink().isOneTime !== true" [class.text-gray-600]="newLink().isOneTime !== true">
+              <i class="bi bi-1-circle text-lg"></i>
+              One-time use
+            </button>
+            <button (click)="patchNew({ isOneTime: false })"
+              class="py-3 rounded-xl border-2 text-sm font-medium transition-all flex flex-col items-center gap-1"
+              [class.border-indigo-500]="newLink().isOneTime === false" [class.bg-indigo-50]="newLink().isOneTime === false" [class.text-indigo-700]="newLink().isOneTime === false"
+              [class.border-gray-200]="newLink().isOneTime !== false" [class.text-gray-600]="newLink().isOneTime !== false">
+              <i class="bi bi-infinity text-lg"></i>
+              Reusable
+            </button>
+          </div>
+        </div>
+
+        @if (!newLink().isOneTime) {
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1.5 uppercase tracking-wider">Max Uses (blank = unlimited)</label>
+            <input type="number" [value]="newLink().maxUses || ''" (input)="patchNew({ maxUses: parseInt($any($event.target).value) || undefined })" min="1"
+              class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm">
+          </div>
+        }
+
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1.5 uppercase tracking-wider">Expires At</label>
+          <input type="datetime-local" [value]="newLink().expiresAt || ''" (input)="patchNew({ expiresAt: $any($event.target).value })"
+            class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1.5 uppercase tracking-wider">Description</label>
+          <textarea [value]="newLink().description || ''" (input)="patchNew({ description: $any($event.target).value })" rows="2" placeholder="Optional description shown to payer..."
+            class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm resize-none"></textarea>
+        </div>
+      </div>
+      <div class="sticky bottom-0 bg-white px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
+        <button (click)="showCreateModal.set(false)" class="px-4 py-2 border border-gray-200 rounded-xl text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
+        <button (click)="create()" [disabled]="actionLoading() !== null || !newLink().title || !newLink().amount"
+          class="px-6 py-2 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-2">
+          @if (actionLoading() === 'create') { <i class="bi bi-arrow-repeat animate-spin"></i> }
+          <i class="bi bi-link-45deg"></i> Create Link
+        </button>
+      </div>
+    </div>
+  </div>
+}

@@ -15,7 +15,11 @@ export class AuthService {
   private readonly storageKey = 'commerce-pro-admin-auth';
   private readonly injector = inject(Injector);
 
-  /** Lazy-resolved to break circular dependency: AuthInterceptor -> AuthService -> NotificationService -> HttpClient -> AuthInterceptor */
+  /** Lazy-resolved to break circular dependency: AuthInterceptor -> AuthService -> HttpClient -> AuthInterceptor */
+  private get http(): HttpClient {
+    return this.injector.get(HttpClient);
+  }
+
   private get notificationService(): NotificationService {
     return this.injector.get(NotificationService);
   }
@@ -30,7 +34,7 @@ export class AuthService {
     return Date.now() < current.expiresAtMs;
   });
 
-  constructor(private http: HttpClient) {
+  constructor() {
     // If session is restored from localStorage, start notifications
     if (this.isAuthenticated()) {
       this.notificationService.startAfterLogin();

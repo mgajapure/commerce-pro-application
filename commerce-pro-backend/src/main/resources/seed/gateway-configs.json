@@ -1,0 +1,32 @@
+[
+  {
+    "gatewayProvider": "STRIPE",
+    "displayName": "Stripe",
+    "apiKey": "sk_test_seed_stripe_key",
+    "apiSecret": "whsec_seed_stripe_secret",
+    "isTestMode": true,
+    "isActive": true,
+    "isDefault": true,
+    "supportedCurrencies": "[\"USD\",\"EUR\",\"GBP\",\"CAD\",\"AUD\"]"
+  },
+  {
+    "gatewayProvider": "PAYPAL",
+    "displayName": "PayPal",
+    "apiKey": "sb_test_seed_paypal_client",
+    "apiSecret": "sb_test_seed_paypal_secret",
+    "isTestMode": true,
+    "isActive": true,
+    "isDefault": false,
+    "supportedCurrencies": "[\"USD\",\"EUR\",\"GBP\"]"
+  },
+  {
+    "gatewayProvider": "MANUAL",
+    "displayName": "Manual / Offline",
+    "apiKey": null,
+    "apiSecret": null,
+    "isTestMode": false,
+    "isActive": true,
+    "isDefault": false,
+    "supportedCurrencies": "[\"USD\"]"
+  }
+]

@@ -1,0 +1,8 @@
+[
+  { "code": "US_CA", "name": "California, USA",      "country": "US", "stateProvince": "CA" },
+  { "code": "US_NY", "name": "New York, USA",        "country": "US", "stateProvince": "NY" },
+  { "code": "US_TX", "name": "Texas, USA",           "country": "US", "stateProvince": "TX" },
+  { "code": "EU_DE", "name": "Germany (EU VAT)",     "country": "DE", "stateProvince": null },
+  { "code": "UK_GB", "name": "United Kingdom (VAT)", "country": "GB", "stateProvince": null },
+  { "code": "AU_AU", "name": "Australia (GST)",      "country": "AU", "stateProvince": null }
+]

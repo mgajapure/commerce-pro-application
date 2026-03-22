@@ -58,6 +58,16 @@ export const routes: Routes = [
     loadChildren: () => import('./features/identity/identity.route').then(m => m.IDENTITY_ROUTES)
   },
   {
+    path: 'payments',
+    canActivate: [authGuard],
+    loadChildren: () => import('./features/payments/payments.route').then(m => m.PAYMENTS_ROUTES)
+  },
+  {
+      path: 'finance',
+      canActivate: [authGuard],
+      loadChildren: () => import('./features/finance/finance.route').then(m => m.FINANCE_ROUTES)
+    },
+  {
     path: '**',
     redirectTo: 'dashboard'
   }

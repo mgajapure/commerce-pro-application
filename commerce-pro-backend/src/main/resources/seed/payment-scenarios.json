@@ -1,0 +1,32 @@
+{
+  "orderStatusMapping": {
+    "DELIVERED":  { "txnType": "CHARGE",    "txnStatus": "SETTLED",    "gateway": "STRIPE", "methodType": "CREDIT_CARD", "cardLast4": "4242", "cardBrand": "VISA",       "capturedDaysAgo": 8, "settledDaysAgo": 3 },
+    "CLOSED":     { "txnType": "CHARGE",    "txnStatus": "SETTLED",    "gateway": "STRIPE", "methodType": "CREDIT_CARD", "cardLast4": "4242", "cardBrand": "VISA",       "capturedDaysAgo": 8, "settledDaysAgo": 3 },
+    "SHIPPED":    { "txnType": "CHARGE",    "txnStatus": "CAPTURED",   "gateway": "STRIPE", "methodType": "CREDIT_CARD", "cardLast4": "5555", "cardBrand": "MASTERCARD", "capturedDaysAgo": 5, "settledDaysAgo": null },
+    "PROCESSING": { "txnType": "CHARGE",    "txnStatus": "CAPTURED",   "gateway": "STRIPE", "methodType": "CREDIT_CARD", "cardLast4": "5555", "cardBrand": "MASTERCARD", "capturedDaysAgo": 5, "settledDaysAgo": null },
+    "CONFIRMED":  { "txnType": "AUTHORIZE", "txnStatus": "AUTHORIZED", "gateway": "PAYPAL", "methodType": "PAYPAL",      "cardLast4": null,   "cardBrand": null,         "capturedDaysAgo": null, "settledDaysAgo": null },
+    "CANCELLED":  { "txnType": "AUTHORIZE", "txnStatus": "VOIDED",     "gateway": "STRIPE", "methodType": "CREDIT_CARD", "cardLast4": "4242", "cardBrand": "VISA",       "capturedDaysAgo": null, "settledDaysAgo": null }
+  },
+  "defaultScenario":    { "txnType": "CHARGE",    "txnStatus": "PENDING",    "gateway": "STRIPE", "methodType": "CREDIT_CARD", "cardLast4": "1234", "cardBrand": "AMEX",       "capturedDaysAgo": null, "settledDaysAgo": null },
+  "gatewayFeePercent": "0.029",
+  "gatewayFeeFixed":   "0.30",
+  "paymentMethods": [
+    { "methodType": "CREDIT_CARD", "gateway": "STRIPE", "cardLast4": "4242", "cardBrand": "VISA",       "cardExpMonth": "12", "cardExpYear": "2028" },
+    { "methodType": "DEBIT_CARD",  "gateway": "STRIPE", "cardLast4": "5555", "cardBrand": "MASTERCARD", "cardExpMonth": "12", "cardExpYear": "2028" },
+    { "methodType": "PAYPAL",      "gateway": "PAYPAL", "cardLast4": null,   "cardBrand": null,         "cardExpMonth": null, "cardExpYear": null },
+    { "methodType": "CREDIT_CARD", "gateway": "STRIPE", "cardLast4": "3782", "cardBrand": "AMEX",       "cardExpMonth": "12", "cardExpYear": "2028" },
+    { "methodType": "DEBIT_CARD",  "gateway": "STRIPE", "cardLast4": "9424", "cardBrand": "DISCOVER",   "cardExpMonth": "12", "cardExpYear": "2028" }
+  ],
+  "refundScenarios": [
+    { "settledTxnIndex": 0, "refundPercent": "0.50", "status": "COMPLETED", "reason": "CUSTOMER_REQUEST", "reasonDetail": "Customer changed mind on half the order", "reviewNotes": "Approved — partial refund for returned items", "processedDaysAgo": 3 },
+    { "settledTxnIndex": 1, "refundPercent": "1.00", "status": "PENDING",   "reason": "DAMAGED_ITEM",    "reasonDetail": "Product arrived with visible damage to packaging", "reviewNotes": null, "processedDaysAgo": null }
+  ],
+  "chargebackScenario": {
+    "settledTxnIndex": 2,
+    "status": "EVIDENCE_REQUIRED",
+    "reason": "PRODUCT_NOT_RECEIVED",
+    "reasonCode": "13.1",
+    "responseDeadlineDaysFromNow": 10,
+    "internalNotes": "Tracking shows delivered — gathering proof of delivery"
+  }
+}
