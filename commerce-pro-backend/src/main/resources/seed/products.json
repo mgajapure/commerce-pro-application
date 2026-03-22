@@ -1,0 +1,347 @@
+[
+  {
+    "name": "Wireless Bluetooth Headphones Pro",
+    "sku": "ELEC-HP-001",
+    "category": "Electronics",
+    "brand": "Sony",
+    "price": 199.99,
+    "compareAtPrice": 249.99,
+    "stock": 150,
+    "image": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&h=800&fit=crop",
+    "gallery": [
+      "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&h=800&fit=crop",
+      "https://images.unsplash.com/photo-1484704849700-f032a568e944?w=800&h=800&fit=crop"
+    ],
+    "description": "Premium noise-cancelling wireless headphones with 30-hour battery life and superior sound quality.",
+    "tags": ["electronics", "audio", "wireless", "headphones", "premium"],
+    "attributes": [
+      { "name": "Color", "values": ["Black", "Silver", "Blue"], "displayOrder": 1 }
+    ],
+    "variants": [
+      { "name": "Color", "options": ["Black", "Silver", "Blue"] }
+    ]
+  },
+  {
+    "name": "Smart Watch Series 8",
+    "sku": "ELEC-SW-002",
+    "category": "Electronics",
+    "brand": "TechBrand",
+    "price": 399.99,
+    "compareAtPrice": 499.99,
+    "stock": 75,
+    "image": "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&h=800&fit=crop",
+    "gallery": [
+      "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&h=800&fit=crop",
+      "https://images.unsplash.com/photo-1579586337278-3befd40fd17a?w=800&h=800&fit=crop"
+    ],
+    "description": "Advanced fitness tracking, heart rate monitoring, and seamless smartphone integration.",
+    "tags": ["electronics", "wearable", "smartwatch", "fitness", "tech"]
+  },
+  {
+    "name": "Mechanical Gaming Keyboard RGB",
+    "sku": "ELEC-KB-003",
+    "category": "Electronics",
+    "brand": "KeyChamp",
+    "price": 149.99,
+    "compareAtPrice": 199.99,
+    "stock": 60,
+    "image": "https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?w=800&h=800&fit=crop",
+    "gallery": [
+      "https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?w=800&h=800&fit=crop",
+      "https://images.unsplash.com/photo-1595225476474-87563907a212?w=800&h=800&fit=crop"
+    ],
+    "description": "Cherry MX switches, customizable RGB lighting, and aircraft-grade aluminum frame.",
+    "tags": ["electronics", "gaming", "keyboard", "mechanical", "rgb"]
+  },
+  {
+    "name": "4K Ultra HD Webcam",
+    "sku": "ELEC-WC-004",
+    "category": "Electronics",
+    "brand": "LogiTech",
+    "price": 129.99,
+    "compareAtPrice": 169.99,
+    "stock": 200,
+    "image": "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=800&h=800&fit=crop",
+    "gallery": [
+      "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=800&h=800&fit=crop"
+    ],
+    "description": "Crystal clear 4K video with auto-focus and noise-reducing microphones.",
+    "tags": ["electronics", "webcam", "streaming", "4k", "video"]
+  },
+  {
+    "name": "Portable Bluetooth Speaker",
+    "sku": "ELEC-SP-005",
+    "category": "Electronics",
+    "brand": "BoseAudio",
+    "price": 79.99,
+    "compareAtPrice": 99.99,
+    "stock": 180,
+    "image": "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=800&h=800&fit=crop",
+    "gallery": [
+      "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=800&h=800&fit=crop",
+      "https://images.unsplash.com/photo-1545454675-3531b543be5d?w=800&h=800&fit=crop"
+    ],
+    "description": "Waterproof portable speaker with 360-degree sound and 12-hour battery.",
+    "tags": ["electronics", "speaker", "bluetooth", "portable", "audio"]
+  },
+  {
+    "name": "Classic Leather Messenger Bag",
+    "sku": "FASH-BG-006",
+    "category": "Fashion",
+    "brand": "Heritage Leather",
+    "price": 189.99,
+    "compareAtPrice": 249.99,
+    "stock": 45,
+    "image": "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=800&h=800&fit=crop",
+    "gallery": [
+      "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=800&h=800&fit=crop",
+      "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=800&h=800&fit=crop"
+    ],
+    "description": "Hand-stitched full-grain leather messenger bag with brass hardware and padded laptop compartment.",
+    "tags": ["fashion", "leather", "bag", "messenger", "premium"]
+  },
+  {
+    "name": "Designer Polarized Sunglasses",
+    "sku": "FASH-SG-007",
+    "category": "Fashion",
+    "brand": "RayStyle",
+    "price": 159.99,
+    "compareAtPrice": 199.99,
+    "stock": 90,
+    "image": "https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=800&h=800&fit=crop",
+    "gallery": [
+      "https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=800&h=800&fit=crop"
+    ],
+    "description": "Italian acetate frame with polarized UV400 lenses and spring hinges.",
+    "tags": ["fashion", "sunglasses", "designer", "polarized", "uv"]
+  },
+  {
+    "name": "Minimalist Leather Wallet",
+    "sku": "FASH-WL-008",
+    "category": "Fashion",
+    "brand": "LeatherCraft",
+    "price": 49.99,
+    "compareAtPrice": 69.99,
+    "stock": 120,
+    "image": "https://images.unsplash.com/photo-1627123424574-724758594e93?w=800&h=800&fit=crop",
+    "gallery": [
+      "https://images.unsplash.com/photo-1627123424574-724758594e93?w=800&h=800&fit=crop"
+    ],
+    "description": "Slim bifold wallet with RFID protection and 6 card slots.",
+    "tags": ["fashion", "wallet", "leather", "minimalist", "rfid"]
+  },
+  {
+    "name": "Urban Canvas Sneakers",
+    "sku": "FASH-SN-009",
+    "category": "Fashion",
+    "brand": "StreetWear",
+    "price": 89.99,
+    "compareAtPrice": 119.99,
+    "stock": 95,
+    "image": "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&h=800&fit=crop",
+    "gallery": [
+      "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&h=800&fit=crop",
+      "https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?w=800&h=800&fit=crop"
+    ],
+    "description": "Eco-friendly canvas upper with memory-foam insole and vulcanized rubber outsole.",
+    "tags": ["fashion", "sneakers", "canvas", "urban", "eco"]
+  },
+  {
+    "name": "Automatic Chronograph Watch",
+    "sku": "FASH-WT-010",
+    "category": "Fashion",
+    "brand": "TimePiece",
+    "price": 299.99,
+    "compareAtPrice": 399.99,
+    "stock": 30,
+    "image": "https://images.unsplash.com/photo-1524592094714-0f0654e20314?w=800&h=800&fit=crop",
+    "gallery": [
+      "https://images.unsplash.com/photo-1524592094714-0f0654e20314?w=800&h=800&fit=crop",
+      "https://images.unsplash.com/photo-1522312346375-d1a52e2b99b3?w=800&h=800&fit=crop"
+    ],
+    "description": "Swiss automatic movement, sapphire crystal, and genuine leather strap.",
+    "tags": ["fashion", "watch", "automatic", "chronograph", "luxury"]
+  },
+  {
+    "name": "Pour-Over Coffee Maker Set",
+    "sku": "HOME-CF-011",
+    "category": "Home & Kitchen",
+    "brand": "BrewMaster",
+    "price": 59.99,
+    "compareAtPrice": 79.99,
+    "stock": 100,
+    "image": "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=800&h=800&fit=crop",
+    "gallery": [
+      "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=800&h=800&fit=crop"
+    ],
+    "description": "Borosilicate glass carafe, stainless steel filter, and bamboo collar.",
+    "tags": ["home", "coffee", "kitchen", "pour-over", "manual"]
+  },
+  {
+    "name": "Insulated Water Bottle 1L",
+    "sku": "HOME-WB-012",
+    "category": "Home & Kitchen",
+    "brand": "HydroLife",
+    "price": 34.99,
+    "compareAtPrice": 44.99,
+    "stock": 250,
+    "image": "https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=800&h=800&fit=crop",
+    "gallery": [
+      "https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=800&h=800&fit=crop"
+    ],
+    "description": "Triple-wall vacuum insulation, keeps cold 24h / hot 12h.",
+    "tags": ["home", "water-bottle", "insulated", "eco", "hydration"]
+  },
+  {
+    "name": "Handmade Ceramic Bowl Set",
+    "sku": "HOME-CB-013",
+    "category": "Home & Kitchen",
+    "brand": "ArtisanHome",
+    "price": 44.99,
+    "compareAtPrice": 59.99,
+    "stock": 70,
+    "image": "https://images.unsplash.com/photo-1610701596007-11502861dcfa?w=800&h=800&fit=crop",
+    "gallery": [
+      "https://images.unsplash.com/photo-1610701596007-11502861dcfa?w=800&h=800&fit=crop"
+    ],
+    "description": "Set of 4 hand-thrown stoneware bowls, microwave and dishwasher safe.",
+    "tags": ["home", "ceramic", "bowls", "handmade", "kitchen"]
+  },
+  {
+    "name": "Smart Air Purifier HEPA",
+    "sku": "HOME-AP-014",
+    "category": "Home & Kitchen",
+    "brand": "PureAir",
+    "price": 249.99,
+    "compareAtPrice": 329.99,
+    "stock": 55,
+    "image": "https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=800&h=800&fit=crop",
+    "gallery": [
+      "https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=800&h=800&fit=crop"
+    ],
+    "description": "True HEPA H13 filter, app-controlled, covers up to 500 sq ft.",
+    "tags": ["home", "air-purifier", "hepa", "smart", "iot"]
+  },
+  {
+    "name": "Yoga Mat Premium 6mm",
+    "sku": "SPRT-YM-015",
+    "category": "Sports",
+    "brand": "FitGear",
+    "price": 39.99,
+    "compareAtPrice": 49.99,
+    "stock": 200,
+    "image": "https://images.unsplash.com/photo-1601925260368-ae2f83cf8b7f?w=800&h=800&fit=crop",
+    "gallery": [
+      "https://images.unsplash.com/photo-1601925260368-ae2f83cf8b7f?w=800&h=800&fit=crop"
+    ],
+    "description": "Non-slip TPE material, alignment lines, and carrying strap included.",
+    "tags": ["sports", "yoga", "fitness", "mat", "exercise"]
+  },
+  {
+    "name": "Adjustable Dumbbell Set 50lb",
+    "sku": "SPRT-DB-016",
+    "category": "Sports",
+    "brand": "PowerFit",
+    "price": 349.99,
+    "compareAtPrice": 449.99,
+    "stock": 40,
+    "image": "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&h=800&fit=crop",
+    "gallery": [
+      "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&h=800&fit=crop"
+    ],
+    "description": "Quick-change weight system from 5-50 lbs, anti-slip grip.",
+    "tags": ["sports", "dumbbells", "fitness", "weights", "home-gym"]
+  },
+  {
+    "name": "Running Shoes AirMax",
+    "sku": "SPRT-RS-017",
+    "category": "Sports",
+    "brand": "NikeRun",
+    "price": 129.99,
+    "compareAtPrice": 159.99,
+    "stock": 85,
+    "image": "https://images.unsplash.com/photo-1460353581641-37baddab0fa2?w=800&h=800&fit=crop",
+    "gallery": [
+      "https://images.unsplash.com/photo-1460353581641-37baddab0fa2?w=800&h=800&fit=crop",
+      "https://images.unsplash.com/photo-1491553895911-0055eca6402d?w=800&h=800&fit=crop"
+    ],
+    "description": "Lightweight mesh upper, responsive cushioning, and carbon rubber outsole.",
+    "tags": ["sports", "running", "shoes", "athletic", "performance"]
+  },
+  {
+    "name": "Resistance Band Set Pro",
+    "sku": "SPRT-RB-018",
+    "category": "Sports",
+    "brand": "FlexFit",
+    "price": 29.99,
+    "compareAtPrice": 39.99,
+    "stock": 300,
+    "image": "https://images.unsplash.com/photo-1598289431512-b97b0917affc?w=800&h=800&fit=crop",
+    "gallery": [
+      "https://images.unsplash.com/photo-1598289431512-b97b0917affc?w=800&h=800&fit=crop"
+    ],
+    "description": "5 resistance levels, door anchor, ankle straps, and carry bag.",
+    "tags": ["sports", "resistance-bands", "fitness", "home-workout", "portable"]
+  },
+  {
+    "name": "DSLR Camera Body 24MP",
+    "sku": "ELEC-CM-019",
+    "category": "Electronics",
+    "brand": "CanonPro",
+    "price": 899.99,
+    "compareAtPrice": 1099.99,
+    "stock": 25,
+    "image": "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800&h=800&fit=crop",
+    "gallery": [
+      "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800&h=800&fit=crop",
+      "https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=800&h=800&fit=crop"
+    ],
+    "description": "24.2MP APS-C sensor, 4K video, dual pixel autofocus, weather-sealed body.",
+    "tags": ["electronics", "camera", "dslr", "photography", "4k"]
+  },
+  {
+    "name": "Noise Cancelling Earbuds",
+    "sku": "ELEC-EB-020",
+    "category": "Electronics",
+    "brand": "SoundTech",
+    "price": 149.99,
+    "compareAtPrice": 199.99,
+    "stock": 110,
+    "image": "https://images.unsplash.com/photo-1590658268037-6bf12f032f55?w=800&h=800&fit=crop",
+    "gallery": [
+      "https://images.unsplash.com/photo-1590658268037-6bf12f032f55?w=800&h=800&fit=crop"
+    ],
+    "description": "Active noise cancelling, transparency mode, 8-hour battery per charge.",
+    "tags": ["electronics", "earbuds", "anc", "wireless", "audio"]
+  },
+  {
+    "name": "Smart Home Hub",
+    "sku": "ELEC-HB-021",
+    "category": "Electronics",
+    "brand": "SmartLife",
+    "price": 99.99,
+    "compareAtPrice": 129.99,
+    "stock": 65,
+    "image": "https://images.unsplash.com/photo-1558089687-f282d8132f71?w=800&h=800&fit=crop",
+    "gallery": [
+      "https://images.unsplash.com/photo-1558089687-f282d8132f71?w=800&h=800&fit=crop"
+    ],
+    "description": "Central control for all smart devices, voice assistant, and 7-inch display.",
+    "tags": ["electronics", "smart-home", "hub", "iot", "voice"]
+  },
+  {
+    "name": "Ergonomic Office Chair",
+    "sku": "HOME-OC-022",
+    "category": "Home & Kitchen",
+    "brand": "ComfortSeating",
+    "price": 449.99,
+    "compareAtPrice": 599.99,
+    "stock": 35,
+    "image": "https://images.unsplash.com/photo-1580480055273-228ff5388ef8?w=800&h=800&fit=crop",
+    "gallery": [
+      "https://images.unsplash.com/photo-1580480055273-228ff5388ef8?w=800&h=800&fit=crop"
+    ],
+    "description": "Adjustable lumbar support, breathable mesh, and 4D armrests.",
+    "tags": ["home", "furniture", "office", "chair", "ergonomic"]
+  }
+]

@@ -1,0 +1,29 @@
+[
+  {
+    "name": "VIP Buyers",
+    "description": "High-value repeat customers",
+    "colorHex": "#F59E0B",
+    "isActive": true,
+    "discountPercentage": 10
+  },
+  {
+    "name": "Wholesale Accounts",
+    "description": "Trade and bulk purchasers",
+    "colorHex": "#0D9488",
+    "isActive": true,
+    "discountPercentage": 15
+  },
+  {
+    "name": "New Customers",
+    "description": "Recently registered customers",
+    "colorHex": "#6366F1",
+    "isActive": true
+  },
+  {
+    "name": "Loyalty Members",
+    "description": "Members of the loyalty rewards program",
+    "colorHex": "#EC4899",
+    "isActive": true,
+    "discountPercentage": 5
+  }
+]

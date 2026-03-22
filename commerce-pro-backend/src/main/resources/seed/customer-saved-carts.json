@@ -1,0 +1,12 @@
+[
+  { "customerIndex": 0, "cartName": "Weekly Order", "productIndices": [0, 2], "quantities": [2, 1] },
+  { "customerIndex": 1, "cartName": "Bulk Restock", "couponCode": "BULK10", "productIndices": [0, 1, 4, 6], "quantities": [10, 5, 8, 12] },
+  { "customerIndex": 2, "cartName": "Saved Cart", "productIndices": [3, 5], "quantities": [1, 1] },
+  { "customerIndex": 3, "cartName": "My Cart", "productIndices": [0], "quantities": [1] },
+  { "customerIndex": 5, "cartName": "Office Order", "productIndices": [1, 3, 6], "quantities": [3, 2, 4] },
+  { "customerIndex": 5, "cartName": "Personal Items", "productIndices": [2, 7], "quantities": [1, 1] },
+  { "customerIndex": 6, "cartName": "Birthday Shopping", "couponCode": "BDAY15", "productIndices": [0, 5], "quantities": [1, 2] },
+  { "customerIndex": 9, "cartName": "Checkout Later", "productIndices": [2, 4], "quantities": [1, 1] },
+  { "customerIndex": 11, "cartName": "Loyalty Rewards Cart", "couponCode": "LOYALTY20", "productIndices": [0, 3, 8], "quantities": [1, 2, 1] },
+  { "customerIndex": 14, "cartName": "Premium Selection", "couponCode": "VIP25", "productIndices": [0, 1, 2], "quantities": [2, 1, 3] }
+]

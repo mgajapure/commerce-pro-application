@@ -1,0 +1,26 @@
+[
+  {
+    "name": "Manual / In-House",
+    "code": "MANUAL",
+    "notes": "Default in-house delivery — no external carrier",
+    "isDefault": true
+  },
+  {
+    "name": "FedEx",
+    "code": "FEDEX",
+    "trackingUrlTemplate": "https://www.fedex.com/apps/fedextrack/?tracknumbers={trackingNumber}",
+    "isDefault": false
+  },
+  {
+    "name": "UPS",
+    "code": "UPS",
+    "trackingUrlTemplate": "https://www.ups.com/track?tracknum={trackingNumber}",
+    "isDefault": false
+  },
+  {
+    "name": "DHL Express",
+    "code": "DHL",
+    "trackingUrlTemplate": "https://www.dhl.com/en/express/tracking.html?AWB={trackingNumber}",
+    "isDefault": false
+  }
+]

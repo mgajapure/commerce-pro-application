@@ -1,0 +1,96 @@
+[
+  {
+    "name": "Color",
+    "code": "color",
+    "type": "SELECT",
+    "description": "Product color options",
+    "isRequired": false,
+    "isFilterable": true,
+    "isSearchable": true,
+    "sortOrder": 1,
+    "options": [
+      { "value": "Black", "label": "Black", "sortOrder": 1, "colorHex": "#000000" },
+      { "value": "White", "label": "White", "sortOrder": 2, "colorHex": "#FFFFFF" },
+      { "value": "Silver", "label": "Silver", "sortOrder": 3, "colorHex": "#C0C0C0" },
+      { "value": "Blue", "label": "Blue", "sortOrder": 4, "colorHex": "#2563EB" },
+      { "value": "Red", "label": "Red", "sortOrder": 5, "colorHex": "#DC2626" },
+      { "value": "Navy", "label": "Navy", "sortOrder": 6, "colorHex": "#1E3A5F" }
+    ]
+  },
+  {
+    "name": "Size",
+    "code": "size",
+    "type": "SELECT",
+    "description": "Product size options",
+    "isRequired": false,
+    "isFilterable": true,
+    "isSearchable": true,
+    "sortOrder": 2,
+    "options": [
+      { "value": "XS", "label": "Extra Small", "sortOrder": 1 },
+      { "value": "S", "label": "Small", "sortOrder": 2 },
+      { "value": "M", "label": "Medium", "sortOrder": 3 },
+      { "value": "L", "label": "Large", "sortOrder": 4 },
+      { "value": "XL", "label": "Extra Large", "sortOrder": 5 }
+    ]
+  },
+  {
+    "name": "Material",
+    "code": "material",
+    "type": "SELECT",
+    "description": "Primary material composition",
+    "isRequired": false,
+    "isFilterable": true,
+    "isSearchable": false,
+    "sortOrder": 3,
+    "options": [
+      { "value": "Leather", "label": "Genuine Leather", "sortOrder": 1 },
+      { "value": "Canvas", "label": "Canvas", "sortOrder": 2 },
+      { "value": "Metal", "label": "Metal/Aluminum", "sortOrder": 3 },
+      { "value": "Plastic", "label": "Plastic/Polymer", "sortOrder": 4 },
+      { "value": "Ceramic", "label": "Ceramic", "sortOrder": 5 }
+    ]
+  },
+  {
+    "name": "Connectivity",
+    "code": "connectivity",
+    "type": "SELECT",
+    "description": "Wireless connectivity type",
+    "isRequired": false,
+    "isFilterable": true,
+    "isSearchable": false,
+    "sortOrder": 4,
+    "options": [
+      { "value": "Bluetooth 5.0", "label": "Bluetooth 5.0", "sortOrder": 1 },
+      { "value": "WiFi", "label": "WiFi", "sortOrder": 2 },
+      { "value": "USB-C", "label": "USB-C", "sortOrder": 3 },
+      { "value": "NFC", "label": "NFC", "sortOrder": 4 }
+    ]
+  },
+  {
+    "name": "Weight",
+    "code": "weight",
+    "type": "TEXT",
+    "description": "Product weight",
+    "isRequired": false,
+    "isFilterable": false,
+    "isSearchable": false,
+    "sortOrder": 5
+  },
+  {
+    "name": "Warranty",
+    "code": "warranty",
+    "type": "SELECT",
+    "description": "Warranty period",
+    "isRequired": false,
+    "isFilterable": true,
+    "isSearchable": false,
+    "sortOrder": 6,
+    "options": [
+      { "value": "6 Months", "label": "6 Months", "sortOrder": 1 },
+      { "value": "1 Year", "label": "1 Year", "sortOrder": 2 },
+      { "value": "2 Years", "label": "2 Years", "sortOrder": 3 },
+      { "value": "Lifetime", "label": "Lifetime", "sortOrder": 4 }
+    ]
+  }
+]

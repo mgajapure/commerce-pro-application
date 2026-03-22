@@ -1,0 +1,13 @@
+[
+  { "customerIndex": 0, "name": "My Favorites", "visibility": "PRIVATE", "isDefault": true, "productIndices": [0, 2, 5] },
+  { "customerIndex": 0, "name": "Gift Ideas", "visibility": "SHARED", "isDefault": false, "productIndices": [1, 3, 7] },
+  { "customerIndex": 1, "name": "Wholesale Picks", "visibility": "PRIVATE", "isDefault": true, "productIndices": [0, 1, 4, 6, 8] },
+  { "customerIndex": 2, "name": "My Wishlist", "visibility": "PRIVATE", "isDefault": true, "productIndices": [2, 5, 9] },
+  { "customerIndex": 5, "name": "Office Supplies", "visibility": "PRIVATE", "isDefault": true, "productIndices": [0, 3, 6] },
+  { "customerIndex": 5, "name": "Personal", "visibility": "PUBLIC", "isDefault": false, "productIndices": [1, 4] },
+  { "customerIndex": 6, "name": "Wishlist", "visibility": "PRIVATE", "isDefault": true, "productIndices": [2, 7, 10] },
+  { "customerIndex": 9, "name": "Must Haves", "visibility": "PRIVATE", "isDefault": true, "productIndices": [0, 5] },
+  { "customerIndex": 11, "name": "My List", "visibility": "PUBLIC", "isDefault": true, "productIndices": [3, 6, 8] },
+  { "customerIndex": 14, "name": "Premium Collection", "visibility": "PRIVATE", "isDefault": true, "productIndices": [0, 1, 2, 3] },
+  { "customerIndex": 14, "name": "For the Team", "visibility": "SHARED", "isDefault": false, "productIndices": [4, 5, 6] }
+]

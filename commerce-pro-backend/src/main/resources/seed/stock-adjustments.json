@@ -1,0 +1,7 @@
+[
+  { "reason": "Cycle count correction", "notes": "Discrepancy found during cycle count", "referenceType": "CYCLE_COUNT" },
+  { "reason": "Damaged goods write-off", "notes": "3 units damaged in transit", "referenceType": "DAMAGE" },
+  { "reason": "Quality control rejection", "notes": "Failed QC inspection", "referenceType": "QC_REJECT" },
+  { "reason": "Promotional allocation", "notes": "Reserved for upcoming sale event", "referenceType": "PROMO" },
+  { "reason": "Return to stock", "notes": "Customer return - item inspected and restocked", "referenceType": "RETURN" }
+]
