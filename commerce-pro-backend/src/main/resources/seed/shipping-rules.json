@@ -1,0 +1,28 @@
+[
+  {
+    "name": "Standard Domestic Shipping",
+    "conditionType": "ALWAYS",
+    "shippingMethod": "Standard",
+    "serviceLevel": "3-5 Business Days",
+    "priority": 100,
+    "isActive": true
+  },
+  {
+    "name": "Express Shipping — Orders over $100",
+    "conditionType": "PRICE",
+    "conditionMin": 100.00,
+    "shippingMethod": "Express",
+    "serviceLevel": "1-2 Business Days",
+    "priority": 50,
+    "isActive": true
+  },
+  {
+    "name": "Free Shipping — Orders over $200",
+    "conditionType": "PRICE",
+    "conditionMin": 200.00,
+    "shippingMethod": "Free Shipping",
+    "serviceLevel": "5-7 Business Days",
+    "priority": 200,
+    "isActive": true
+  }
+]

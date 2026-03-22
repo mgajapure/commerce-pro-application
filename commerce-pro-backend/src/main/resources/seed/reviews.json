@@ -1,0 +1,26 @@
+{
+  "primaryReviews": [
+    { "productIndex": 0, "customerOffset": 0, "rating": 5, "title": "Absolutely amazing!", "content": "Best purchase I've made this year. Sound quality is incredible and the battery lasts forever.", "verified": true },
+    { "productIndex": 1, "customerOffset": 1, "rating": 4, "title": "Great product", "content": "Very good quality, only minor issue is the size is a bit large for my wrist.", "verified": false },
+    { "productIndex": 2, "customerOffset": 2, "rating": 5, "title": "Highly recommend!", "content": "Perfect for my daily use. Build quality is exceptional.", "verified": true },
+    { "productIndex": 3, "customerOffset": 3, "rating": 3, "title": "Decent but could improve", "content": "Good product overall but the instruction manual could be better.", "verified": false },
+    { "productIndex": 4, "customerOffset": 4, "rating": 5, "title": "Love it!", "content": "Exactly what I was looking for. Arrived quickly and works perfectly.", "verified": true },
+    { "productIndex": 5, "customerOffset": 5, "rating": 4, "title": "Solid purchase", "content": "Great value for the price. Would buy again.", "verified": false },
+    { "productIndex": 6, "customerOffset": 6, "rating": 2, "title": "Not what I expected", "content": "Quality is okay but doesn't match the product photos.", "verified": true },
+    { "productIndex": 7, "customerOffset": 7, "rating": 5, "title": "Exceeded expectations!", "content": "Wow, this is amazing quality. My family loves it too.", "verified": false },
+    { "productIndex": 8, "customerOffset": 8, "rating": 4, "title": "Very good quality", "content": "Sturdy build and nice design. Shipping was fast.", "verified": true },
+    { "productIndex": 9, "customerOffset": 9, "rating": 5, "title": "Outstanding!", "content": "Premium quality all around. Worth every penny.", "verified": false }
+  ],
+  "extraReviews": [
+    { "productIndex": 0, "customerOffset": 5, "rating": 5, "title": "Great product!", "content": "Really happy with this purchase. Works exactly as described.", "verified": true },
+    { "productIndex": 0, "customerOffset": 6, "rating": 4, "title": "Highly recommend", "content": "Would definitely recommend to friends and family. Top quality.", "verified": true },
+    { "productIndex": 1, "customerOffset": 7, "rating": 5, "title": "Good value", "content": "Great value for the money. Can't complain about anything.", "verified": true },
+    { "productIndex": 1, "customerOffset": 8, "rating": 4, "title": "Very satisfied", "content": "Using this daily and it performs flawlessly. Very satisfied.", "verified": true },
+    { "productIndex": 2, "customerOffset": 9, "rating": 5, "title": "Love this!", "content": "Got this as a gift and the recipient absolutely loved it!", "verified": true },
+    { "productIndex": 2, "customerOffset": 10, "rating": 5, "title": "Nice quality", "content": "The build quality is outstanding. Very impressed with the finish.", "verified": true },
+    { "productIndex": 3, "customerOffset": 11, "rating": 4, "title": "Perfect gift", "content": "Bought this for my home office setup and it's perfect.", "verified": true },
+    { "productIndex": 3, "customerOffset": 12, "rating": 5, "title": "Daily essential", "content": "Reliable and well-made. Exactly what I needed.", "verified": true },
+    { "productIndex": 4, "customerOffset": 13, "rating": 4, "title": "Impressive", "content": "The design is beautiful and functionality is spot on.", "verified": true },
+    { "productIndex": 4, "customerOffset": 14, "rating": 5, "title": "Must have", "content": "Everyone should have one of these. Changed my daily routine.", "verified": true }
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "rootCategories": [
+    {
+      "name": "Electronics",
+      "slug": "electronics",
+      "description": "Electronic devices, gadgets, and accessories",
+      "imageUrl": "https://images.unsplash.com/photo-1498049794561-7780e7231661?w=400",
+      "sortOrder": 1,
+      "seoTitle": "Electronics - Best Deals on Electronic Devices",
+      "seoDescription": "Shop the latest electronics including headphones, cameras, smart devices and more.",
+      "subCategories": [
+        { "name": "Audio", "slug": "audio", "description": "Headphones, speakers, and audio equipment" },
+        { "name": "Wearables", "slug": "wearables", "description": "Smartwatches and fitness trackers" },
+        { "name": "Cameras", "slug": "cameras", "description": "DSLR and mirrorless cameras" },
+        { "name": "Smart Home", "slug": "smart-home", "description": "IoT devices and home automation" }
+      ]
+    },
+    {
+      "name": "Fashion",
+      "slug": "fashion",
+      "description": "Clothing, shoes, bags, and fashion accessories",
+      "imageUrl": "https://images.unsplash.com/photo-1445205170230-053b83016050?w=400",
+      "sortOrder": 2,
+      "seoTitle": "Fashion - Trending Styles and Accessories",
+      "seoDescription": "Discover the latest fashion trends, designer bags, shoes, and accessories.",
+      "subCategories": [
+        { "name": "Bags & Wallets", "slug": "bags-wallets", "description": "Backpacks, wallets, and bags" },
+        { "name": "Shoes", "slug": "shoes", "description": "Sneakers, running shoes, and footwear" },
+        { "name": "Accessories", "slug": "fashion-accessories", "description": "Sunglasses, watches, and more" }
+      ]
+    },
+    {
+      "name": "Home & Kitchen",
+      "slug": "home-kitchen",
+      "description": "Home appliances, kitchenware, and furniture",
+      "imageUrl": "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400",
+      "sortOrder": 3,
+      "seoTitle": "Home & Kitchen - Essentials for Your Home",
+      "seoDescription": "Browse premium home appliances, kitchenware, and furniture.",
+      "subCategories": [
+        { "name": "Kitchen", "slug": "kitchen", "description": "Kitchenware and cooking equipment" },
+        { "name": "Furniture", "slug": "furniture", "description": "Office and home furniture" }
+      ]
+    },
+    {
+      "name": "Sports",
+      "slug": "sports",
+      "description": "Fitness equipment, sports gear, and athletic wear",
+      "imageUrl": "https://images.unsplash.com/photo-1461896836934-bd45ba8bab8e?w=400",
+      "sortOrder": 4,
+      "seoTitle": "Sports & Fitness Equipment",
+      "seoDescription": "Shop fitness equipment, yoga mats, running shoes, and more.",
+      "subCategories": [
+        { "name": "Fitness", "slug": "fitness", "description": "Yoga mats, resistance bands, and gym gear" },
+        { "name": "Running", "slug": "running", "description": "Running shoes and gear" }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,106 @@
+[
+  {
+    "customerIndex": 0,
+    "addresses": [
+      { "label": "Home", "type": "SHIPPING", "line1": "742 Evergreen Terrace", "line2": "Apt 4B", "city": "New York", "state": "NY", "zip": "10001", "country": "USA", "phone": "+1-212-555-0101", "isDefault": true },
+      { "label": "Office", "type": "BILLING", "line1": "350 Fifth Avenue", "line2": "Floor 22", "city": "New York", "state": "NY", "zip": "10118", "country": "USA", "phone": "+1-212-555-0201", "company": "Johnson Enterprises" },
+      { "label": "Warehouse", "type": "BOTH", "line1": "100 Industrial Blvd", "city": "Newark", "state": "NJ", "zip": "07102", "country": "USA", "phone": "+1-973-555-0301", "company": "Johnson Enterprises" }
+    ]
+  },
+  {
+    "customerIndex": 1,
+    "addresses": [
+      { "label": "Home", "type": "BOTH", "line1": "1600 Vine Street", "city": "Los Angeles", "state": "CA", "zip": "90028", "country": "USA", "phone": "+1-310-555-0102", "isDefault": true },
+      { "label": "Business", "type": "BILLING", "line1": "9000 Sunset Blvd", "line2": "Suite 500", "city": "West Hollywood", "state": "CA", "zip": "90069", "country": "USA", "phone": "+1-310-555-0202", "company": "Smith Trading Co." }
+    ]
+  },
+  {
+    "customerIndex": 2,
+    "addresses": [
+      { "label": "Home", "type": "BOTH", "line1": "233 S Wacker Dr", "line2": "Unit 12A", "city": "Chicago", "state": "IL", "zip": "60606", "country": "USA", "phone": "+1-312-555-0103", "isDefault": true },
+      { "label": "Parents", "type": "SHIPPING", "line1": "456 Oak Avenue", "city": "Naperville", "state": "IL", "zip": "60540", "country": "USA", "phone": "+1-630-555-0103" }
+    ]
+  },
+  {
+    "customerIndex": 3,
+    "addresses": [
+      { "label": "Home", "type": "SHIPPING", "line1": "1 Market Street", "line2": "Apt 8C", "city": "San Francisco", "state": "CA", "zip": "94105", "country": "USA", "phone": "+1-415-555-0104", "isDefault": true },
+      { "label": "Office", "type": "BILLING", "line1": "500 Terry Francois Blvd", "city": "San Francisco", "state": "CA", "zip": "94158", "country": "USA", "phone": "+1-415-555-0204" }
+    ]
+  },
+  {
+    "customerIndex": 4,
+    "addresses": [
+      { "label": "Home", "type": "BOTH", "line1": "400 Broad Street", "city": "Seattle", "state": "WA", "zip": "98109", "country": "USA", "phone": "+1-206-555-0105", "isDefault": true }
+    ]
+  },
+  {
+    "customerIndex": 5,
+    "addresses": [
+      { "label": "Home", "type": "SHIPPING", "line1": "1000 Main Street", "city": "Houston", "state": "TX", "zip": "77002", "country": "USA", "phone": "+1-713-555-0106", "isDefault": true },
+      { "label": "Downtown Office", "type": "BILLING", "line1": "800 Bell Street", "line2": "Suite 1200", "city": "Houston", "state": "TX", "zip": "77019", "country": "USA", "phone": "+1-713-555-0206", "company": "Miller & Associates" },
+      { "label": "Branch Office", "type": "SHIPPING", "line1": "200 Congress Ave", "line2": "Floor 10", "city": "Austin", "state": "TX", "zip": "78701", "country": "USA", "phone": "+1-512-555-0106", "company": "Miller & Associates" }
+    ]
+  },
+  {
+    "customerIndex": 6,
+    "addresses": [
+      { "label": "Home", "type": "BOTH", "line1": "3300 E Camelback Rd", "line2": "Apt 205", "city": "Phoenix", "state": "AZ", "zip": "85018", "country": "USA", "phone": "+1-602-555-0107", "isDefault": true },
+      { "label": "Gift Address", "type": "SHIPPING", "line1": "7000 N 16th St", "city": "Phoenix", "state": "AZ", "zip": "85020", "country": "USA", "phone": "+1-602-555-0207" }
+    ]
+  },
+  {
+    "customerIndex": 7,
+    "addresses": [
+      { "label": "Home", "type": "BOTH", "line1": "1200 Brickell Ave", "line2": "PH1", "city": "Miami", "state": "FL", "zip": "33131", "country": "USA", "phone": "+1-305-555-0108", "isDefault": true }
+    ]
+  },
+  {
+    "customerIndex": 8,
+    "addresses": [
+      { "label": "Home", "type": "SHIPPING", "line1": "200 Clarendon St", "city": "Boston", "state": "MA", "zip": "02116", "country": "USA", "phone": "+1-617-555-0109", "isDefault": true },
+      { "label": "Retail HQ", "type": "BILLING", "line1": "100 Federal Street", "line2": "Floor 30", "city": "Boston", "state": "MA", "zip": "02110", "country": "USA", "phone": "+1-617-555-0209", "company": "Taylor Retail Group" }
+    ]
+  },
+  {
+    "customerIndex": 9,
+    "addresses": [
+      { "label": "Home", "type": "BOTH", "line1": "60 Hudson Street", "line2": "Apt 3D", "city": "New York", "state": "NY", "zip": "10013", "country": "USA", "phone": "+1-646-555-0110", "isDefault": true },
+      { "label": "College", "type": "SHIPPING", "line1": "120 Broadway", "city": "New York", "state": "NY", "zip": "10271", "country": "USA", "phone": "+1-646-555-0210" }
+    ]
+  },
+  {
+    "customerIndex": 10,
+    "addresses": [
+      { "label": "Home", "type": "BOTH", "line1": "2000 Ross Avenue", "city": "Dallas", "state": "TX", "zip": "75201", "country": "USA", "phone": "+1-214-555-0111", "isDefault": true }
+    ]
+  },
+  {
+    "customerIndex": 11,
+    "addresses": [
+      { "label": "Home", "type": "BOTH", "line1": "1 Infinite Loop", "city": "San Jose", "state": "CA", "zip": "95112", "country": "USA", "phone": "+1-408-555-0112", "isDefault": true },
+      { "label": "Vacation", "type": "SHIPPING", "line1": "500 Beach Dr", "city": "Santa Cruz", "state": "CA", "zip": "95060", "country": "USA", "phone": "+1-831-555-0112" }
+    ]
+  },
+  {
+    "customerIndex": 12,
+    "addresses": [
+      { "label": "Home", "type": "BOTH", "line1": "800 SW Broadway", "line2": "Apt 610", "city": "Portland", "state": "OR", "zip": "97205", "country": "USA", "phone": "+1-503-555-0113", "isDefault": true },
+      { "label": "Work", "type": "SHIPPING", "line1": "1120 NW Couch St", "line2": "Suite 200", "city": "Portland", "state": "OR", "zip": "97209", "country": "USA", "phone": "+1-503-555-0213" }
+    ]
+  },
+  {
+    "customerIndex": 13,
+    "addresses": [
+      { "label": "Home", "type": "BOTH", "line1": "3600 Las Vegas Blvd S", "line2": "Unit 2510", "city": "Las Vegas", "state": "NV", "zip": "89109", "country": "USA", "phone": "+1-702-555-0114", "isDefault": true }
+    ]
+  },
+  {
+    "customerIndex": 14,
+    "addresses": [
+      { "label": "Home", "type": "SHIPPING", "line1": "191 Peachtree St NE", "line2": "Apt 1502", "city": "Atlanta", "state": "GA", "zip": "30303", "country": "USA", "phone": "+1-404-555-0115", "isDefault": true },
+      { "label": "Office", "type": "BILLING", "line1": "3344 Peachtree Rd NE", "line2": "Suite 800", "city": "Atlanta", "state": "GA", "zip": "30326", "country": "USA", "phone": "+1-404-555-0215", "company": "White Digital Solutions" },
+      { "label": "Parents", "type": "SHIPPING", "line1": "500 Magnolia Lane", "city": "Savannah", "state": "GA", "zip": "31401", "country": "USA", "phone": "+1-912-555-0115" }
+    ]
+  }
+]

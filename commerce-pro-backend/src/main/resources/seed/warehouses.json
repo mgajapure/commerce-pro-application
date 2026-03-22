@@ -1,0 +1,30 @@
+[
+  {
+    "name": "Main Warehouse",
+    "code": "MAIN-001",
+    "address": "123 Commerce Street, Industrial District",
+    "city": "New York",
+    "state": "NY",
+    "country": "USA",
+    "postalCode": "10001",
+    "managerName": "John Smith",
+    "managerEmail": "john.smith@commercepro.com",
+    "managerPhone": "+1-555-0100",
+    "isActive": true,
+    "isDefault": true
+  },
+  {
+    "name": "West Coast Warehouse",
+    "code": "WEST-002",
+    "address": "456 Logistics Blvd, Port Area",
+    "city": "Los Angeles",
+    "state": "CA",
+    "country": "USA",
+    "postalCode": "90001",
+    "managerName": "Sarah Johnson",
+    "managerEmail": "sarah.johnson@commercepro.com",
+    "managerPhone": "+1-555-0200",
+    "isActive": true,
+    "isDefault": false
+  }
+]

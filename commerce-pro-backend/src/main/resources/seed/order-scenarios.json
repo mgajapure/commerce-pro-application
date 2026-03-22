@@ -1,0 +1,12 @@
+[
+  { "scenario": "DRAFT", "customerIndex": 0, "productFrom": 0, "productCount": 2 },
+  { "scenario": "PENDING_PAYMENT", "customerIndex": 1, "productFrom": 1, "productCount": 2 },
+  { "scenario": "CONFIRMED", "customerIndex": 2, "productFrom": 2, "productCount": 3, "coupon": "SAVE10" },
+  { "scenario": "ON_HOLD", "customerIndex": 3, "productFrom": 3, "productCount": 2 },
+  { "scenario": "PROCESSING", "customerIndex": 4, "productFrom": 4, "productCount": 3 },
+  { "scenario": "SHIPPED", "customerIndex": 5, "productFrom": 5, "productCount": 2 },
+  { "scenario": "DELIVERED", "customerIndex": 6, "productFrom": 6, "productCount": 2 },
+  { "scenario": "CLOSED", "customerIndex": 7, "productFrom": 7, "productCount": 3, "coupon": "WELCOME15" },
+  { "scenario": "CANCELLED", "customerIndex": 8, "productFrom": 8, "productCount": 1 },
+  { "scenario": "HIGH_VALUE", "customerIndex": 9, "productFrom": 9, "productCount": 4 }
+]

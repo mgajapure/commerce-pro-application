@@ -1,0 +1,59 @@
+[
+  {
+    "name": "Best Sellers",
+    "slug": "best-sellers",
+    "description": "Our most popular products across all categories",
+    "type": "MANUAL",
+    "status": "ACTIVE",
+    "imageUrl": "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400",
+    "sortOrder": 1,
+    "isFeatured": true,
+    "productSlice": { "from": 0, "count": 10 }
+  },
+  {
+    "name": "New Arrivals",
+    "slug": "new-arrivals",
+    "description": "Latest additions to our store",
+    "type": "MANUAL",
+    "status": "ACTIVE",
+    "imageUrl": "https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=400",
+    "sortOrder": 2,
+    "isFeatured": true,
+    "productSlice": { "fromEnd": 8 }
+  },
+  {
+    "name": "Tech Essentials",
+    "slug": "tech-essentials",
+    "description": "Must-have technology products for modern life",
+    "type": "MANUAL",
+    "status": "ACTIVE",
+    "imageUrl": "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=400",
+    "sortOrder": 3,
+    "isFeatured": true,
+    "productSlice": { "firstAndLast": { "first": 5, "last": 4 } }
+  },
+  {
+    "name": "Under $100",
+    "slug": "under-100",
+    "description": "Great value products under $100",
+    "type": "AUTOMATED",
+    "status": "ACTIVE",
+    "conditions": "{\"priceMax\": 100}",
+    "sortOrder": 4,
+    "isFeatured": false,
+    "filterByMaxPrice": 100
+  },
+  {
+    "name": "Summer Sale",
+    "slug": "summer-sale",
+    "description": "Hot deals for the summer season",
+    "type": "MANUAL",
+    "status": "DRAFT",
+    "imageUrl": "https://images.unsplash.com/photo-1555529669-e69e7aa0ba9a?w=400",
+    "sortOrder": 5,
+    "isFeatured": false,
+    "productSlice": { "from": 2, "count": 6 },
+    "startDaysFromNow": 30,
+    "endDaysFromNow": 90
+  }
+]

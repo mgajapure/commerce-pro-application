@@ -102,3 +102,5 @@ data/*
 commerce-pro-backend/.idea/*
 commerce-pro-backend/bin/*
 commerce-pro-backend/build/*
+.claude/settings.local.json
+commerce-pro-backend/data/commerce-pro-db.mv.db
