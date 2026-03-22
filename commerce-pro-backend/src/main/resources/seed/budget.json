@@ -1,0 +1,20 @@
+{
+  "name": "Annual Operating Budget",
+  "description": "Approved annual operating budget",
+  "totalRevenueBudget": "1200000.00",
+  "totalExpenseBudget": "480000.00",
+  "currency": "USD",
+  "notes": "Board-approved annual budget",
+  "lines": [
+    { "lineName": "Product Revenue",         "lineType": "REVENUE", "accountCode": "4000", "categoryCode": null,       "budgetedAmount": "1000000.00", "sortOrder": 1 },
+    { "lineName": "Shipping Revenue",        "lineType": "REVENUE", "accountCode": "4100", "categoryCode": null,       "budgetedAmount": "120000.00",  "sortOrder": 2 },
+    { "lineName": "Other Revenue",           "lineType": "REVENUE", "accountCode": "4900", "categoryCode": null,       "budgetedAmount": "80000.00",   "sortOrder": 3 },
+    { "lineName": "Software & SaaS",         "lineType": "EXPENSE", "accountCode": "6100", "categoryCode": "SAAS",     "budgetedAmount": "30000.00",   "sortOrder": 4 },
+    { "lineName": "Marketing",               "lineType": "EXPENSE", "accountCode": "6200", "categoryCode": "MARKETING","budgetedAmount": "60000.00",   "sortOrder": 5 },
+    { "lineName": "Logistics",               "lineType": "EXPENSE", "accountCode": "6300", "categoryCode": "LOGISTICS","budgetedAmount": "36000.00",   "sortOrder": 6 },
+    { "lineName": "Payroll",                 "lineType": "EXPENSE", "accountCode": "6600", "categoryCode": "PAYROLL",  "budgetedAmount": "300000.00",  "sortOrder": 7 },
+    { "lineName": "Legal & Professional",    "lineType": "EXPENSE", "accountCode": "6500", "categoryCode": "LEGAL",    "budgetedAmount": "24000.00",   "sortOrder": 8 },
+    { "lineName": "Office & Admin",          "lineType": "EXPENSE", "accountCode": "6400", "categoryCode": "OFFICE",   "budgetedAmount": "12000.00",   "sortOrder": 9 },
+    { "lineName": "Infrastructure",          "lineType": "EXPENSE", "accountCode": "6800", "categoryCode": "INFRA",    "budgetedAmount": "18000.00",   "sortOrder": 10 }
+  ]
+}

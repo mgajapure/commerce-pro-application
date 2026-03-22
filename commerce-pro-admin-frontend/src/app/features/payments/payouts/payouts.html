@@ -1,0 +1,320 @@
+<div class="min-h-screen bg-gray-50/50 p-4 sm:p-6 lg:p-8">
+  <div class="max-w-[1600px] mx-auto space-y-6">
+
+    <!-- Header -->
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+      <div>
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-green-600 rounded-xl flex items-center justify-center">
+            <i class="bi bi-bank text-white text-lg"></i>
+          </div>
+          <h1 class="text-2xl font-bold text-gray-900">Payouts</h1>
+          <span class="px-3 py-1 bg-gray-100 text-gray-600 text-sm font-medium rounded-full">{{ totalElements() | number }}</span>
+        </div>
+        <p class="text-gray-500 mt-1 text-sm">Batch merchant payouts to bank — collect, approve, and transfer settled funds</p>
+      </div>
+      <button (click)="showCreateModal.set(true)"
+        class="px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 flex items-center gap-2 shadow-lg shadow-indigo-200">
+        <i class="bi bi-plus-lg"></i> Create Payout Batch
+      </button>
+    </div>
+
+    <!-- Status Tabs -->
+    <div class="bg-white rounded-2xl p-2 shadow-sm border border-gray-100 overflow-x-auto">
+      <div class="flex gap-1.5 min-w-max">
+        @for (tab of statusTabs; track tab.value) {
+          <button (click)="setTab(tab.value)"
+            class="px-4 py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap flex items-center gap-1.5"
+            [class.bg-indigo-600]="filterStatus() === tab.value" [class.text-white]="filterStatus() === tab.value"
+            [class.bg-gray-50]="filterStatus() !== tab.value" [class.text-gray-700]="filterStatus() !== tab.value">
+            <i class="bi bi-{{ tab.icon }} text-xs"></i>{{ tab.label }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Loading -->
+    @if (isLoading()) {
+      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 space-y-4 animate-pulse">
+        @for (i of [1,2,3,4]; track i) { <div class="h-20 bg-gray-100 rounded-xl"></div> }
+      </div>
+    }
+
+    <!-- Payout Cards -->
+    @if (!isLoading()) {
+      <div class="space-y-4">
+        @for (p of payouts(); track p.id) {
+          <div class="bg-white rounded-2xl border shadow-sm hover:shadow-md transition-all cursor-pointer"
+            [class.border-gray-100]="p.status !== 'FAILED'" [class.border-red-200]="p.status === 'FAILED'"
+            (click)="openDetail(p.id)">
+            <div class="p-6">
+              <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                <div class="flex items-center gap-4">
+                  <!-- Status icon -->
+                  <div class="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
+                    [class.bg-yellow-100]="p.status === 'PENDING'"
+                    [class.bg-blue-100]="p.status === 'APPROVED'"
+                    [class.bg-indigo-100]="p.status === 'PROCESSING'"
+                    [class.bg-purple-100]="p.status === 'IN_TRANSIT'"
+                    [class.bg-green-100]="p.status === 'COMPLETED'"
+                    [class.bg-red-100]="p.status === 'FAILED'"
+                    [class.bg-gray-100]="p.status === 'CANCELLED'">
+                    <i class="bi text-xl"
+                      [class.bi-clock]="p.status === 'PENDING'" [class.text-yellow-600]="p.status === 'PENDING'"
+                      [class.bi-check-circle]="p.status === 'APPROVED'" [class.text-blue-600]="p.status === 'APPROVED'"
+                      [class.bi-gear-fill]="p.status === 'PROCESSING'" [class.text-indigo-600]="p.status === 'PROCESSING'"
+                      [class.bi-send-fill]="p.status === 'IN_TRANSIT'" [class.text-purple-600]="p.status === 'IN_TRANSIT'"
+                      [class.bi-bank]="p.status === 'COMPLETED'" [class.text-green-600]="p.status === 'COMPLETED'"
+                      [class.bi-x-circle-fill]="p.status === 'FAILED'" [class.text-red-600]="p.status === 'FAILED'"
+                      [class.bi-slash-circle]="p.status === 'CANCELLED'" [class.text-gray-500]="p.status === 'CANCELLED'"></i>
+                  </div>
+                  <div>
+                    <div class="flex items-center gap-2">
+                      <p class="font-semibold text-gray-900 font-mono">{{ p.payoutRef }}</p>
+                      <span class="px-2.5 py-0.5 rounded-full text-xs font-medium {{ getStatusConfig(p.status).badge }}">{{ getStatusConfig(p.status).label }}</span>
+                    </div>
+                    <p class="text-sm text-gray-500">{{ fmtDateShort(p.periodStart) }} – {{ fmtDateShort(p.periodEnd) }}</p>
+                  </div>
+                </div>
+
+                <!-- Pipeline progress -->
+                @if (p.status !== 'FAILED' && p.status !== 'CANCELLED') {
+                  <div class="hidden lg:flex items-center gap-1">
+                    @for (step of [
+                      { label: 'Pending', s: 1 },
+                      { label: 'Approved', s: 2 },
+                      { label: 'Processing', s: 3 },
+                      { label: 'In Transit', s: 4 },
+                      { label: 'Completed', s: 5 }
+                    ]; track step.s) {
+                      <div class="flex items-center gap-1">
+                        <div class="flex flex-col items-center">
+                          <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
+                            [class.bg-indigo-600]="getStatusConfig(p.status).step >= step.s"
+                            [class.text-white]="getStatusConfig(p.status).step >= step.s"
+                            [class.bg-gray-200]="getStatusConfig(p.status).step < step.s"
+                            [class.text-gray-500]="getStatusConfig(p.status).step < step.s">
+                            @if (getStatusConfig(p.status).step > step.s) { <i class="bi bi-check text-xs"></i> }
+                            @else { {{ step.s }} }
+                          </div>
+                        </div>
+                        @if (step.s < 5) {
+                          <div class="w-8 h-0.5" [class.bg-indigo-600]="getStatusConfig(p.status).step > step.s" [class.bg-gray-200]="getStatusConfig(p.status).step <= step.s"></div>
+                        }
+                      </div>
+                    }
+                  </div>
+                }
+
+                <!-- Amount -->
+                <div class="text-right">
+                  <p class="text-2xl font-bold text-gray-900">{{ fmt(p.netAmount) }}</p>
+                  <p class="text-xs text-gray-400">{{ p.currency }}</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action bar (visible on hover via group) -->
+            <div class="px-6 pb-4 flex items-center gap-2" (click)="$event.stopPropagation()">
+              @if (p.status === 'PENDING') {
+                <button (click)="approve(p.id)" [disabled]="actionLoading() !== null"
+                  class="px-4 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center gap-1">
+                  @if (actionLoading() === p.id) { <i class="bi bi-arrow-repeat animate-spin"></i> }
+                  <i class="bi bi-check-lg"></i> Approve
+                </button>
+                <button (click)="openCancel(p.id)" [disabled]="actionLoading() !== null"
+                  class="px-4 py-1.5 bg-gray-200 text-gray-700 rounded-lg text-xs font-medium hover:bg-gray-300 disabled:opacity-50">
+                  Cancel
+                </button>
+              }
+              @if (p.status === 'APPROVED') {
+                <button (click)="initiate(p.id)" [disabled]="actionLoading() !== null"
+                  class="px-4 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-medium hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-1">
+                  @if (actionLoading() === p.id) { <i class="bi bi-arrow-repeat animate-spin"></i> }
+                  <i class="bi bi-send"></i> Initiate Transfer
+                </button>
+                <button (click)="openCancel(p.id)" [disabled]="actionLoading() !== null"
+                  class="px-4 py-1.5 bg-gray-200 text-gray-700 rounded-lg text-xs font-medium hover:bg-gray-300 disabled:opacity-50">
+                  Cancel
+                </button>
+              }
+              @if (p.status === 'IN_TRANSIT') {
+                <button (click)="complete(p.id)" [disabled]="actionLoading() !== null"
+                  class="px-4 py-1.5 bg-green-600 text-white rounded-lg text-xs font-medium hover:bg-green-700 disabled:opacity-50 flex items-center gap-1">
+                  @if (actionLoading() === p.id) { <i class="bi bi-arrow-repeat animate-spin"></i> }
+                  <i class="bi bi-bank"></i> Mark Completed
+                </button>
+              }
+            </div>
+          </div>
+        } @empty {
+          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-16 text-center">
+            <div class="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <i class="bi bi-bank text-2xl text-green-600"></i>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">No payouts yet</h3>
+            <p class="text-gray-500 text-sm mb-6">Create a payout batch to collect and transfer settled funds</p>
+            <button (click)="showCreateModal.set(true)" class="px-6 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700">Create First Payout</button>
+          </div>
+        }
+      </div>
+
+      @if (totalPages() > 1) {
+        <div class="flex items-center justify-center gap-1.5">
+          <button (click)="prevPage()" [disabled]="currentPage() === 1" class="p-2 rounded-lg border border-gray-200 disabled:opacity-40"><i class="bi bi-chevron-left"></i></button>
+          @for (page of visiblePages(); track page) {
+            @if (page === '...') { <span class="px-2 text-gray-400">…</span> }
+            @else { <button (click)="goToPage(+page)" class="px-3 py-1.5 rounded-lg text-sm font-medium" [class.bg-indigo-600]="currentPage() === page" [class.text-white]="currentPage() === page" [class.text-gray-700]="currentPage() !== page">{{ page }}</button> }
+          }
+          <button (click)="nextPage()" [disabled]="currentPage() === totalPages()" class="p-2 rounded-lg border border-gray-200 disabled:opacity-40"><i class="bi bi-chevron-right"></i></button>
+        </div>
+      }
+    }
+  </div>
+</div>
+
+<!-- Detail Modal -->
+@if (showDetail() && detail()) {
+  <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg animate-slide-up max-h-[90vh] overflow-y-auto">
+      <div class="sticky top-0 bg-white px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+        <div>
+          <h2 class="text-lg font-semibold text-gray-900">{{ detail()!.payoutRef }}</h2>
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium {{ getStatusConfig(detail()!.status).badge }}">{{ getStatusConfig(detail()!.status).label }}</span>
+        </div>
+        <button (click)="showDetail.set(false)" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="p-6 space-y-4">
+        <div class="grid grid-cols-2 gap-3">
+          <div class="bg-gray-50 rounded-xl p-3"><p class="text-xs text-gray-500 mb-1">Gross Amount</p><p class="font-bold text-lg text-gray-900">{{ fmt(detail()!.totalAmount) }}</p></div>
+          <div class="bg-gray-50 rounded-xl p-3"><p class="text-xs text-gray-500 mb-1">Gateway Fees</p><p class="font-bold text-lg text-red-500">–{{ fmt(detail()!.totalFees) }}</p></div>
+          <div class="col-span-2 bg-green-50 rounded-xl p-4 text-center border border-green-100">
+            <p class="text-xs text-green-600 uppercase tracking-wider mb-1">Net Payout</p>
+            <p class="text-3xl font-bold text-green-700">{{ fmt(detail()!.netAmount) }}</p>
+          </div>
+          <div class="bg-gray-50 rounded-xl p-3"><p class="text-xs text-gray-500 mb-1">Period</p><p class="text-sm">{{ fmtDateShort(detail()!.periodStart) }} – {{ fmtDateShort(detail()!.periodEnd) }}</p></div>
+          @if (detail()!.bankAccountName) {
+            <div class="bg-gray-50 rounded-xl p-3"><p class="text-xs text-gray-500 mb-1">Bank Account</p><p class="font-medium text-sm">{{ detail()!.bankAccountName }} ••••{{ detail()!.bankAccountLast4 }}</p></div>
+          }
+          @if (detail()!.estimatedArrival) {
+            <div class="bg-blue-50 rounded-xl p-3 border border-blue-100"><p class="text-xs text-blue-600 mb-1">Estimated Arrival</p><p class="font-medium text-sm text-blue-800">{{ fmtDateShort(detail()!.estimatedArrival) }}</p></div>
+          }
+          @if (detail()!.completedAt) {
+            <div class="bg-green-50 rounded-xl p-3 border border-green-100"><p class="text-xs text-green-600 mb-1">Completed</p><p class="font-medium text-sm text-green-800">{{ fmtDate(detail()!.completedAt) }}</p></div>
+          }
+        </div>
+        @if (detail()!.failureReason) {
+          <div class="bg-red-50 rounded-xl p-3 border border-red-100"><p class="text-xs text-red-600 mb-1">Failure Reason</p><p class="text-sm text-red-800">{{ detail()!.failureReason }}</p></div>
+        }
+        @if (detail()!.notes) {
+          <div class="bg-gray-50 rounded-xl p-3"><p class="text-xs text-gray-500 mb-1">Notes</p><p class="text-sm text-gray-700">{{ detail()!.notes }}</p></div>
+        }
+      </div>
+      @if (detail()!.status === 'PENDING' || detail()!.status === 'APPROVED' || detail()!.status === 'IN_TRANSIT') {
+        <div class="sticky bottom-0 bg-white px-6 py-4 border-t border-gray-100 flex gap-3">
+          @if (detail()!.status === 'PENDING') {
+            <button (click)="approve(detail()!.id)" [disabled]="actionLoading() !== null" class="flex-1 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2">
+              @if (actionLoading() === detail()!.id) { <i class="bi bi-arrow-repeat animate-spin"></i> } Approve
+            </button>
+            <button (click)="openCancel(detail()!.id)" class="flex-1 py-2.5 bg-gray-200 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-300">Cancel</button>
+          }
+          @if (detail()!.status === 'APPROVED') {
+            <button (click)="initiate(detail()!.id)" [disabled]="actionLoading() !== null" class="flex-1 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 flex items-center justify-center gap-2">
+              @if (actionLoading() === detail()!.id) { <i class="bi bi-arrow-repeat animate-spin"></i> } <i class="bi bi-send"></i> Initiate Transfer
+            </button>
+          }
+          @if (detail()!.status === 'IN_TRANSIT') {
+            <button (click)="complete(detail()!.id)" [disabled]="actionLoading() !== null" class="flex-1 py-2.5 bg-green-600 text-white rounded-xl text-sm font-medium hover:bg-green-700 disabled:opacity-50 flex items-center justify-center gap-2">
+              @if (actionLoading() === detail()!.id) { <i class="bi bi-arrow-repeat animate-spin"></i> } <i class="bi bi-bank"></i> Mark Completed
+            </button>
+          }
+        </div>
+      }
+    </div>
+  </div>
+}
+
+<!-- Create Modal -->
+@if (showCreateModal()) {
+  <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md animate-slide-up">
+      <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+        <h2 class="text-lg font-semibold text-gray-900">Create Payout Batch</h2>
+        <button (click)="showCreateModal.set(false)" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="p-6 space-y-4">
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1.5 uppercase tracking-wider">Period Start *</label>
+          <input type="datetime-local" [value]="newPayout().periodStart || ''" (input)="patchNew({ periodStart: $any($event.target).value })"
+            class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1.5 uppercase tracking-wider">Period End *</label>
+          <input type="datetime-local" [value]="newPayout().periodEnd || ''" (input)="patchNew({ periodEnd: $any($event.target).value })"
+            class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm">
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1.5 uppercase tracking-wider">Bank Account Name</label>
+            <input type="text" [value]="newPayout().bankAccountName || ''" (input)="patchNew({ bankAccountName: $any($event.target).value })" placeholder="Account holder"
+              class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1.5 uppercase tracking-wider">Last 4 Digits</label>
+            <input type="text" [value]="newPayout().bankAccountLast4 || ''" (input)="patchNew({ bankAccountLast4: $any($event.target).value })" placeholder="e.g. 4242" maxlength="4"
+              class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm font-mono">
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1.5 uppercase tracking-wider">Notes</label>
+          <input type="text" [value]="newPayout().notes || ''" (input)="patchNew({ notes: $any($event.target).value })" placeholder="Optional notes..."
+            class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm">
+        </div>
+        <div class="bg-blue-50 border border-blue-200 rounded-xl p-3">
+          <p class="text-xs text-blue-700 flex items-start gap-2">
+            <i class="bi bi-info-circle-fill mt-0.5 flex-shrink-0"></i>
+            All settled transactions within this period that haven't been paid out yet will be included in this batch.
+          </p>
+        </div>
+      </div>
+      <div class="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
+        <button (click)="showCreateModal.set(false)" class="px-4 py-2 border border-gray-200 rounded-xl text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
+        <button (click)="create()" [disabled]="actionLoading() !== null || !newPayout().periodStart || !newPayout().periodEnd"
+          class="px-6 py-2 bg-green-600 text-white rounded-xl text-sm font-medium hover:bg-green-700 disabled:opacity-50 flex items-center gap-2">
+          @if (actionLoading() === 'create') { <i class="bi bi-arrow-repeat animate-spin"></i> }
+          Create Batch
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Cancel Confirm -->
+@if (showCancelModal()) {
+  <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4 animate-fade-in">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md animate-slide-up">
+      <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+        <h2 class="text-lg font-semibold text-gray-900">Cancel Payout</h2>
+        <button (click)="showCancelModal.set(null)" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="p-6 space-y-4">
+        <div class="bg-red-50 border border-red-100 rounded-xl p-3">
+          <p class="text-sm text-red-700 flex items-start gap-2"><i class="bi bi-exclamation-triangle-fill mt-0.5"></i>This will cancel the payout batch. Transactions will remain in settled state for future payouts.</p>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1.5 uppercase tracking-wider">Cancellation Reason</label>
+          <textarea [(ngModel)]="cancelReason" rows="3" placeholder="Reason for cancellation..."
+            class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 text-sm resize-none"></textarea>
+        </div>
+      </div>
+      <div class="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
+        <button (click)="showCancelModal.set(null)" class="px-4 py-2 border border-gray-200 rounded-xl text-sm text-gray-700 hover:bg-gray-50">Back</button>
+        <button (click)="confirmCancel()" [disabled]="actionLoading() !== null"
+          class="px-6 py-2 bg-red-600 text-white rounded-xl text-sm font-medium hover:bg-red-700 disabled:opacity-50 flex items-center gap-2">
+          @if (actionLoading()) { <i class="bi bi-arrow-repeat animate-spin"></i> }
+          Cancel Payout
+        </button>
+      </div>
+    </div>
+  </div>
+}

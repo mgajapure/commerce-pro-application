@@ -1,0 +1,226 @@
+<div class="min-h-screen bg-gray-50/50 p-4 sm:p-6 lg:p-8">
+  <div class="max-w-[1600px] mx-auto space-y-6">
+
+    <!-- Header -->
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+      <div>
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-gray-800 rounded-xl flex items-center justify-center">
+            <i class="bi bi-cloud-check text-white text-lg"></i>
+          </div>
+          <h1 class="text-2xl font-bold text-gray-900">Payment Gateways</h1>
+          <span class="px-2 py-0.5 bg-red-100 text-red-700 text-xs font-semibold rounded-full">Super Admin</span>
+        </div>
+        <p class="text-gray-500 mt-1 text-sm">Configure payment gateway credentials — encrypted at rest with AES-256-GCM</p>
+      </div>
+      <button (click)="showCreateModal.set(true)"
+        class="px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 flex items-center gap-2 shadow-lg shadow-indigo-200">
+        <i class="bi bi-plus-lg"></i> Add Gateway
+      </button>
+    </div>
+
+    <!-- Security Notice -->
+    <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-4">
+      <div class="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
+        <i class="bi bi-shield-lock-fill text-amber-600"></i>
+      </div>
+      <div>
+        <p class="font-semibold text-amber-800 text-sm">PCI-DSS Compliance Notice</p>
+        <p class="text-amber-700 text-sm mt-0.5">API keys and secrets are stored encrypted using AES-256-GCM and are <strong>never</strong> returned in API responses. After saving, you will not be able to view credentials again — only replace them.</p>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    @if (isLoading()) {
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        @for (i of [1,2,3]; track i) {
+          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 h-48 animate-pulse">
+            <div class="h-5 bg-gray-100 rounded w-2/3 mb-4"></div>
+            <div class="h-3 bg-gray-100 rounded w-full mb-2"></div>
+            <div class="h-3 bg-gray-100 rounded w-3/4"></div>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Gateway Cards -->
+    @if (!isLoading()) {
+      @if (gateways().length === 0) {
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-16 text-center">
+          <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <i class="bi bi-cloud-plus text-2xl text-gray-400"></i>
+          </div>
+          <h3 class="text-lg font-medium text-gray-900 mb-2">No payment gateways configured</h3>
+          <p class="text-gray-500 text-sm mb-6">Add a payment gateway to start accepting payments</p>
+          <button (click)="showCreateModal.set(true)" class="px-6 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700">Add First Gateway</button>
+        </div>
+      } @else {
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          @for (gw of gateways(); track gw.id) {
+            <div class="bg-white rounded-2xl border shadow-sm hover:shadow-md transition-all relative"
+              [class.border-indigo-300]="gw.isDefault && gw.isActive"
+              [class.border-gray-100]="!gw.isDefault || !gw.isActive">
+
+              <!-- Default badge -->
+              @if (gw.isDefault && gw.isActive) {
+                <div class="absolute -top-2.5 left-4">
+                  <span class="px-3 py-0.5 bg-indigo-600 text-white text-xs font-semibold rounded-full shadow-lg shadow-indigo-200">
+                    <i class="bi bi-star-fill me-1"></i>Default
+                  </span>
+                </div>
+              }
+
+              <div class="p-6">
+                <!-- Provider header -->
+                <div class="flex items-start justify-between mb-4">
+                  <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center border {{ providerInfo[gw.gatewayProvider].bg }}">
+                      <i class="bi bi-credit-card {{ providerInfo[gw.gatewayProvider].color }} text-xl"></i>
+                    </div>
+                    <div>
+                      <p class="font-bold text-gray-900">{{ gw.displayName }}</p>
+                      <p class="text-xs text-gray-500">{{ gw.gatewayProvider }}</p>
+                    </div>
+                  </div>
+                  <div class="flex flex-col items-end gap-1.5">
+                    @if (gw.isActive) {
+                      <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-green-100 text-green-700 text-xs font-medium rounded-full">
+                        <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>Active
+                      </span>
+                    } @else {
+                      <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-100 text-gray-500 text-xs font-medium rounded-full">
+                        <span class="w-1.5 h-1.5 rounded-full bg-gray-400"></span>Inactive
+                      </span>
+                    }
+                    @if (gw.isTestMode) {
+                      <span class="px-2 py-0.5 bg-yellow-100 text-yellow-700 text-xs font-medium rounded-full">Test Mode</span>
+                    }
+                  </div>
+                </div>
+
+                <p class="text-xs text-gray-500 mb-4">{{ providerInfo[gw.gatewayProvider].description }}</p>
+
+                <!-- Credentials indicator -->
+                <div class="flex items-center gap-2 mb-4 p-3 bg-gray-50 rounded-xl border border-gray-100">
+                  <i class="bi bi-key-fill text-gray-400"></i>
+                  <span class="text-xs text-gray-500 font-mono">API keys encrypted •••••••••••</span>
+                  <i class="bi bi-shield-fill-check text-green-500 ml-auto"></i>
+                </div>
+
+                @if (gw.webhookUrl) {
+                  <div class="mb-4">
+                    <p class="text-xs text-gray-400 uppercase tracking-wider mb-1">Webhook URL</p>
+                    <p class="text-xs font-mono text-gray-600 truncate">{{ gw.webhookUrl }}</p>
+                  </div>
+                }
+
+                @if (gw.supportedCurrencies) {
+                  <div class="mb-4">
+                    <p class="text-xs text-gray-400 uppercase tracking-wider mb-1">Currencies</p>
+                    <p class="text-xs text-gray-600">{{ gw.supportedCurrencies }}</p>
+                  </div>
+                }
+
+                <p class="text-xs text-gray-400">Added {{ fmtDate(gw.createdAt) }}</p>
+              </div>
+
+              <!-- Actions -->
+              <div class="px-6 pb-5 flex flex-wrap gap-2">
+                @if (!gw.isActive) {
+                  <button (click)="activate(gw.id)" [disabled]="actionLoading() !== null"
+                    class="flex-1 py-2 bg-green-600 text-white rounded-xl text-xs font-medium hover:bg-green-700 disabled:opacity-50 flex items-center justify-center gap-1">
+                    @if (actionLoading() === gw.id) { <i class="bi bi-arrow-repeat animate-spin"></i> }
+                    <i class="bi bi-power"></i> Activate
+                  </button>
+                }
+                @if (gw.isActive && !gw.isDefault) {
+                  <button (click)="setDefault(gw.id)" [disabled]="actionLoading() !== null"
+                    class="flex-1 py-2 bg-indigo-600 text-white rounded-xl text-xs font-medium hover:bg-indigo-700 disabled:opacity-50 flex items-center justify-center gap-1">
+                    @if (actionLoading() === gw.id + '-default') { <i class="bi bi-arrow-repeat animate-spin"></i> }
+                    <i class="bi bi-star"></i> Set Default
+                  </button>
+                }
+                @if (gw.isActive && gw.isDefault) {
+                  <div class="flex-1 py-2 bg-indigo-50 text-indigo-600 rounded-xl text-xs font-medium flex items-center justify-center gap-1">
+                    <i class="bi bi-star-fill"></i> Default Gateway
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
+    }
+  </div>
+</div>
+
+<!-- Create Modal -->
+@if (showCreateModal()) {
+  <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg animate-slide-up max-h-[90vh] overflow-y-auto">
+      <div class="sticky top-0 bg-white px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+        <h2 class="text-lg font-semibold text-gray-900">Add Payment Gateway</h2>
+        <button (click)="showCreateModal.set(false)" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="p-6 space-y-4">
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1.5 uppercase tracking-wider">Provider *</label>
+          <select [value]="newGateway().gatewayProvider || ''" (change)="patchNew({ gatewayProvider: $any($event.target).value })"
+            class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm">
+            <option value="">Select provider</option>
+            @for (p of providers; track p) { <option [value]="p">{{ p }}</option> }
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1.5 uppercase tracking-wider">Display Name *</label>
+          <input type="text" [value]="newGateway().displayName || ''" (input)="patchNew({ displayName: $any($event.target).value })" placeholder="e.g. Stripe Production"
+            class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm">
+        </div>
+        <div class="bg-amber-50 border border-amber-200 rounded-xl p-3">
+          <p class="text-xs text-amber-700 flex items-start gap-2">
+            <i class="bi bi-shield-lock-fill mt-0.5 flex-shrink-0"></i>
+            Credentials are encrypted with AES-256-GCM before storage. After saving, you cannot retrieve them — you can only replace them.
+          </p>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1.5 uppercase tracking-wider">API Key</label>
+          <input type="password" [value]="newGateway().apiKey || ''" (input)="patchNew({ apiKey: $any($event.target).value })" placeholder="sk_live_... or pk_live_..."
+            class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm font-mono">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1.5 uppercase tracking-wider">API Secret</label>
+          <input type="password" [value]="newGateway().apiSecret || ''" (input)="patchNew({ apiSecret: $any($event.target).value })" placeholder="Secret key"
+            class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm font-mono">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1.5 uppercase tracking-wider">Webhook Secret</label>
+          <input type="password" [value]="newGateway().webhookSecret || ''" (input)="patchNew({ webhookSecret: $any($event.target).value })" placeholder="whsec_..."
+            class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm font-mono">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1.5 uppercase tracking-wider">Webhook URL</label>
+          <input type="url" [value]="newGateway().webhookUrl || ''" (input)="patchNew({ webhookUrl: $any($event.target).value })" placeholder="https://yourstore.com/api/webhooks/stripe"
+            class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1.5 uppercase tracking-wider">Supported Currencies (comma-separated)</label>
+          <input type="text" [value]="newGateway().supportedCurrencies || ''" (input)="patchNew({ supportedCurrencies: $any($event.target).value })" placeholder="USD,EUR,GBP"
+            class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm">
+        </div>
+        <div class="flex items-center gap-3">
+          <input type="checkbox" id="testMode" [checked]="newGateway().isTestMode ?? true" (change)="patchNew({ isTestMode: $any($event.target).checked })"
+            class="w-4 h-4 rounded border-gray-300 text-indigo-600 cursor-pointer">
+          <label for="testMode" class="text-sm text-gray-700 cursor-pointer">Enable test mode (no real charges)</label>
+        </div>
+      </div>
+      <div class="sticky bottom-0 bg-white px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
+        <button (click)="showCreateModal.set(false)" class="px-4 py-2 border border-gray-200 rounded-xl text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
+        <button (click)="create()" [disabled]="actionLoading() !== null || !newGateway().gatewayProvider || !newGateway().displayName"
+          class="px-6 py-2 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-2">
+          @if (actionLoading() === 'create') { <i class="bi bi-arrow-repeat animate-spin"></i> }
+          Add Gateway
+        </button>
+      </div>
+    </div>
+  </div>
+}

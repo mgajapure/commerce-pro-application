@@ -1,0 +1,9 @@
+[
+  { "baseCurrency": "USD", "quoteCurrency": "EUR", "rate": "0.921000", "source": "MANUAL" },
+  { "baseCurrency": "USD", "quoteCurrency": "GBP", "rate": "0.786000", "source": "MANUAL" },
+  { "baseCurrency": "USD", "quoteCurrency": "INR", "rate": "83.250000","source": "MANUAL" },
+  { "baseCurrency": "USD", "quoteCurrency": "CAD", "rate": "1.360000", "source": "MANUAL" },
+  { "baseCurrency": "USD", "quoteCurrency": "AUD", "rate": "1.540000", "source": "MANUAL" },
+  { "baseCurrency": "EUR", "quoteCurrency": "USD", "rate": "1.085000", "source": "MANUAL" },
+  { "baseCurrency": "GBP", "quoteCurrency": "USD", "rate": "1.271000", "source": "MANUAL" }
+]

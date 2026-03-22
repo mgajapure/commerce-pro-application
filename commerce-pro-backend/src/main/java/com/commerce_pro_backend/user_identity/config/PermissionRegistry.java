@@ -148,6 +148,63 @@ public class PermissionRegistry {
         register("notification:read",  "View Notifications",   PermissionCategory.SYSTEM_CONFIGURATION, 1);
         register("notification:write", "Manage Notifications", PermissionCategory.SYSTEM_CONFIGURATION, 2);
 
+        // Payment Permissions
+        register("payment:transaction:read",      "View Transactions",                PermissionCategory.PAYMENT_MANAGEMENT, 1);
+        register("payment:transaction:create",    "Create Payments",                  PermissionCategory.PAYMENT_MANAGEMENT, 3);
+        register("payment:transaction:capture",   "Capture Authorized Payments",      PermissionCategory.PAYMENT_MANAGEMENT, 3);
+        register("payment:transaction:void",      "Void Authorizations",              PermissionCategory.PAYMENT_MANAGEMENT, 3);
+        register("payment:transaction:flag",      "Flag Suspicious Transactions",     PermissionCategory.PAYMENT_MANAGEMENT, 2);
+        register("payment:refund:read",           "View Refund Requests",             PermissionCategory.PAYMENT_MANAGEMENT, 1);
+        register("payment:refund:request",        "Submit Refund Requests",           PermissionCategory.PAYMENT_MANAGEMENT, 2);
+        register("payment:refund:approve",        "Approve / Reject Refunds",         PermissionCategory.PAYMENT_MANAGEMENT, 3);
+        register("payment:refund:process",        "Process Refund on Gateway",        PermissionCategory.PAYMENT_MANAGEMENT, 4);
+        register("payment:chargeback:read",       "View Chargebacks & Disputes",      PermissionCategory.PAYMENT_MANAGEMENT, 1);
+        register("payment:chargeback:manage",     "Manage Chargebacks & Disputes",    PermissionCategory.PAYMENT_MANAGEMENT, 3);
+        register("payment:reconciliation:read",   "View Reconciliation Reports",      PermissionCategory.PAYMENT_MANAGEMENT, 2);
+        register("payment:reconciliation:manage", "Generate Reconciliation Reports",  PermissionCategory.PAYMENT_MANAGEMENT, 3);
+        register("payment:payout:read",           "View Payouts",                     PermissionCategory.PAYMENT_MANAGEMENT, 2);
+        register("payment:payout:create",         "Create Payout Batches",            PermissionCategory.PAYMENT_MANAGEMENT, 3);
+        register("payment:payout:approve",        "Approve Payouts",                  PermissionCategory.PAYMENT_MANAGEMENT, 4);
+        register("payment:payout:process",        "Initiate Payout Transfers",        PermissionCategory.PAYMENT_MANAGEMENT, 4);
+        register("payment:link:read",             "View Payment Links",               PermissionCategory.PAYMENT_MANAGEMENT, 1);
+        register("payment:link:create",           "Create & Manage Payment Links",    PermissionCategory.PAYMENT_MANAGEMENT, 2);
+        register("payment:method:read",           "View Saved Payment Methods",       PermissionCategory.PAYMENT_MANAGEMENT, 1);
+        register("payment:method:manage",         "Manage Payment Methods",           PermissionCategory.PAYMENT_MANAGEMENT, 2);
+        register("payment:gateway:read",          "View Gateway Configurations",      PermissionCategory.PAYMENT_MANAGEMENT, 2);
+        register("payment:gateway:manage",        "Manage Gateway Configurations",    PermissionCategory.PAYMENT_MANAGEMENT, 5, true);
+
+        // ── Finance Permissions ────────────────────────────────────
+        register("finance:revenue:read",   "View Revenue Overview & Reports",         PermissionCategory.FINANCE_MANAGEMENT, 1);
+        register("finance:invoice:read",   "View Customer Invoices",                  PermissionCategory.FINANCE_MANAGEMENT, 1);
+        register("finance:invoice:create", "Create & Update Customer Invoices",       PermissionCategory.FINANCE_MANAGEMENT, 2);
+        register("finance:invoice:payment","Record Invoice Payments",                 PermissionCategory.FINANCE_MANAGEMENT, 3);
+        register("finance:invoice:void",   "Void & Write Off Invoices",               PermissionCategory.FINANCE_MANAGEMENT, 4);
+        register("finance:ar:read",        "View Accounts Receivable & Aging",        PermissionCategory.FINANCE_MANAGEMENT, 1);
+        register("finance:vendor:read",    "View Vendors",                             PermissionCategory.FINANCE_MANAGEMENT, 1);
+        register("finance:vendor:manage",  "Create & Manage Vendors",                 PermissionCategory.FINANCE_MANAGEMENT, 2);
+        register("finance:ap:read",        "View Accounts Payable & Vendor Bills",    PermissionCategory.FINANCE_MANAGEMENT, 1);
+        register("finance:ap:create",      "Record Vendor Invoices",                  PermissionCategory.FINANCE_MANAGEMENT, 2);
+        register("finance:ap:approve",     "Approve & Schedule AP Payments",          PermissionCategory.FINANCE_MANAGEMENT, 3);
+        register("finance:ap:pay",         "Record AP Payments",                      PermissionCategory.FINANCE_MANAGEMENT, 4);
+        register("finance:tax:read",       "View Tax Rates & Reports",                PermissionCategory.FINANCE_MANAGEMENT, 1);
+        register("finance:tax:manage",     "Create & Manage Tax Rates",               PermissionCategory.FINANCE_MANAGEMENT, 3);
+        register("finance:expense:read",   "View Expenses",                           PermissionCategory.FINANCE_MANAGEMENT, 1);
+        register("finance:expense:create", "Create & Submit Expenses",                PermissionCategory.FINANCE_MANAGEMENT, 2);
+        register("finance:expense:approve","Approve & Pay Expenses",                  PermissionCategory.FINANCE_MANAGEMENT, 3);
+        register("finance:expense:manage", "Manage Expense Categories",               PermissionCategory.FINANCE_MANAGEMENT, 3);
+        register("finance:journal:read",   "View Journal Entries",                    PermissionCategory.FINANCE_MANAGEMENT, 2);
+        register("finance:journal:post",   "Post Journal Entries",                    PermissionCategory.FINANCE_MANAGEMENT, 4, true);
+        register("finance:period:read",    "View Financial Periods",                  PermissionCategory.FINANCE_MANAGEMENT, 1);
+        register("finance:period:manage",  "Create Financial Periods",                PermissionCategory.FINANCE_MANAGEMENT, 3);
+        register("finance:period:close",   "Close & Lock Financial Periods",          PermissionCategory.FINANCE_MANAGEMENT, 5, true);
+        register("finance:budget:read",    "View Budgets",                            PermissionCategory.FINANCE_MANAGEMENT, 1);
+        register("finance:budget:manage",  "Create & Update Budgets",                 PermissionCategory.FINANCE_MANAGEMENT, 3);
+        register("finance:budget:approve", "Approve Budgets",                         PermissionCategory.FINANCE_MANAGEMENT, 4);
+        register("finance:pnl:read",       "View P&L Statements",                     PermissionCategory.FINANCE_MANAGEMENT, 2);
+        register("finance:cashflow:read",  "View Cash Flow Forecasts",                PermissionCategory.FINANCE_MANAGEMENT, 2);
+        register("finance:rates:read",     "View Exchange Rates",                     PermissionCategory.FINANCE_MANAGEMENT, 1);
+        register("finance:rates:manage",   "Manage Exchange Rates",                   PermissionCategory.FINANCE_MANAGEMENT, 2);
+
         log.info("Registered {} system permissions", systemPermissions.size());
     }
 

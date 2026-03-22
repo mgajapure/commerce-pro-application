@@ -18,3 +18,5 @@ export * from './dashboard/dashboard.service';
 export * from './notification/notification.service';
 export * from './identity/identity.service';
 export * from './auth/auth.service';
+export * from './payment/payment.service';
+export * from './finance/finance.service';

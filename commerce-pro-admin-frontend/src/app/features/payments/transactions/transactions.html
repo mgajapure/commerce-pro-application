@@ -1,0 +1,356 @@
+<div class="min-h-screen bg-gray-50/50 p-4 sm:p-6 lg:p-8">
+  <div class="max-w-[1600px] mx-auto space-y-6">
+
+    <!-- Header -->
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+      <div>
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center">
+            <i class="bi bi-credit-card text-white text-lg"></i>
+          </div>
+          <h1 class="text-2xl font-bold text-gray-900">Transactions</h1>
+          <span class="px-3 py-1 bg-gray-100 text-gray-600 text-sm font-medium rounded-full">{{ totalElements() | number }}</span>
+        </div>
+        <p class="text-gray-500 mt-1 text-sm">Complete payment ledger — charges, authorizations, refunds</p>
+      </div>
+      <div class="flex flex-wrap items-center gap-3">
+        <button (click)="toggleFilters()"
+          class="group px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:border-indigo-300 hover:text-indigo-600 transition-all flex items-center gap-2 shadow-sm">
+          <i class="bi bi-funnel group-hover:scale-110 transition-transform"></i>
+          Filters
+          @if (activeFiltersCount() > 0) {
+            <span class="bg-indigo-600 text-white text-xs px-2 py-0.5 rounded-full">{{ activeFiltersCount() }}</span>
+          }
+        </button>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    @if (stats()) {
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        @for (s of displayStats(); track s.label) {
+          <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all">
+            <div class="flex items-start justify-between">
+              <div>
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">{{ s.label }}</p>
+                <p class="text-xl font-bold text-gray-900">{{ s.value }}</p>
+              </div>
+              <div class="w-9 h-9 rounded-xl flex items-center justify-center {{ s.bg }}">
+                <i class="bi bi-{{ s.icon }} {{ s.ic }}"></i>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Quick Tabs -->
+    <div class="bg-white rounded-2xl p-2 shadow-sm border border-gray-100 overflow-x-auto">
+      <div class="flex gap-1.5 min-w-max">
+        @for (tab of quickTabs; track tab.value) {
+          <button (click)="setTab(tab.value)"
+            class="px-4 py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap"
+            [class.bg-indigo-600]="activeTab() === tab.value"
+            [class.text-white]="activeTab() === tab.value"
+            [class.shadow-md]="activeTab() === tab.value"
+            [class.bg-gray-50]="activeTab() !== tab.value"
+            [class.text-gray-700]="activeTab() !== tab.value">
+            {{ tab.label }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Advanced Filters -->
+    @if (showFilters()) {
+      <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+        <div class="flex items-center justify-between mb-5">
+          <h3 class="font-semibold text-gray-900 flex items-center gap-2"><i class="bi bi-funnel-fill text-indigo-600"></i> Filters</h3>
+          <button (click)="clearFilters()" class="text-sm text-gray-500 hover:text-red-600 transition-colors">Clear all</button>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="lg:col-span-2">
+            <label class="block text-xs font-medium text-gray-600 mb-1.5 uppercase tracking-wider">Search</label>
+            <div class="relative">
+              <i class="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+              <input type="text" [value]="searchQuery()" (input)="onSearchInput($any($event.target).value)"
+                placeholder="Transaction ref, order#, customer..."
+                class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm">
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1.5 uppercase tracking-wider">Status</label>
+            <select [(ngModel)]="filterStatus" (ngModelChange)="applyFilter()"
+              class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm">
+              <option value="">All Statuses</option>
+              <option value="PENDING">Pending</option>
+              <option value="AUTHORIZED">Authorized</option>
+              <option value="CAPTURED">Captured</option>
+              <option value="SETTLED">Settled</option>
+              <option value="FAILED">Failed</option>
+              <option value="VOIDED">Voided</option>
+              <option value="REFUNDED">Refunded</option>
+              <option value="CHARGEBACK">Chargeback</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1.5 uppercase tracking-wider">Gateway</label>
+            <select [(ngModel)]="filterGateway" (ngModelChange)="applyFilter()"
+              class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm">
+              <option value="">All Gateways</option>
+              <option value="STRIPE">Stripe</option>
+              <option value="PAYPAL">PayPal</option>
+              <option value="SQUARE">Square</option>
+              <option value="MANUAL">Manual</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1.5 uppercase tracking-wider">Flagged</label>
+            <select [(ngModel)]="filterFlagged" (ngModelChange)="applyFilter()"
+              class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm">
+              <option value="">All</option>
+              <option value="true">Flagged only</option>
+              <option value="false">Not flagged</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1.5 uppercase tracking-wider">From</label>
+            <input type="date" [(ngModel)]="filterFrom" (ngModelChange)="applyFilter()"
+              class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1.5 uppercase tracking-wider">To</label>
+            <input type="date" [(ngModel)]="filterTo" (ngModelChange)="applyFilter()"
+              class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm">
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Bulk Bar -->
+    @if (selected().length > 0) {
+      <div class="bg-indigo-600 rounded-2xl p-4 flex items-center justify-between animate-slide-up">
+        <span class="text-white font-medium text-sm">{{ selected().length }} selected</span>
+        <div class="flex items-center gap-3">
+          <button (click)="selected.set([])" class="text-indigo-200 hover:text-white text-sm transition-colors">Clear</button>
+        </div>
+      </div>
+    }
+
+    <!-- Loading -->
+    @if (isLoading()) {
+      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
+        <div class="space-y-4 animate-pulse">
+          @for (i of [1,2,3,4,5,6,7,8]; track i) {
+            <div class="h-14 bg-gray-100 rounded-xl"></div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Error -->
+    @if (error() && !isLoading()) {
+      <div class="bg-red-50 border border-red-200 rounded-2xl p-6 flex items-center gap-4">
+        <div class="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center flex-shrink-0">
+          <i class="bi bi-exclamation-triangle text-red-600"></i>
+        </div>
+        <div>
+          <p class="font-medium text-red-800">Failed to load transactions</p>
+          <p class="text-red-600 text-sm">{{ error() }}</p>
+        </div>
+        <button (click)="loadTransactions()" class="ml-auto px-4 py-2 bg-red-600 text-white rounded-xl text-sm hover:bg-red-700">Retry</button>
+      </div>
+    }
+
+    <!-- Table -->
+    @if (!isLoading() && !error()) {
+      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead class="bg-gray-50/50 border-b border-gray-100">
+              <tr>
+                <th class="px-6 py-4 w-12">
+                  <input type="checkbox" [checked]="isAllSelected()" (change)="toggleAll()"
+                    class="w-4 h-4 rounded border-gray-300 text-indigo-600 cursor-pointer">
+                </th>
+                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer hover:text-gray-700" (click)="sort('transactionRef')">
+                  Reference <i class="bi bi-arrow-down-up ml-1 opacity-50"></i>
+                </th>
+                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Customer / Order</th>
+                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Type</th>
+                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Gateway</th>
+                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer hover:text-gray-700" (click)="sort('amount')">
+                  Amount <i class="bi bi-arrow-down-up ml-1 opacity-50"></i>
+                </th>
+                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer hover:text-gray-700" (click)="sort('createdAt')">
+                  Date <i class="bi bi-arrow-down-up ml-1 opacity-50"></i>
+                </th>
+                <th class="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+              @for (txn of transactions(); track txn.id) {
+                <tr class="group hover:bg-gray-50/50 transition-colors" [class.bg-indigo-50/30]="isSelected(txn.id)">
+                  <td class="px-6 py-4">
+                    <input type="checkbox" [checked]="isSelected(txn.id)" (change)="toggleSelect(txn.id)"
+                      class="w-4 h-4 rounded border-gray-300 text-indigo-600 cursor-pointer">
+                  </td>
+                  <td class="px-6 py-4">
+                    <div class="flex items-center gap-2">
+                      @if (txn.isFlagged) {
+                        <i class="bi bi-flag-fill text-red-500 text-xs" title="Flagged for review"></i>
+                      }
+                      <div>
+                        <p class="font-semibold text-gray-900 text-sm font-mono">{{ txn.transactionRef }}</p>
+                        @if (txn.cardLast4) {
+                          <p class="text-xs {{ getCardBrandColor(txn.cardBrand ?? '') }}">
+                            {{ txn.cardBrand }} ••••{{ txn.cardLast4 }}
+                          </p>
+                        }
+                      </div>
+                    </div>
+                  </td>
+                  <td class="px-6 py-4">
+                    <p class="font-medium text-gray-900 text-sm">{{ txn.customerName || '—' }}</p>
+                    <p class="text-xs text-gray-400 font-mono">{{ txn.orderNumber }}</p>
+                  </td>
+                  <td class="px-6 py-4">
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium {{ getTypeConfig(txn.transactionType).badge }}">
+                      <i class="bi bi-{{ getTypeConfig(txn.transactionType).icon }}"></i>
+                      {{ txn.transactionType | titlecase }}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4">
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium {{ getStatusConfig(txn.status).badge }}">
+                      <span class="w-1.5 h-1.5 rounded-full {{ getStatusConfig(txn.status).dot }}"></span>
+                      {{ getStatusConfig(txn.status).label }}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4">
+                    <span class="text-sm text-gray-600 flex items-center gap-1.5">
+                      <i class="bi bi-{{ getGatewayIcon(txn.gatewayProvider ?? '') }} text-gray-400"></i>
+                      {{ txn.gatewayProvider || '—' }}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4">
+                    <p class="font-bold text-gray-900">{{ fmt(txn.amount) }}</p>
+                    <p class="text-xs text-gray-400">{{ txn.currency }}</p>
+                  </td>
+                  <td class="px-6 py-4">
+                    <p class="text-sm text-gray-700">{{ timeAgo(txn.createdAt) }}</p>
+                    <p class="text-xs text-gray-400">{{ fmtDate(txn.createdAt) }}</p>
+                  </td>
+                  <td class="px-6 py-4 text-right">
+                    <div class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      @if (txn.status === 'AUTHORIZED') {
+                        <button (click)="capture(txn, $event)" [disabled]="actionLoading() === txn.id"
+                          class="px-3 py-1.5 bg-green-600 text-white rounded-lg text-xs font-medium hover:bg-green-700 disabled:opacity-50 flex items-center gap-1">
+                          @if (actionLoading() === txn.id) { <i class="bi bi-arrow-repeat animate-spin"></i> }
+                          Capture
+                        </button>
+                        <button (click)="voidTxn(txn, $event)" [disabled]="actionLoading() === txn.id"
+                          class="px-3 py-1.5 bg-gray-200 text-gray-700 rounded-lg text-xs font-medium hover:bg-gray-300 disabled:opacity-50">
+                          Void
+                        </button>
+                      }
+                      <button (click)="openFlagModal(txn, $event)"
+                        class="p-1.5 rounded-lg transition-colors"
+                        [class.text-red-500]="txn.isFlagged"
+                        [class.hover:text-red-600]="txn.isFlagged"
+                        [class.text-gray-400]="!txn.isFlagged"
+                        [class.hover:text-orange-500]="!txn.isFlagged"
+                        [title]="txn.isFlagged ? 'Remove flag' : 'Flag for review'">
+                        <i class="bi bi-flag{{ txn.isFlagged ? '-fill' : '' }}"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="9" class="px-6 py-16 text-center">
+                    <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                      <i class="bi bi-credit-card text-2xl text-gray-400"></i>
+                    </div>
+                    <h3 class="text-lg font-medium text-gray-900 mb-1">No transactions found</h3>
+                    <p class="text-gray-500 text-sm mb-4">Try adjusting your filters</p>
+                    <button (click)="clearFilters()" class="px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700">Clear Filters</button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="px-6 py-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div class="flex items-center gap-2 text-sm text-gray-500">
+            Show
+            <select [(ngModel)]="itemsPerPage" (ngModelChange)="goToPage(1)"
+              class="px-2 py-1 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none">
+              <option [value]="10">10</option><option [value]="20">20</option><option [value]="50">50</option>
+            </select>
+            of {{ totalElements() | number }} transactions
+          </div>
+          <div class="flex items-center gap-1.5">
+            <button (click)="prevPage()" [disabled]="currentPage() === 1"
+              class="p-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed">
+              <i class="bi bi-chevron-left"></i>
+            </button>
+            @for (page of visiblePages(); track page) {
+              @if (page === '...') { <span class="px-2 text-gray-400">…</span> }
+              @else {
+                <button (click)="goToPage(+page)"
+                  class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
+                  [class.bg-indigo-600]="currentPage() === page" [class.text-white]="currentPage() === page"
+                  [class.text-gray-700]="currentPage() !== page" [class.hover:bg-gray-100]="currentPage() !== page">
+                  {{ page }}
+                </button>
+              }
+            }
+            <button (click)="nextPage()" [disabled]="currentPage() === totalPages()"
+              class="p-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed">
+              <i class="bi bi-chevron-right"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</div>
+
+<!-- Flag Modal -->
+@if (showFlagModal()) {
+  <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md animate-slide-up">
+      <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+        <h2 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+          <i class="bi bi-flag-fill text-orange-500"></i>
+          {{ flagTarget()?.flagged ? 'Flag Transaction' : 'Remove Flag' }}
+        </h2>
+        <button (click)="showFlagModal.set(false)" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="p-6">
+        @if (flagTarget()?.flagged) {
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1.5">Reason for flagging</label>
+            <textarea [(ngModel)]="flagReason" rows="3" placeholder="Describe the suspicious activity..."
+              class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 text-sm resize-none"></textarea>
+          </div>
+        } @else {
+          <p class="text-gray-600 text-sm">Remove the fraud flag from this transaction?</p>
+        }
+      </div>
+      <div class="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
+        <button (click)="showFlagModal.set(false)" class="px-4 py-2 border border-gray-200 rounded-xl text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
+        <button (click)="submitFlag()" [disabled]="actionLoading() !== null"
+          class="px-6 py-2 rounded-xl text-sm font-medium text-white flex items-center gap-2 disabled:opacity-50 transition-colors"
+          [class.bg-orange-500]="flagTarget()?.flagged" [class.hover:bg-orange-600]="flagTarget()?.flagged"
+          [class.bg-gray-600]="!flagTarget()?.flagged" [class.hover:bg-gray-700]="!flagTarget()?.flagged">
+          @if (actionLoading()) { <i class="bi bi-arrow-repeat animate-spin"></i> }
+          {{ flagTarget()?.flagged ? 'Flag Transaction' : 'Remove Flag' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

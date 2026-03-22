@@ -195,6 +195,139 @@ public class SecurityConfig {
                         .requestMatchers("/v1/reviews/**").authenticated()
                         .requestMatchers("/v1/seo/**").authenticated()
 
+                        // ── Payment & Finance ──────────────────────────────────────────────────
+                        // Transactions
+                        .requestMatchers(HttpMethod.GET,    "/v1/payments/transactions/**").hasAuthority("payment:transaction:read")
+                        .requestMatchers(HttpMethod.GET,    "/v1/payments/transactions").hasAuthority("payment:transaction:read")
+                        .requestMatchers(HttpMethod.POST,   "/v1/payments/transactions").hasAuthority("payment:transaction:create")
+                        .requestMatchers(HttpMethod.POST,   "/v1/payments/transactions/*/capture").hasAuthority("payment:transaction:capture")
+                        .requestMatchers(HttpMethod.POST,   "/v1/payments/transactions/*/void").hasAuthority("payment:transaction:void")
+                        .requestMatchers(HttpMethod.PATCH,  "/v1/payments/transactions/*/flag").hasAuthority("payment:transaction:flag")
+
+                        // Pending payments
+                        .requestMatchers(HttpMethod.GET,    "/v1/payments/pending/**").hasAuthority("payment:transaction:read")
+                        .requestMatchers(HttpMethod.GET,    "/v1/payments/pending").hasAuthority("payment:transaction:read")
+                        .requestMatchers(HttpMethod.POST,   "/v1/payments/pending/*/capture").hasAuthority("payment:transaction:capture")
+                        .requestMatchers(HttpMethod.POST,   "/v1/payments/pending/*/void").hasAuthority("payment:transaction:void")
+
+                        // Refunds
+                        .requestMatchers(HttpMethod.GET,    "/v1/payments/refunds/**").hasAuthority("payment:refund:read")
+                        .requestMatchers(HttpMethod.GET,    "/v1/payments/refunds").hasAuthority("payment:refund:read")
+                        .requestMatchers(HttpMethod.POST,   "/v1/payments/refunds").hasAuthority("payment:refund:request")
+                        .requestMatchers(HttpMethod.POST,   "/v1/payments/refunds/*/approve").hasAuthority("payment:refund:approve")
+                        .requestMatchers(HttpMethod.POST,   "/v1/payments/refunds/*/reject").hasAuthority("payment:refund:approve")
+                        .requestMatchers(HttpMethod.POST,   "/v1/payments/refunds/*/process").hasAuthority("payment:refund:process")
+
+                        // Chargebacks
+                        .requestMatchers(HttpMethod.GET,    "/v1/payments/chargebacks/**").hasAuthority("payment:chargeback:read")
+                        .requestMatchers(HttpMethod.GET,    "/v1/payments/chargebacks").hasAuthority("payment:chargeback:read")
+                        .requestMatchers(HttpMethod.POST,   "/v1/payments/chargebacks").hasAuthority("payment:chargeback:manage")
+                        .requestMatchers(HttpMethod.POST,   "/v1/payments/chargebacks/**").hasAuthority("payment:chargeback:manage")
+                        .requestMatchers(HttpMethod.PUT,    "/v1/payments/chargebacks/**").hasAuthority("payment:chargeback:manage")
+
+                        // Reconciliation
+                        .requestMatchers(HttpMethod.GET,    "/v1/payments/reconciliation/**").hasAuthority("payment:reconciliation:read")
+                        .requestMatchers(HttpMethod.GET,    "/v1/payments/reconciliation").hasAuthority("payment:reconciliation:read")
+                        .requestMatchers(HttpMethod.POST,   "/v1/payments/reconciliation/**").hasAuthority("payment:reconciliation:manage")
+
+                        // Payouts
+                        .requestMatchers(HttpMethod.GET,    "/v1/payments/payouts/**").hasAuthority("payment:payout:read")
+                        .requestMatchers(HttpMethod.GET,    "/v1/payments/payouts").hasAuthority("payment:payout:read")
+                        .requestMatchers(HttpMethod.POST,   "/v1/payments/payouts").hasAuthority("payment:payout:create")
+                        .requestMatchers(HttpMethod.POST,   "/v1/payments/payouts/*/approve").hasAuthority("payment:payout:approve")
+                        .requestMatchers(HttpMethod.POST,   "/v1/payments/payouts/*/cancel").hasAuthority("payment:payout:approve")
+                        .requestMatchers(HttpMethod.POST,   "/v1/payments/payouts/*/initiate").hasAuthority("payment:payout:process")
+                        .requestMatchers(HttpMethod.POST,   "/v1/payments/payouts/*/complete").hasAuthority("payment:payout:process")
+
+                        // Payment Links — public slug endpoints first (no auth required)
+                        .requestMatchers(HttpMethod.GET,    "/v1/payments/links/slug/**").permitAll()
+                        .requestMatchers(HttpMethod.POST,   "/v1/payments/links/slug/**").permitAll()
+                        .requestMatchers(HttpMethod.GET,    "/v1/payments/links/**").hasAuthority("payment:link:read")
+                        .requestMatchers(HttpMethod.GET,    "/v1/payments/links").hasAuthority("payment:link:read")
+                        .requestMatchers(HttpMethod.POST,   "/v1/payments/links").hasAuthority("payment:link:create")
+                        .requestMatchers(HttpMethod.POST,   "/v1/payments/links/*/deactivate").hasAuthority("payment:link:create")
+
+                        // Payment Methods
+                        .requestMatchers(HttpMethod.GET,    "/v1/payments/methods/**").hasAuthority("payment:method:read")
+                        .requestMatchers(HttpMethod.POST,   "/v1/payments/methods/**").hasAuthority("payment:method:manage")
+                        .requestMatchers(HttpMethod.POST,   "/v1/payments/methods").hasAuthority("payment:method:manage")
+                        .requestMatchers(HttpMethod.DELETE, "/v1/payments/methods/**").hasAuthority("payment:method:manage")
+
+                        // Gateway Configuration (high risk — requires payment:gateway:manage)
+                        .requestMatchers(HttpMethod.GET,    "/v1/payments/gateways/**").hasAuthority("payment:gateway:read")
+                        .requestMatchers(HttpMethod.GET,    "/v1/payments/gateways").hasAuthority("payment:gateway:read")
+                        .requestMatchers(HttpMethod.POST,   "/v1/payments/gateways/**").hasAuthority("payment:gateway:manage")
+                        .requestMatchers(HttpMethod.POST,   "/v1/payments/gateways").hasAuthority("payment:gateway:manage")
+                        .requestMatchers(HttpMethod.PUT,    "/v1/payments/gateways/**").hasAuthority("payment:gateway:manage")
+
+                        // ── Finance Module ────────────────────────────────────────────────────
+                        // Revenue & P&L
+                        .requestMatchers(HttpMethod.GET, "/v1/finance/revenue/**").hasAuthority("finance:revenue:read")
+                        .requestMatchers(HttpMethod.GET, "/v1/finance/pnl/**").hasAuthority("finance:pnl:read")
+                        // Cash Flow
+                        .requestMatchers(HttpMethod.GET, "/v1/finance/cashflow/**").hasAuthority("finance:cashflow:read")
+                        // Exchange Rates
+                        .requestMatchers(HttpMethod.GET, "/v1/finance/exchange-rates/**").hasAuthority("finance:rates:read")
+                        .requestMatchers(HttpMethod.GET, "/v1/finance/exchange-rates").hasAuthority("finance:rates:read")
+                        .requestMatchers(HttpMethod.POST, "/v1/finance/exchange-rates/**").hasAuthority("finance:rates:manage")
+                        .requestMatchers(HttpMethod.POST, "/v1/finance/exchange-rates").hasAuthority("finance:rates:manage")
+                        // Financial Periods
+                        .requestMatchers(HttpMethod.GET, "/v1/finance/periods/**").hasAuthority("finance:period:read")
+                        .requestMatchers(HttpMethod.GET, "/v1/finance/periods").hasAuthority("finance:period:read")
+                        .requestMatchers(HttpMethod.POST, "/v1/finance/periods").hasAuthority("finance:period:manage")
+                        .requestMatchers(HttpMethod.POST, "/v1/finance/periods/*/close").hasAuthority("finance:period:close")
+                        .requestMatchers(HttpMethod.POST, "/v1/finance/periods/*/lock").hasAuthority("finance:period:close")
+                        .requestMatchers(HttpMethod.POST, "/v1/finance/periods/*/reopen").hasAuthority("finance:period:close")
+                        // Vendors
+                        .requestMatchers(HttpMethod.GET, "/v1/finance/vendors/**").hasAuthority("finance:vendor:read")
+                        .requestMatchers(HttpMethod.GET, "/v1/finance/vendors").hasAuthority("finance:vendor:read")
+                        .requestMatchers(HttpMethod.POST, "/v1/finance/vendors").hasAuthority("finance:vendor:manage")
+                        .requestMatchers(HttpMethod.PUT, "/v1/finance/vendors/**").hasAuthority("finance:vendor:manage")
+                        .requestMatchers(HttpMethod.PATCH, "/v1/finance/vendors/**").hasAuthority("finance:vendor:manage")
+                        // Customer Invoices (AR)
+                        .requestMatchers(HttpMethod.GET, "/v1/finance/invoices/customer/**").hasAuthority("finance:invoice:read")
+                        .requestMatchers(HttpMethod.GET, "/v1/finance/invoices/customer").hasAuthority("finance:invoice:read")
+                        .requestMatchers(HttpMethod.POST, "/v1/finance/invoices/customer").hasAuthority("finance:invoice:create")
+                        .requestMatchers(HttpMethod.POST, "/v1/finance/invoices/customer/*/send").hasAuthority("finance:invoice:create")
+                        .requestMatchers(HttpMethod.POST, "/v1/finance/invoices/customer/*/record-payment").hasAuthority("finance:invoice:payment")
+                        .requestMatchers(HttpMethod.POST, "/v1/finance/invoices/customer/*/void").hasAuthority("finance:invoice:void")
+                        .requestMatchers(HttpMethod.POST, "/v1/finance/invoices/customer/*/write-off").hasAuthority("finance:invoice:void")
+                        // Vendor Invoices (AP)
+                        .requestMatchers(HttpMethod.GET, "/v1/finance/invoices/vendor/**").hasAuthority("finance:ap:read")
+                        .requestMatchers(HttpMethod.GET, "/v1/finance/invoices/vendor").hasAuthority("finance:ap:read")
+                        .requestMatchers(HttpMethod.POST, "/v1/finance/invoices/vendor").hasAuthority("finance:ap:create")
+                        .requestMatchers(HttpMethod.POST, "/v1/finance/invoices/vendor/*/approve").hasAuthority("finance:ap:approve")
+                        .requestMatchers(HttpMethod.POST, "/v1/finance/invoices/vendor/*/reject").hasAuthority("finance:ap:approve")
+                        .requestMatchers(HttpMethod.POST, "/v1/finance/invoices/vendor/*/schedule-payment").hasAuthority("finance:ap:approve")
+                        .requestMatchers(HttpMethod.POST, "/v1/finance/invoices/vendor/*/record-payment").hasAuthority("finance:ap:pay")
+                        .requestMatchers(HttpMethod.POST, "/v1/finance/invoices/vendor/*/dispute").hasAuthority("finance:ap:approve")
+                        // Tax
+                        .requestMatchers(HttpMethod.GET, "/v1/finance/tax/**").hasAuthority("finance:tax:read")
+                        .requestMatchers(HttpMethod.POST, "/v1/finance/tax/**").hasAuthority("finance:tax:manage")
+                        .requestMatchers(HttpMethod.PUT, "/v1/finance/tax/**").hasAuthority("finance:tax:manage")
+                        .requestMatchers(HttpMethod.PATCH, "/v1/finance/tax/**").hasAuthority("finance:tax:manage")
+                        // Expenses
+                        .requestMatchers(HttpMethod.GET, "/v1/finance/expenses/**").hasAuthority("finance:expense:read")
+                        .requestMatchers(HttpMethod.GET, "/v1/finance/expenses").hasAuthority("finance:expense:read")
+                        .requestMatchers(HttpMethod.POST, "/v1/finance/expenses").hasAuthority("finance:expense:create")
+                        .requestMatchers(HttpMethod.PUT, "/v1/finance/expenses/**").hasAuthority("finance:expense:create")
+                        .requestMatchers(HttpMethod.POST, "/v1/finance/expenses/*/approve").hasAuthority("finance:expense:approve")
+                        .requestMatchers(HttpMethod.POST, "/v1/finance/expenses/*/reject").hasAuthority("finance:expense:approve")
+                        .requestMatchers(HttpMethod.POST, "/v1/finance/expenses/*/mark-paid").hasAuthority("finance:expense:approve")
+                        .requestMatchers(HttpMethod.POST, "/v1/finance/expenses/categories").hasAuthority("finance:expense:manage")
+                        .requestMatchers(HttpMethod.PUT, "/v1/finance/expenses/categories/**").hasAuthority("finance:expense:manage")
+                        // Journal Entries
+                        .requestMatchers(HttpMethod.GET, "/v1/finance/journal/**").hasAuthority("finance:journal:read")
+                        .requestMatchers(HttpMethod.GET, "/v1/finance/journal").hasAuthority("finance:journal:read")
+                        .requestMatchers(HttpMethod.POST, "/v1/finance/journal").hasAuthority("finance:journal:post")
+                        .requestMatchers(HttpMethod.POST, "/v1/finance/journal/*/reverse").hasAuthority("finance:journal:post")
+                        // Budgets
+                        .requestMatchers(HttpMethod.GET, "/v1/finance/budgets/**").hasAuthority("finance:budget:read")
+                        .requestMatchers(HttpMethod.GET, "/v1/finance/budgets").hasAuthority("finance:budget:read")
+                        .requestMatchers(HttpMethod.POST, "/v1/finance/budgets").hasAuthority("finance:budget:manage")
+                        .requestMatchers(HttpMethod.PUT, "/v1/finance/budgets/**").hasAuthority("finance:budget:manage")
+                        .requestMatchers(HttpMethod.POST, "/v1/finance/budgets/*/approve").hasAuthority("finance:budget:approve")
+
                         // Dashboard
                         // Permission registered (dashboard:read) — assign to roles via Identity UI
                         .requestMatchers("/v1/dashboard/**").authenticated()

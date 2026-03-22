@@ -1,0 +1,11 @@
+[
+  { "rateCode": "US_CA_SALES", "name": "California Sales Tax", "taxType": "SALES_TAX", "rate": "0.085000", "country": "US", "stateProvince": "CA", "jurisdictionCode": "US_CA" },
+  { "rateCode": "US_NY_SALES", "name": "New York Sales Tax",   "taxType": "SALES_TAX", "rate": "0.088750", "country": "US", "stateProvince": "NY", "jurisdictionCode": "US_NY" },
+  { "rateCode": "US_TX_SALES", "name": "Texas Sales Tax",      "taxType": "SALES_TAX", "rate": "0.082500", "country": "US", "stateProvince": "TX", "jurisdictionCode": "US_TX" },
+  { "rateCode": "US_NO_TAX",   "name": "Tax Exempt (US)",      "taxType": "SALES_TAX", "rate": "0.000000", "country": "US", "stateProvince": null, "jurisdictionCode": null },
+  { "rateCode": "EU_VAT_STD",  "name": "EU Standard VAT",      "taxType": "VAT",       "rate": "0.200000", "country": "DE", "stateProvince": null, "jurisdictionCode": "EU_DE" },
+  { "rateCode": "EU_VAT_RED",  "name": "EU Reduced VAT",       "taxType": "VAT",       "rate": "0.070000", "country": "DE", "stateProvince": null, "jurisdictionCode": "EU_DE" },
+  { "rateCode": "UK_VAT_STD",  "name": "UK Standard VAT",      "taxType": "VAT",       "rate": "0.200000", "country": "GB", "stateProvince": null, "jurisdictionCode": "UK_GB" },
+  { "rateCode": "UK_VAT_ZERO", "name": "UK Zero-Rated VAT",    "taxType": "VAT",       "rate": "0.000000", "country": "GB", "stateProvince": null, "jurisdictionCode": "UK_GB" },
+  { "rateCode": "AU_GST",      "name": "Australia GST",        "taxType": "GST",       "rate": "0.100000", "country": "AU", "stateProvince": null, "jurisdictionCode": "AU_AU" }
+]

@@ -1,0 +1,12 @@
+[
+  { "customerIndex": 0, "totalAmount": "1250.00", "taxRate": "0.08", "issuedDaysAgo": 20, "dueDaysAgo":  5,  "status": "PAID",           "paid": true  },
+  { "customerIndex": 1, "totalAmount": "850.00",  "taxRate": "0.08", "issuedDaysAgo": 18, "dueDaysAgo":  3,  "status": "PAID",           "paid": true  },
+  { "customerIndex": 2, "totalAmount": "3200.00", "taxRate": "0.08", "issuedDaysAgo": 15, "dueDaysAgo":  1,  "status": "PAID",           "paid": true  },
+  { "customerIndex": 3, "totalAmount": "990.00",  "taxRate": "0.08", "issuedDaysAgo": 10, "dueDaysFromNow": 20, "status": "SENT",        "paid": false },
+  { "customerIndex": 4, "totalAmount": "4500.00", "taxRate": "0.08", "issuedDaysAgo":  8, "dueDaysFromNow": 22, "status": "SENT",        "paid": false },
+  { "customerIndex": 5, "totalAmount": "675.00",  "taxRate": "0.08", "issuedDaysAgo":  5, "dueDaysFromNow": 25, "status": "SENT",        "paid": false },
+  { "customerIndex": 6, "totalAmount": "1800.00", "taxRate": "0.08", "issuedDaysAgo": 45, "dueDaysAgo": 15,  "status": "OVERDUE",        "paid": false },
+  { "customerIndex": 7, "totalAmount": "2250.00", "taxRate": "0.08", "issuedDaysAgo": 60, "dueDaysAgo": 30,  "status": "OVERDUE",        "paid": false },
+  { "customerIndex": 8, "totalAmount": "5000.00", "taxRate": "0.08", "issuedDaysAgo": 12, "dueDaysFromNow": 18, "status": "PARTIALLY_PAID","paid": false },
+  { "customerIndex": 9, "totalAmount": "320.00",  "taxRate": "0.08", "issuedDaysAgo":  2, "dueDaysFromNow": 28, "status": "DRAFT",        "paid": false }
+]

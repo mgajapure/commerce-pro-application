@@ -1,0 +1,92 @@
+<div class="min-h-screen bg-gray-50/50 p-4 sm:p-6 lg:p-8">
+  <div class="max-w-[1600px] mx-auto space-y-6">
+    <div class="flex items-center gap-3 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+      <div class="w-10 h-10 bg-cyan-600 rounded-xl flex items-center justify-center"><i class="bi bi-water text-white text-lg"></i></div>
+      <div><h1 class="text-2xl font-bold text-gray-900">Cash Flow Forecast</h1><p class="text-gray-500 text-sm">Projected cash position from AR aging and AP due dates</p></div>
+    </div>
+    @if (isLoading()) { <div class="bg-white rounded-2xl border border-gray-100 p-16 flex items-center justify-center animate-pulse"><i class="bi bi-water text-3xl text-cyan-200"></i></div> }
+    @if (!isLoading() && forecast()) {
+      <!-- 30/60/90 day projection cards -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        @for (proj of [
+          { label: '30-Day Net Cash Flow', value: forecast()!.projectedNetCash30Days, sub: 'Next 30 days' },
+          { label: '60-Day Net Cash Flow', value: forecast()!.projectedNetCash60Days, sub: 'Next 60 days' },
+          { label: '90-Day Net Cash Flow', value: forecast()!.projectedNetCash90Days, sub: 'Next 90 days' }
+        ]; track proj.label) {
+          <div class="bg-white rounded-2xl border shadow-sm p-6 text-center"
+            [class.border-emerald-200]="proj.value >= 0" [class.border-red-200]="proj.value < 0">
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">{{ proj.label }}</p>
+            <p class="text-3xl font-bold tabular-nums" [class.text-emerald-600]="proj.value >= 0" [class.text-red-600]="proj.value < 0">{{ fmt(proj.value) }}</p>
+            <p class="text-xs text-gray-400 mt-1">{{ proj.sub }}</p>
+          </div>
+        }
+      </div>
+
+      <!-- AR vs AP comparison -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="bg-white rounded-2xl border border-emerald-100 shadow-sm p-6">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-9 h-9 bg-emerald-100 rounded-xl flex items-center justify-center"><i class="bi bi-arrow-down-circle text-emerald-600"></i></div>
+            <div><p class="font-semibold text-gray-900">Expected Inflows (AR)</p><p class="text-xs text-gray-500">Receivables coming in</p></div>
+          </div>
+          <div class="space-y-3">
+            <div class="flex justify-between items-center py-2 border-b border-gray-50">
+              <span class="text-sm text-gray-600">Due in 30 days</span>
+              <span class="font-bold text-emerald-600 tabular-nums">{{ fmt(forecast()!.totalArDue30Days) }}</span>
+            </div>
+            <div class="flex justify-between items-center py-2">
+              <span class="text-sm text-gray-600">Due in 60 days</span>
+              <span class="font-bold text-emerald-600 tabular-nums">{{ fmt(forecast()!.totalArDue60Days) }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="bg-white rounded-2xl border border-rose-100 shadow-sm p-6">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-9 h-9 bg-rose-100 rounded-xl flex items-center justify-center"><i class="bi bi-arrow-up-circle text-rose-600"></i></div>
+            <div><p class="font-semibold text-gray-900">Expected Outflows (AP)</p><p class="text-xs text-gray-500">Payables going out</p></div>
+          </div>
+          <div class="space-y-3">
+            <div class="flex justify-between items-center py-2 border-b border-gray-50">
+              <span class="text-sm text-gray-600">Due in 30 days</span>
+              <span class="font-bold text-rose-600 tabular-nums">{{ fmt(forecast()!.totalApDue30Days) }}</span>
+            </div>
+            <div class="flex justify-between items-center py-2">
+              <span class="text-sm text-gray-600">Due in 60 days</span>
+              <span class="font-bold text-rose-600 tabular-nums">{{ fmt(forecast()!.totalApDue60Days) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Waterfall projections -->
+      @if ((forecast()!.projections?.length ?? 0) > 0) {
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <p class="font-semibold text-gray-900 mb-5">Period Projections</p>
+          <div class="space-y-4">
+            @for (p of forecast()!.projections; track p.period) {
+              <div class="bg-gray-50 rounded-xl p-4">
+                <div class="flex items-center justify-between mb-3">
+                  <p class="font-medium text-gray-800">{{ p.period }}</p>
+                  <p class="font-bold tabular-nums" [class.text-emerald-600]="p.netCashFlow >= 0" [class.text-red-600]="p.netCashFlow < 0">{{ fmt(p.netCashFlow) }}</p>
+                </div>
+                <div class="flex gap-6 text-xs text-gray-500">
+                  <span class="flex items-center gap-1"><i class="bi bi-arrow-down-short text-emerald-500"></i> In: <strong class="text-emerald-600">{{ fmt(p.expectedInflows) }}</strong></span>
+                  <span class="flex items-center gap-1"><i class="bi bi-arrow-up-short text-rose-500"></i> Out: <strong class="text-rose-600">{{ fmt(p.expectedOutflows) }}</strong></span>
+                </div>
+                <!-- Visual bar -->
+                <div class="mt-2 h-2 bg-gray-200 rounded-full overflow-hidden flex">
+                  @if (p.expectedInflows > 0) {
+                    <div class="h-full bg-emerald-400 rounded-l-full" [style.width.%]="p.expectedInflows / (p.expectedInflows + p.expectedOutflows) * 100"></div>
+                  }
+                  @if (p.expectedOutflows > 0) {
+                    <div class="h-full bg-rose-400 rounded-r-full" [style.width.%]="p.expectedOutflows / (p.expectedInflows + p.expectedOutflows) * 100"></div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    }
+  </div>
+</div>
