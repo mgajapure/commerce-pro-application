@@ -12,7 +12,7 @@ import {
 } from '../../models/fulfillment/fulfillment.model';
 import { ApiResponse, PageResponse, PageParams, buildPageParams } from '../../models/common';
 
-const BASE = 'http://localhost:8080/api/v1/fulfillment';
+const BASE = 'http://localhost:8080/api/v1/fulfillment'; // context-path /api + controller /v1/fulfillment
 
 @Injectable({ providedIn: 'root' })
 export class FulfillmentService {

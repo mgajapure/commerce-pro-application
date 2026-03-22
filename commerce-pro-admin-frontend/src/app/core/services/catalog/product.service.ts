@@ -36,18 +36,18 @@ import {
 
 // API Configuration
 const API_CONFIG = {
-  baseUrl: 'http://localhost:8080/api',  // Proxy to Spring Boot backend
+  baseUrl: 'http://localhost:8080/api',
   endpoints: {
-    products: '/products',
-    search: '/products/search',
-    featured: '/products/featured',
-    stock: '/products/stock',
-    dashboard: '/products/dashboard',
-    stats: '/products/stats',
-    reference: '/products/reference',
-    validate: '/products/validate',
-    bulkDelete: '/products/bulk-delete',
-    bulkStatus: '/products/bulk-status'
+    products: '/v1/products',
+    search: '/v1/products/search',
+    featured: '/v1/products/featured',
+    stock: '/v1/products/stock',
+    dashboard: '/v1/products/dashboard',
+    stats: '/v1/products/stats',
+    reference: '/v1/products/reference',
+    validate: '/v1/products/validate',
+    bulkDelete: '/v1/products/bulk-delete',
+    bulkStatus: '/v1/products/bulk-status'
   }
 };
 

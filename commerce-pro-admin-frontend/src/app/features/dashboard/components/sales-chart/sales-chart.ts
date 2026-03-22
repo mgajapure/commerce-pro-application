@@ -2,8 +2,8 @@ import { Component, ElementRef, viewChild, afterNextRender, signal, inject, effe
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Chart, ChartConfiguration } from 'chart.js/auto';
-import { DashboardService } from '../../../../core/services/dashboard.service';
-import { ChartPeriod } from '../../../../core/models/dashboard.model';
+import { DashboardService } from '../../../../core/services/dashboard/dashboard.service';
+import { ChartPeriod } from '../../../../core/models/dashboard/dashboard.model';
 
 @Component({
   selector: 'app-sales-chart',

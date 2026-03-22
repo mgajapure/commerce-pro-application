@@ -6,8 +6,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { Dropdown, DropdownItem } from '../../../shared/components/dropdown/dropdown';
-import { SeoTemplate, SeoMetadata } from '../../../core/models/seo.model';
-import { SeoService } from '../../../core/services/seo.service';
+import { SeoTemplate, SeoMetadata } from '../../../core/models/catalog/seo.model';
+import { SeoService } from '../../../core/services/catalog/seo.service';
 import { AlertService } from '../../../shared/services/alert.service';
 
 interface SeoAlert {

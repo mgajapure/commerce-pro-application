@@ -19,7 +19,7 @@ import java.util.Map;
  * Controller for file upload/download operations
  */
 @RestController
-@RequestMapping("/files")
+@RequestMapping("/v1/files")
 @RequiredArgsConstructor
 @Tag(name = "File Storage", description = "File upload and download APIs")
 public class FileStorageController {

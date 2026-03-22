@@ -6,8 +6,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { Dropdown, DropdownItem } from '../../../shared/components/dropdown/dropdown';
-import { Review, ReviewStatus, ReviewReply } from '../../../core/models/review.model';
-import { ReviewService } from '../../../core/services/review.service';
+import { Review, ReviewStatus, ReviewReply } from '../../../core/models/catalog/review.model';
+import { ReviewService } from '../../../core/services/catalog/review.service';
 import { AlertService } from '../../../shared/services/alert.service';
 
 @Component({

@@ -101,7 +101,7 @@ public class AuditService {
             "Bulk Export", null, null, "Exported logs from " + request.getFrom() + " to " + request.getTo(), true);
 
         return ExportResult.builder()
-            .downloadUrl("/api/v1/downloads/audit-export-" + System.currentTimeMillis() + ".csv")
+            .downloadUrl("/v1/downloads/audit-export-" + System.currentTimeMillis() + ".csv")
             .fileName("audit-export.csv")
             .recordCount(1000)
             .fileSizeBytes(102400)

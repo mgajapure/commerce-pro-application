@@ -61,7 +61,7 @@ public class CustomerGroupService {
 
         CustomerGroup saved = groupRepo.save(g);
         auditService.log(actorId, AuditAction.CUSTOMER_GROUP_CREATED,
-                "CUSTOMER_GROUP", saved.getId(), saved.getName(), null, null, true);
+                "CUSTOMER_GROUP", saved.getId(), saved.getName(), null, null, null, true);
         return mapper.toGroupResponse(saved);
     }
 
@@ -81,7 +81,7 @@ public class CustomerGroupService {
 
         CustomerGroup saved = groupRepo.save(g);
         auditService.log(actorId, AuditAction.CUSTOMER_GROUP_UPDATED,
-                "CUSTOMER_GROUP", saved.getId(), saved.getName(), null, null, true);
+                "CUSTOMER_GROUP", saved.getId(), saved.getName(), null, null, null, true);
         return mapper.toGroupResponse(saved);
     }
 
@@ -93,7 +93,7 @@ public class CustomerGroupService {
             throw ApiException.conflict("Cannot delete group '" + g.getName() + "' — it has " + g.getMemberCount() + " members. Reassign them first.");
         groupRepo.delete(g);
         auditService.log(actorId, AuditAction.CUSTOMER_GROUP_DELETED,
-                "CUSTOMER_GROUP", id, g.getName(), null, null, true);
+                "CUSTOMER_GROUP", id, g.getName(), null, null, null, true);
     }
 
     private CustomerGroup findGroup(String id) {

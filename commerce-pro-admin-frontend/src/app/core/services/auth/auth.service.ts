@@ -1,17 +1,24 @@
-import { Injectable, computed, signal } from '@angular/core';
+import { Injectable, Injector, computed, inject, signal } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, catchError, map, of, tap } from 'rxjs';
 
 import { ApiResponse } from '../../models/common';
 import { AuthRequest, AuthResponse, AuthSession } from '../../models/auth';
+import { NotificationService } from '../notification/notification.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
   private readonly apiBase = 'http://localhost:8080/api';
-  private readonly authBase = `${this.apiBase}/api/v1/auth`;
+  private readonly authBase = `${this.apiBase}/v1/auth`;
   private readonly storageKey = 'commerce-pro-admin-auth';
+  private readonly injector = inject(Injector);
+
+  /** Lazy-resolved to break circular dependency: AuthInterceptor -> AuthService -> NotificationService -> HttpClient -> AuthInterceptor */
+  private get notificationService(): NotificationService {
+    return this.injector.get(NotificationService);
+  }
 
   private readonly sessionSignal = signal<AuthSession | null>(this.readPersistedSession());
 
@@ -23,7 +30,12 @@ export class AuthService {
     return Date.now() < current.expiresAtMs;
   });
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) {
+    // If session is restored from localStorage, start notifications
+    if (this.isAuthenticated()) {
+      this.notificationService.startAfterLogin();
+    }
+  }
 
   login(payload: AuthRequest): Observable<boolean> {
     return this.http
@@ -108,9 +120,11 @@ export class AuthService {
 
     this.sessionSignal.set(session);
     localStorage.setItem(this.storageKey, JSON.stringify(session));
+    this.notificationService.startAfterLogin();
   }
 
   private clearSession(): void {
+    this.notificationService.stopOnLogout();
     this.sessionSignal.set(null);
     localStorage.removeItem(this.storageKey);
   }

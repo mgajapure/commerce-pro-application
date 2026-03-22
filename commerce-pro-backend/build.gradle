@@ -14,6 +14,14 @@ java {
 	}
 }
 
+bootJar {
+	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+jar {
+	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
 configurations {
 	compileOnly {
 		extendsFrom annotationProcessor

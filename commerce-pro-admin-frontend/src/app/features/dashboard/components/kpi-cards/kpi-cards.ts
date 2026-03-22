@@ -1,6 +1,6 @@
 import { Component, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { DashboardService } from '../../../../core/services/dashboard.service';
+import { DashboardService } from '../../../../core/services/dashboard/dashboard.service';
 
 @Component({
   selector: 'app-kpi-cards',

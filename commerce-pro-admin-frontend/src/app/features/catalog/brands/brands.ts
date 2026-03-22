@@ -6,8 +6,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { Dropdown, DropdownItem } from '../../../shared/components/dropdown/dropdown';
-import { Brand } from '../../../core/models/brand.model';
-import { BrandService } from '../../../core/services/brand.service';
+import { Brand } from '../../../core/models/catalog/brand.model';
+import { BrandService } from '../../../core/services/catalog/brand.service';
 import { AlertService } from '../../../shared/services/alert.service';
 
 @Component({

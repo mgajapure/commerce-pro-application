@@ -7,8 +7,8 @@ import { Dropdown, DropdownItem } from '../../../shared/components/dropdown/drop
 import { 
   Attribute, 
   AttributeType 
-} from '../../../core/models/attribute.model';
-import { AttributeService } from '../../../core/services/attribute.service';
+} from '../../../core/models/catalog/attribute.model';
+import { AttributeService } from '../../../core/services/catalog/attribute.service';
 import { AlertService } from '../../../shared/services/alert.service';
 
 @Component({

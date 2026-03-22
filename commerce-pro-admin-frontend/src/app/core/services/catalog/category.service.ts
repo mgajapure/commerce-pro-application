@@ -1,36 +1,29 @@
-// src/app/core/services/category.service.ts
-// Category service with API-ready patterns for Spring Boot integration
-
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, of, throwError } from 'rxjs';
-import { catchError, map, tap, delay } from 'rxjs/operators';
-import { 
-  Category, 
-  CategoryTreeNode, 
-  CategoryTemplate, 
-  CategoryStats 
+import { Observable, of, forkJoin } from 'rxjs';
+import { catchError, map, tap } from 'rxjs/operators';
+import {
+  Category,
+  CategoryTreeNode,
+  CategoryTemplate,
+  CategoryStats
 } from '../../models/catalog/category.model';
-import { ApiResponse, PageParams, PageResponse } from './../../models/common';
+import { ApiResponse, PageResponse, PageParams, buildPageParams } from '../../models/common';
 
-@Injectable({
-  providedIn: 'root'
-})
+const BASE = 'http://localhost:8080/api/v1/categories';
+
+@Injectable({ providedIn: 'root' })
 export class CategoryService {
-  private readonly BASE_URL = 'assets/data/catalog';
-  private readonly CATEGORIES_URL = `${this.BASE_URL}/categories.json`;
-  
-  // State
+  private http = inject(HttpClient);
+
   private categories = signal<Category[]>([]);
   private loading = signal<boolean>(false);
   private error = signal<string | null>(null);
-  
-  // Public signals
+
   readonly allCategories = computed(() => this.categories());
   readonly isLoading = computed(() => this.loading());
   readonly currentError = computed(() => this.error());
-  
-  // Computed stats
+
   readonly categoryStats = computed<CategoryStats>(() => {
     const all = this.categories();
     return {
@@ -41,26 +34,23 @@ export class CategoryService {
     };
   });
 
-  // Tree structure computed
-  readonly categoryTree = computed<CategoryTreeNode[]>(() => 
+  readonly categoryTree = computed<CategoryTreeNode[]>(() =>
     this.buildCategoryTree(null, 0)
   );
 
-  constructor(private http: HttpClient) {
+  constructor() {
     this.loadCategories();
   }
 
   // ==================== CRUD Operations ====================
 
-  /**
-   * Load all categories
-   * For Spring Boot: GET /api/v1/categories
-   */
   loadCategories(): void {
     this.loading.set(true);
-    this.http.get<Category[]>(this.CATEGORIES_URL).pipe(
-      delay(300),
-      map(cats => this.transformDates(cats)),
+    this.error.set(null);
+    this.http.get<ApiResponse<PageResponse<Category>>>(BASE, {
+      params: new HttpParams().set('size', '1000')
+    }).pipe(
+      map(r => r.data.content),
       catchError(this.handleError('loadCategories', []))
     ).subscribe({
       next: (cats) => {
@@ -74,134 +64,155 @@ export class CategoryService {
     });
   }
 
-  /**
-   * Get all categories
-   * For Spring Boot: GET /api/v1/categories
-   */
+  getCategoriesPaged(pageParams?: PageParams): Observable<PageResponse<Category>> {
+    const params = new HttpParams({ fromObject: buildPageParams(pageParams ?? {}) });
+    return this.http.get<ApiResponse<PageResponse<Category>>>(BASE, { params })
+      .pipe(
+        map(r => r.data),
+        catchError(this.handleError('getCategoriesPaged',
+          { content: [], page: 0, size: 20, totalElements: 0, totalPages: 0, first: true, last: true, empty: true }))
+      );
+  }
+
   getCategories(): Observable<Category[]> {
-    return this.http.get<Category[]>(this.CATEGORIES_URL).pipe(
-      map(cats => this.transformDates(cats)),
+    return this.http.get<ApiResponse<PageResponse<Category>>>(BASE, {
+      params: new HttpParams().set('size', '1000')
+    }).pipe(
+      map(r => r.data.content),
       catchError(this.handleError('getCategories', []))
     );
   }
 
-  /**
-   * Get category by ID
-   * For Spring Boot: GET /api/v1/categories/{id}
-   */
+  getCategoryTree(): Observable<any[]> {
+    return this.http.get<ApiResponse<any[]>>(`${BASE}/tree`)
+      .pipe(map(r => r.data), catchError(this.handleError('getCategoryTree', [])));
+  }
+
+  getMenuCategories(): Observable<Category[]> {
+    return this.http.get<ApiResponse<Category[]>>(`${BASE}/menu`)
+      .pipe(map(r => r.data), catchError(this.handleError('getMenuCategories', [])));
+  }
+
   getCategory(id: string): Observable<Category | null> {
-    return this.getCategories().pipe(
-      map(cats => cats.find(c => c.id === id) || null),
-      catchError(this.handleError('getCategory', null))
-    );
+    return this.http.get<ApiResponse<Category>>(`${BASE}/${id}`)
+      .pipe(map(r => r.data), catchError(this.handleError<Category | null>('getCategory', null)));
   }
 
-  /**
-   * Get category by slug
-   * For Spring Boot: GET /api/v1/categories/slug/{slug}
-   */
   getCategoryBySlug(slug: string): Observable<Category | null> {
-    return this.getCategories().pipe(
-      map(cats => cats.find(c => c.slug === slug) || null),
-      catchError(this.handleError('getCategoryBySlug', null))
-    );
+    return this.http.get<ApiResponse<Category>>(`${BASE}/slug/${slug}`)
+      .pipe(map(r => r.data), catchError(this.handleError<Category | null>('getCategoryBySlug', null)));
   }
 
-  /**
-   * Create category
-   * For Spring Boot: POST /api/v1/categories
-   */
   createCategory(category: Partial<Category>): Observable<Category> {
-    const newCategory: Category = {
-      ...category as Category,
-      id: this.generateId(),
-      subcategories: [],
-      productCount: 0,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    
-    this.categories.update(current => [...current, newCategory]);
-    return of(newCategory).pipe(delay(500));
-    
-    // For Spring Boot:
-    // return this.http.post<ApiResponse<Category>>(`${this.BASE_URL}/categories`, category).pipe(
-    //   map(response => response.data),
-    //   tap(() => this.loadCategories())
-    // );
+    return this.http.post<ApiResponse<Category>>(BASE, this.toRequest(category))
+      .pipe(
+        map(r => r.data),
+        tap(() => this.loadCategories()),
+        catchError(this.handleError<Category>('createCategory'))
+      );
   }
 
-  /**
-   * Update category
-   * For Spring Boot: PUT /api/v1/categories/{id}
-   */
   updateCategory(id: string, updates: Partial<Category>): Observable<Category> {
-    this.categories.update(current =>
-      current.map(c =>
-        c.id === id
-          ? { ...c, ...updates, updatedAt: new Date() }
-          : c
-      )
-    );
-    
-    const updated = this.categories().find(c => c.id === id);
-    return updated ? of(updated).pipe(delay(500)) : throwError(() => new Error('Category not found'));
+    return this.http.put<ApiResponse<Category>>(`${BASE}/${id}`, this.toRequest(updates))
+      .pipe(
+        map(r => r.data),
+        tap(() => this.loadCategories()),
+        catchError(this.handleError<Category>('updateCategory'))
+      );
   }
 
-  /**
-   * Delete category
-   * For Spring Boot: DELETE /api/v1/categories/{id}
-   */
   deleteCategory(id: string): Observable<void> {
-    // Check for subcategories
-    const hasChildren = this.categories().some(c => c.parentId === id);
-    if (hasChildren) {
-      return throwError(() => new Error('Cannot delete category with subcategories'));
-    }
-    
-    this.categories.update(current => current.filter(c => c.id !== id));
-    return of(void 0).pipe(delay(500));
+    return this.http.delete<ApiResponse<string>>(`${BASE}/${id}`)
+      .pipe(
+        map(() => void 0),
+        tap(() => this.loadCategories()),
+        catchError(this.handleError<void>('deleteCategory'))
+      );
   }
 
-  /**
-   * Bulk update category status
-   * For Spring Boot: PUT /api/v1/categories/bulk/status
-   */
-  bulkUpdateStatus(ids: string[], isActive: boolean): Observable<void> {
-    this.categories.update(current =>
-      current.map(c => ids.includes(c.id) ? { ...c, isActive } : c)
+  restoreCategory(id: string): Observable<Category> {
+    return this.http.post<ApiResponse<Category>>(`${BASE}/${id}/restore`, {})
+      .pipe(
+        map(r => r.data),
+        tap(() => this.loadCategories()),
+        catchError(this.handleError<Category>('restoreCategory'))
+      );
+  }
+
+  getSubcategories(id: string): Observable<Category[]> {
+    return this.http.get<ApiResponse<Category[]>>(`${BASE}/${id}/subcategories`)
+      .pipe(map(r => r.data), catchError(this.handleError('getSubcategories', [])));
+  }
+
+  moveCategory(id: string, newParentId: string | null): Observable<Category> {
+    return this.http.post<ApiResponse<Category>>(`${BASE}/${id}/move`, { newParentId })
+      .pipe(
+        map(r => r.data),
+        tap(() => this.loadCategories()),
+        catchError(this.handleError<Category>('moveCategory'))
+      );
+  }
+
+  reorderCategory(id: string, newSortOrder: number): Observable<void> {
+    return this.http.post<ApiResponse<string>>(`${BASE}/${id}/reorder`, { newSortOrder })
+      .pipe(
+        map(() => void 0),
+        tap(() => this.loadCategories()),
+        catchError(this.handleError<void>('reorderCategory'))
+      );
+  }
+
+  getCategoryPath(id: string): Observable<Category[]> {
+    return this.http.get<ApiResponse<Category[]>>(`${BASE}/${id}/path`)
+      .pipe(map(r => r.data), catchError(this.handleError('getCategoryPath', [])));
+  }
+
+  toggleActive(id: string, active: boolean): Observable<void> {
+    return this.http.patch<ApiResponse<string>>(`${BASE}/${id}/active`, null, {
+      params: new HttpParams().set('active', active)
+    }).pipe(
+      map(() => void 0),
+      tap(() => this.loadCategories()),
+      catchError(this.handleError<void>('toggleActive'))
     );
-    return of(void 0).pipe(delay(500));
   }
 
-  /**
-   * Bulk delete categories
-   * For Spring Boot: DELETE /api/v1/categories/bulk
-   */
+  getStatistics(): Observable<Record<string, number>> {
+    return this.http.get<ApiResponse<Record<string, number>>>(`${BASE}/statistics`)
+      .pipe(map(r => r.data), catchError(this.handleError('getStatistics', {})));
+  }
+
+  getCustomFields(id: string): Observable<Record<string, any>> {
+    return this.http.get<ApiResponse<Record<string, any>>>(`${BASE}/${id}/custom-fields`)
+      .pipe(map(r => r.data), catchError(this.handleError('getCustomFields', {})));
+  }
+
+  updateCustomFields(id: string, fields: Record<string, any>): Observable<void> {
+    return this.http.put<ApiResponse<string>>(`${BASE}/${id}/custom-fields`, { fields })
+      .pipe(
+        map(() => void 0),
+        catchError(this.handleError<void>('updateCustomFields'))
+      );
+  }
+
+  bulkUpdateStatus(ids: string[], active: boolean): Observable<void> {
+    if (ids.length === 0) return of(void 0);
+    return forkJoin(ids.map(id => this.toggleActive(id, active))).pipe(
+      map(() => void 0),
+      catchError(this.handleError<void>('bulkUpdateStatus'))
+    );
+  }
+
   bulkDelete(ids: string[]): Observable<void> {
-    // Delete category and all its children
-    const idsToDelete = new Set<string>(ids);
-    const collectChildIds = (parentId: string) => {
-      this.categories()
-        .filter(c => c.parentId === parentId)
-        .forEach(c => {
-          idsToDelete.add(c.id);
-          collectChildIds(c.id);
-        });
-    };
-    ids.forEach(id => collectChildIds(id));
-    
-    this.categories.update(current => 
-      current.filter(c => !idsToDelete.has(c.id))
+    if (ids.length === 0) return of(void 0);
+    return forkJoin(ids.map(id => this.deleteCategory(id))).pipe(
+      map(() => void 0),
+      catchError(this.handleError<void>('bulkDelete'))
     );
-    return of(void 0).pipe(delay(800));
   }
 
   // ==================== Tree Operations ====================
 
-  /**
-   * Build category tree structure
-   */
   private buildCategoryTree(parentId: string | null, level: number): CategoryTreeNode[] {
     return this.categories()
       .filter(c => c.parentId === parentId)
@@ -215,25 +226,16 @@ export class CategoryService {
       }));
   }
 
-  /**
-   * Get flat list of all categories (for dropdowns)
-   * For Spring Boot: GET /api/v1/categories/flat
-   */
   getFlatCategories(): Observable<Category[]> {
     return this.getCategories().pipe(
       map(cats => this.flattenCategories(cats))
     );
   }
 
-  /**
-   * Get available parent categories (exclude current and its children)
-   */
   getAvailableParents(currentId?: string): Observable<Category[]> {
     return this.getCategories().pipe(
       map(cats => {
         if (!currentId) return cats;
-        
-        // Get all children of current to exclude
         const childrenIds = new Set<string>();
         const collectChildren = (parentId: string) => {
           cats.filter(c => c.parentId === parentId).forEach(c => {
@@ -242,94 +244,44 @@ export class CategoryService {
           });
         };
         collectChildren(currentId);
-        
         return cats.filter(c => c.id !== currentId && !childrenIds.has(c.id));
       })
     );
   }
 
-  /**
-   * Move category to new parent
-   * For Spring Boot: PUT /api/v1/categories/{id}/move
-   */
-  moveCategory(id: string, newParentId: string | null): Observable<Category> {
-    return this.updateCategory(id, { parentId: newParentId });
-  }
+  // ==================== Templates (client-side) ====================
 
-  /**
-   * Reorder categories
-   * For Spring Boot: PUT /api/v1/categories/reorder
-   */
-  reorderCategory(id: string, newOrder: number): Observable<void> {
-    this.categories.update(current => {
-      const category = current.find(c => c.id === id);
-      if (!category) return current;
-      
-      const siblings = current.filter(c => c.parentId === category.parentId);
-      const oldOrder = category.sortOrder;
-      
-      return current.map(c => {
-        if (c.id === id) return { ...c, sortOrder: newOrder };
-        if (c.parentId === category.parentId) {
-          if (oldOrder < newOrder && c.sortOrder > oldOrder && c.sortOrder <= newOrder) {
-            return { ...c, sortOrder: c.sortOrder - 1 };
-          }
-          if (oldOrder > newOrder && c.sortOrder < oldOrder && c.sortOrder >= newOrder) {
-            return { ...c, sortOrder: c.sortOrder + 1 };
-          }
-        }
-        return c;
-      });
-    });
-    
-    return of(void 0).pipe(delay(300));
-  }
-
-  // ==================== Templates ====================
-
-  /**
-   * Get category templates
-   * For Spring Boot: GET /api/v1/categories/templates
-   */
   getTemplates(): Observable<CategoryTemplate[]> {
-    const templates: CategoryTemplate[] = [
-      {
-        id: 'electronics',
-        name: 'Electronics',
-        description: 'For gadgets and devices',
-        icon: 'laptop',
-        color: '#6366f1',
-        defaultFields: { icon: 'laptop', color: '#6366f1', isFeatured: true }
-      },
-      {
-        id: 'fashion',
-        name: 'Fashion',
-        description: 'For clothing and apparel',
-        icon: 'shirt',
-        color: '#f59e0b',
-        defaultFields: { icon: 'shirt', color: '#f59e0b', isFeatured: true }
-      },
-      {
-        id: 'home',
-        name: 'Home & Garden',
-        description: 'For home and living',
-        icon: 'house',
-        color: '#10b981',
-        defaultFields: { icon: 'house', color: '#10b981', isFeatured: false }
-      },
-      {
-        id: 'sports',
-        name: 'Sports',
-        description: 'For sports and fitness',
-        icon: 'bicycle',
-        color: '#f43f5e',
-        defaultFields: { icon: 'bicycle', color: '#f43f5e', isFeatured: false }
-      }
-    ];
-    return of(templates).pipe(delay(200));
+    return of([
+      { id: 'electronics', name: 'Electronics', description: 'For gadgets and devices', icon: 'laptop', color: '#6366f1', defaultFields: { icon: 'laptop', color: '#6366f1', isFeatured: true } },
+      { id: 'fashion', name: 'Fashion', description: 'For clothing and apparel', icon: 'shirt', color: '#f59e0b', defaultFields: { icon: 'shirt', color: '#f59e0b', isFeatured: true } },
+      { id: 'home', name: 'Home & Garden', description: 'For home and living', icon: 'house', color: '#10b981', defaultFields: { icon: 'house', color: '#10b981', isFeatured: false } },
+      { id: 'sports', name: 'Sports', description: 'For sports and fitness', icon: 'bicycle', color: '#f43f5e', defaultFields: { icon: 'bicycle', color: '#f43f5e', isFeatured: false } }
+    ]);
   }
 
   // ==================== Helper Methods ====================
+
+  retry(): void {
+    this.loadCategories();
+  }
+
+  private toRequest(category: Partial<Category>): any {
+    return {
+      name: category.name,
+      slug: category.slug,
+      description: category.description,
+      parentId: category.parentId,
+      imageUrl: category.image,
+      isActive: category.isActive,
+      sortOrder: category.sortOrder,
+      showInMenu: category.showInMenu,
+      seoTitle: category.seoTitle,
+      seoDescription: category.seoDescription,
+      metaKeywords: category.metaKeywords,
+      customFields: category.customFields
+    };
+  }
 
   private flattenCategories(categories: Category[], parentId: string | null = null): Category[] {
     const result: Category[] = [];
@@ -343,21 +295,10 @@ export class CategoryService {
     return result;
   }
 
-  private transformDates(categories: Category[]): Category[] {
-    return categories.map(c => ({
-      ...c,
-      createdAt: c.createdAt ? new Date(c.createdAt) : undefined,
-      updatedAt: c.updatedAt ? new Date(c.updatedAt) : undefined
-    }));
-  }
-
-  private generateId(): string {
-    return `cat_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
-  }
-
-  private handleError<T>(operation = 'operation', result?: T) {
-    return (error: any): Observable<T> => {
-      console.error(`${operation} failed: ${error.message}`);
+  private handleError<T>(op = 'operation', result?: T) {
+    return (err: any): Observable<T> => {
+      console.error(`[CategoryService] ${op}:`, err);
+      this.error.set(err?.error?.message ?? err?.message ?? 'An error occurred');
       return of(result as T);
     };
   }

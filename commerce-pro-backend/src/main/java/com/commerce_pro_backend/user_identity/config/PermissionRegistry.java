@@ -133,6 +133,21 @@ public class PermissionRegistry {
         register("analytics:reports:manage",    "Create & Manage Saved/Scheduled Reports", PermissionCategory.ANALYTICS_REPORTING, 2);
 
 
+        // Catalog Management Permissions
+        register("catalog:read",  "View Catalog (Products, Categories, Brands, etc.)", PermissionCategory.CATALOG_MANAGEMENT, 1);
+        register("catalog:write", "Manage Catalog (Create/Update/Delete)",             PermissionCategory.CATALOG_MANAGEMENT, 2);
+
+        // Inventory Management Permissions
+        register("inventory:read",  "View Inventory & Stock Levels",   PermissionCategory.INVENTORY_MANAGEMENT, 1);
+        register("inventory:write", "Manage Inventory & Stock Levels", PermissionCategory.INVENTORY_MANAGEMENT, 2);
+
+        // Dashboard Permissions
+        register("dashboard:read", "View Dashboard & KPIs", PermissionCategory.ANALYTICS_REPORTING, 1);
+
+        // Notification Permissions
+        register("notification:read",  "View Notifications",   PermissionCategory.SYSTEM_CONFIGURATION, 1);
+        register("notification:write", "Manage Notifications", PermissionCategory.SYSTEM_CONFIGURATION, 2);
+
         log.info("Registered {} system permissions", systemPermissions.size());
     }
 

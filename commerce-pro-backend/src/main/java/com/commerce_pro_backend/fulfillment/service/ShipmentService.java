@@ -152,7 +152,7 @@ public class ShipmentService {
         syncTrackingToOrder(order, saved);
 
         auditService.log(actorId, AuditAction.FULFILLMENT_SHIPMENT_CREATED,
-                "SHIPMENT", saved.getId(), saved.getShipmentNumber(), null, null, true);
+                "SHIPMENT", saved.getId(), saved.getShipmentNumber(), null, null, null, true);
         log.info("Created shipment {} for order {}", saved.getShipmentNumber(), order.getOrderNumber());
         return shipmentMapper.toDTO(saved, carrier);
     }
@@ -188,7 +188,7 @@ public class ShipmentService {
 
         Shipment saved = shipmentRepository.save(shipment);
         auditService.log(actorId, AuditAction.FULFILLMENT_SHIPMENT_UPDATED,
-                "SHIPMENT", saved.getId(), saved.getShipmentNumber(), null, null, true);
+                "SHIPMENT", saved.getId(), saved.getShipmentNumber(), null, null, null, true);
         return shipmentMapper.toDTO(saved, carrier);
     }
 
@@ -243,7 +243,7 @@ public class ShipmentService {
                 ? carrierRepository.findById(shipment.getCarrierId()).orElse(null) : null;
 
         auditService.log(actorId, AuditAction.FULFILLMENT_SHIPMENT_TRACKING_ADDED,
-                "SHIPMENT", saved.getId(), saved.getShipmentNumber(), null, newStatus.name(), true);
+                "SHIPMENT", saved.getId(), saved.getShipmentNumber(), null, null, newStatus.name(), true);
         return shipmentMapper.toDTO(saved, carrier);
     }
 
@@ -273,7 +273,7 @@ public class ShipmentService {
         }
         shipmentRepository.delete(shipment);
         auditService.log(actorId, AuditAction.FULFILLMENT_SHIPMENT_DELETED,
-                "SHIPMENT", id, shipment.getShipmentNumber(), null, null, true);
+                "SHIPMENT", id, shipment.getShipmentNumber(), null, null, null, true);
     }
 
     // ══════════════════════════════════════════════════════════════════════════

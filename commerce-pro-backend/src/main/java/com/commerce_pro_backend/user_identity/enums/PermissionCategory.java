@@ -11,5 +11,7 @@ public enum PermissionCategory {
     ORDER_MANAGEMENT,       // Orders, fulfilment, cancellations
     FULFILLMENT_MANAGEMENT, // Pick lists, shipments, carriers, shipping rules
     CUSTOMER_MANAGEMENT,     //
+    CATALOG_MANAGEMENT,     // Products, categories, brands, collections, attributes, reviews, SEO
+    INVENTORY_MANAGEMENT,   // Stock levels, warehouses, valuations, forecasts
     ANALYTICS_REPORTING     // Analytics, reports, KPIs
 }
