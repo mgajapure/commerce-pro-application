@@ -21,7 +21,6 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/ai/budget-anomaly")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMIN')")
 public class AiBudgetAnomalyController {
 
     private final BudgetAnomalyService budgetAnomalyService;
@@ -48,6 +47,7 @@ public class AiBudgetAnomalyController {
      * @param budgetId  UUID of the Budget to analyse
      */
     @PostMapping("/budgets/{budgetId}")
+    @PreAuthorize("hasAuthority('ai:budget:analyse')")
     public ResponseEntity<ApiResponse<AnomalyResult>> detect(
             @PathVariable String budgetId) {
 

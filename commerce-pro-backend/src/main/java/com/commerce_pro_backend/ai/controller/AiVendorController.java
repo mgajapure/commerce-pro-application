@@ -21,7 +21,6 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/ai/vendors")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMIN')")
 public class AiVendorController {
 
     private final VendorAnalysisService vendorService;
@@ -48,6 +47,7 @@ public class AiVendorController {
      * @param vendorId  UUID of the vendor
      */
     @PostMapping("/{vendorId}/analyse")
+    @PreAuthorize("hasAuthority('ai:vendor:analyse')")
     public ResponseEntity<ApiResponse<VendorAnalysisResult>> analyse(
             @PathVariable String vendorId) {
 

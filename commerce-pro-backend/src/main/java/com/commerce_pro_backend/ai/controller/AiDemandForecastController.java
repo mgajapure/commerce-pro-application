@@ -21,7 +21,6 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/ai/forecast")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMIN')")
 public class AiDemandForecastController {
 
     private final AiDemandForecastService forecastService;
@@ -53,6 +52,7 @@ public class AiDemandForecastController {
      * @param forecastDays number of days to forecast (default 30)
      */
     @PostMapping("/products/{productId}")
+    @PreAuthorize("hasAuthority('ai:forecast:run')")
     public ResponseEntity<ApiResponse<ForecastResult>> forecast(
             @PathVariable String productId,
             @RequestParam(defaultValue = "30") int forecastDays) {

@@ -30,7 +30,6 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/api/v1/admin/ai")
-@PreAuthorize("hasRole('ADMIN')")
 @RequiredArgsConstructor
 public class AiAdminController {
 
@@ -46,6 +45,7 @@ public class AiAdminController {
      * Returns the runtime configuration for every AI feature.
      */
     @GetMapping("/configs")
+    @PreAuthorize("hasAuthority('ai:config:manage')")
     public ResponseEntity<ApiResponse<List<AiConfigResponse>>> listConfigs() {
         List<AiConfigResponse> configs = configRepo.findAll()
                 .stream()
@@ -59,6 +59,7 @@ public class AiAdminController {
      * Returns configuration for a single feature.
      */
     @GetMapping("/configs/{feature}")
+    @PreAuthorize("hasAuthority('ai:config:manage')")
     public ResponseEntity<ApiResponse<AiConfigResponse>> getConfig(
             @PathVariable AiFeatureType feature) {
 
@@ -72,6 +73,7 @@ public class AiAdminController {
      * Partially updates a feature's configuration. Only non-null fields are applied.
      */
     @PatchMapping("/configs/{feature}")
+    @PreAuthorize("hasAuthority('ai:config:manage')")
     public ResponseEntity<ApiResponse<AiConfigResponse>> updateConfig(
             @PathVariable AiFeatureType feature,
             @RequestBody @Valid AiConfigUpdateRequest req,
@@ -104,6 +106,7 @@ public class AiAdminController {
      * Defaults to the last 30 days when parameters are omitted.
      */
     @GetMapping("/usage")
+    @PreAuthorize("hasAuthority('ai:config:manage')")
     public ResponseEntity<ApiResponse<List<AiUsageSummaryItem>>> usageSummary(
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
@@ -132,6 +135,7 @@ public class AiAdminController {
      * Real-time spend counters, call success/failure rates, and slow-call counts.
      */
     @GetMapping("/dashboard")
+    @PreAuthorize("hasAuthority('ai:config:manage')")
     public ResponseEntity<ApiResponse<AiDashboardResponse>> dashboard() {
         LocalDateTime since24h = LocalDateTime.now().minusHours(24);
 

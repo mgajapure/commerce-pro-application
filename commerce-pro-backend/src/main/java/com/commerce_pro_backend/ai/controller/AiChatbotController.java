@@ -104,7 +104,7 @@ public class AiChatbotController {
      * @param principal  the authenticated user (customer or admin)
      */
     @PostMapping("/chat")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAuthority('ai:chatbot:use')")
     public ResponseEntity<ApiResponse<AiChatResponse>> chat(
             @RequestBody @Valid AiChatRequest request,
             @AuthenticationPrincipal UserDetails principal) {
@@ -172,7 +172,7 @@ public class AiChatbotController {
      * @param sessionId  UUID of the AiConversation session
      */
     @GetMapping("/sessions/{sessionId}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ai:admin')")
     public ResponseEntity<ApiResponse<AiConversation>> getSession(
             @PathVariable String sessionId) {
 

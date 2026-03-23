@@ -21,7 +21,6 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/ai/marketing")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMIN')")
 public class AiMarketingController {
 
     private final MarketingPersonalizationService marketingService;
@@ -48,6 +47,7 @@ public class AiMarketingController {
      * @param customerId  UUID of the customer
      */
     @PostMapping("/customers/{customerId}/personalise")
+    @PreAuthorize("hasAuthority('ai:marketing:personalise')")
     public ResponseEntity<ApiResponse<PersonalizationResult>> personalise(
             @PathVariable String customerId) {
 

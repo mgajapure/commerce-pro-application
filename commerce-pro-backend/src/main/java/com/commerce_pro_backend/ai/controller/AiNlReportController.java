@@ -34,7 +34,6 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/ai/nl-report")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMIN')")
 public class AiNlReportController {
 
     private final NlReportService nlReportService;
@@ -70,6 +69,7 @@ public class AiNlReportController {
      * </pre>
      */
     @PostMapping("/chat")
+    @PreAuthorize("hasAuthority('ai:nl-report:use')")
     public ResponseEntity<ApiResponse<AiChatResponse>> chat(
             @RequestBody @Valid AiChatRequest request,
             @AuthenticationPrincipal UserDetails principal) {

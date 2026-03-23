@@ -22,7 +22,6 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/ai/pricing")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMIN')")
 public class AiPricingController {
 
     private final PricingRecommendationService pricingService;
@@ -50,6 +49,7 @@ public class AiPricingController {
      * @param productId  UUID of the product to price
      */
     @PostMapping("/products/{productId}")
+    @PreAuthorize("hasAuthority('ai:pricing:run')")
     public ResponseEntity<ApiResponse<PricingResult>> recommend(
             @PathVariable String productId) {
 

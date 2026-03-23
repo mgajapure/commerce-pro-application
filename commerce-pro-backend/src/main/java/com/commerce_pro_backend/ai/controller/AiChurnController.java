@@ -30,7 +30,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/ai/churn")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMIN')")
 public class AiChurnController {
 
     private final ChurnPredictionService churnService;
@@ -68,6 +67,7 @@ public class AiChurnController {
      * @param customerId  UUID of the Customer to evaluate
      */
     @PostMapping("/{customerId}")
+    @PreAuthorize("hasAuthority('ai:churn:analyse')")
     public ResponseEntity<ApiResponse<ChurnResult>> predictChurn(
             @PathVariable String customerId) {
 

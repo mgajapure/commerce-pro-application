@@ -26,7 +26,6 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/ai/products")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMIN')")
 public class AiProductAiController {
 
     private final ProductDescriptionService productDescService;
@@ -59,6 +58,7 @@ public class AiProductAiController {
      * @param productId  UUID of the Product to generate a description for
      */
     @PostMapping("/{productId}/description/generate")
+    @PreAuthorize("hasAuthority('ai:product:generate')")
     public ResponseEntity<ApiResponse<String>> generateAndSave(
             @PathVariable String productId) {
 
@@ -91,6 +91,7 @@ public class AiProductAiController {
      * @param productId  UUID of the Product
      */
     @PostMapping("/{productId}/description/preview")
+    @PreAuthorize("hasAuthority('ai:product:generate')")
     public ResponseEntity<ApiResponse<String>> preview(
             @PathVariable String productId) {
 

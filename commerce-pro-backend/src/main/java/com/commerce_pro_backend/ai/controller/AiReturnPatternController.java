@@ -21,7 +21,6 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/ai/returns")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMIN')")
 public class AiReturnPatternController {
 
     private final ReturnPatternAnalysisService returnService;
@@ -48,6 +47,7 @@ public class AiReturnPatternController {
      * @param lookbackDays days of history to include (default 90)
      */
     @PostMapping("/products/{productId}")
+    @PreAuthorize("hasAuthority('ai:returns:analyse')")
     public ResponseEntity<ApiResponse<ReturnAnalysisResult>> analyse(
             @PathVariable String productId,
             @RequestParam(defaultValue = "90") int lookbackDays) {

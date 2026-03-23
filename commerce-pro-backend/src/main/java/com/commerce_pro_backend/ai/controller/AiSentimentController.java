@@ -29,7 +29,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/ai/sentiment")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMIN')")
 public class AiSentimentController {
 
     private final SentimentAnalysisService sentimentService;
@@ -63,6 +62,7 @@ public class AiSentimentController {
      * @param reviewId  UUID of the Review to analyse
      */
     @PostMapping("/reviews/{reviewId}")
+    @PreAuthorize("hasAuthority('ai:sentiment:analyse')")
     public ResponseEntity<ApiResponse<SentimentResult>> analyseReview(
             @PathVariable String reviewId) {
 
@@ -99,6 +99,7 @@ public class AiSentimentController {
      * @param reviewIds  list of Review UUIDs (must be non-empty)
      */
     @PostMapping("/reviews/batch")
+    @PreAuthorize("hasAuthority('ai:sentiment:analyse')")
     public ResponseEntity<ApiResponse<List<SentimentResult>>> analyseBatch(
             @RequestBody @NotEmpty List<String> reviewIds) {
 

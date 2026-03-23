@@ -22,7 +22,6 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/ai/shipping")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMIN')")
 public class AiShippingController {
 
     private final ShippingOptimizationService shippingService;
@@ -50,6 +49,7 @@ public class AiShippingController {
      * @param orderId  UUID of the order to optimise shipping for
      */
     @PostMapping("/orders/{orderId}/optimise")
+    @PreAuthorize("hasAuthority('ai:shipping:optimise')")
     public ResponseEntity<ApiResponse<ShippingResult>> optimise(
             @PathVariable String orderId) {
 

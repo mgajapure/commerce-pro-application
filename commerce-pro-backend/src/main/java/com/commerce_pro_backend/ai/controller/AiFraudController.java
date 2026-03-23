@@ -33,7 +33,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/ai/fraud")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMIN')")
 public class AiFraudController {
 
     private final FraudDetectionService fraudService;
@@ -79,6 +78,7 @@ public class AiFraudController {
      * @param transactionId  UUID of the PaymentTransaction to evaluate
      */
     @PostMapping("/{transactionId}")
+    @PreAuthorize("hasAuthority('ai:fraud:analyse')")
     public ResponseEntity<ApiResponse<FraudResult>> analyseTransaction(
             @PathVariable String transactionId) {
 

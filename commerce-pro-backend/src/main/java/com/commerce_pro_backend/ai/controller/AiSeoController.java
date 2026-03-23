@@ -23,7 +23,6 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/ai/seo")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMIN')")
 public class AiSeoController {
 
     private final SeoOptimizerService seoService;
@@ -47,6 +46,7 @@ public class AiSeoController {
      * </pre>
      */
     @PostMapping("/products/{productId}/optimise")
+    @PreAuthorize("hasAuthority('ai:seo:optimise')")
     public ResponseEntity<ApiResponse<SeoResult>> optimiseAndSave(
             @PathVariable String productId) {
 
@@ -60,6 +60,7 @@ public class AiSeoController {
      * <p>Generates a SEO preview without saving — for admin review before publishing.
      */
     @PostMapping("/products/{productId}/preview")
+    @PreAuthorize("hasAuthority('ai:seo:optimise')")
     public ResponseEntity<ApiResponse<SeoResult>> preview(
             @PathVariable String productId) {
 

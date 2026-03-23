@@ -22,7 +22,6 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/ai/inventory")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMIN')")
 public class AiInventoryController {
 
     private final InventoryOptimizationService inventoryService;
@@ -49,6 +48,7 @@ public class AiInventoryController {
      * @param warehouseId optional UUID of a specific warehouse
      */
     @PostMapping("/products/{productId}")
+    @PreAuthorize("hasAuthority('ai:inventory:optimise')")
     public ResponseEntity<ApiResponse<OptimizationResult>> optimise(
             @PathVariable String productId,
             @RequestParam(required = false) String warehouseId) {
