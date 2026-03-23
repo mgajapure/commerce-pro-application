@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
  * Clicking the "Analyse" button calls this endpoint to get the AI's diagnosis.
  */
 @RestController
-@RequestMapping("/api/v1/ai/returns")
+@RequestMapping("/v1/ai/returns")
 @RequiredArgsConstructor
 public class AiReturnPatternController {
 

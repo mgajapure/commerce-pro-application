@@ -31,7 +31,7 @@ import org.springframework.web.bind.annotation.RestController;
  * the same JWT mechanism as human admin users.
  */
 @RestController
-@RequestMapping("/api/v1/ai/fraud")
+@RequestMapping("/v1/ai/fraud")
 @RequiredArgsConstructor
 public class AiFraudController {
 

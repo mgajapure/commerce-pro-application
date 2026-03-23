@@ -27,7 +27,7 @@ import java.util.List;
  * </ul>
  */
 @RestController
-@RequestMapping("/api/v1/ai/sentiment")
+@RequestMapping("/v1/ai/sentiment")
 @RequiredArgsConstructor
 public class AiSentimentController {
 

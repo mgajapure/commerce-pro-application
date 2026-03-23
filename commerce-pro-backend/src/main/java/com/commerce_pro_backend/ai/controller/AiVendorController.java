@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
  * endpoint to show a live AI performance scorecard alongside payment history.
  */
 @RestController
-@RequestMapping("/api/v1/ai/vendors")
+@RequestMapping("/v1/ai/vendors")
 @RequiredArgsConstructor
 public class AiVendorController {
 

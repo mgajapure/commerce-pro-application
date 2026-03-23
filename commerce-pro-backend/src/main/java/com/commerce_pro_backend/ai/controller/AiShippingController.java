@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
  * can accept the recommendation or override it manually.
  */
 @RestController
-@RequestMapping("/api/v1/ai/shipping")
+@RequestMapping("/v1/ai/shipping")
 @RequiredArgsConstructor
 public class AiShippingController {
 

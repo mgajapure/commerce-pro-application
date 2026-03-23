@@ -48,7 +48,7 @@ import org.springframework.web.bind.annotation.*;
  * the authenticated user's ID.
  */
 @RestController
-@RequestMapping("/api/v1/ai/chatbot")
+@RequestMapping("/v1/ai/chatbot")
 @RequiredArgsConstructor
 @Slf4j
 public class AiChatbotController {

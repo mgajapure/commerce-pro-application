@@ -29,7 +29,7 @@ import java.util.List;
  * All endpoints require the ADMIN role.
  */
 @RestController
-@RequestMapping("/api/v1/admin/ai")
+@RequestMapping("/v1/admin/ai")
 @RequiredArgsConstructor
 public class AiAdminController {
 

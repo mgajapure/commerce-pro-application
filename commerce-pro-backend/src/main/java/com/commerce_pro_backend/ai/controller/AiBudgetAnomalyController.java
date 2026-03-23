@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
  * the CFO wants a quick AI-generated variance commentary for the board report.
  */
 @RestController
-@RequestMapping("/api/v1/ai/budget-anomaly")
+@RequestMapping("/v1/ai/budget-anomaly")
 @RequiredArgsConstructor
 public class AiBudgetAnomalyController {
 

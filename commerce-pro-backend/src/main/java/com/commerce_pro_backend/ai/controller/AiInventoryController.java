@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
  * to restock, reduce, or hold — with urgency and recommended quantity.
  */
 @RestController
-@RequestMapping("/api/v1/ai/inventory")
+@RequestMapping("/v1/ai/inventory")
 @RequiredArgsConstructor
 public class AiInventoryController {
 

@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.*;
  * </ul>
  */
 @RestController
-@RequestMapping("/api/v1/ai/products")
+@RequestMapping("/v1/ai/products")
 @RequiredArgsConstructor
 public class AiProductAiController {
 

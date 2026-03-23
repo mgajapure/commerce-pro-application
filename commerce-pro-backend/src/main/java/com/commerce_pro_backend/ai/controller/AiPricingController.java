@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
  * The admin can accept or override the recommendation.
  */
 @RestController
-@RequestMapping("/api/v1/ai/pricing")
+@RequestMapping("/v1/ai/pricing")
 @RequiredArgsConstructor
 public class AiPricingController {
 

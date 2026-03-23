@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
  * to generate a targeted offer before launching a campaign.
  */
 @RestController
-@RequestMapping("/api/v1/ai/marketing")
+@RequestMapping("/v1/ai/marketing")
 @RequiredArgsConstructor
 public class AiMarketingController {
 

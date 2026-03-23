@@ -32,7 +32,7 @@ import org.springframework.web.bind.annotation.*;
  * </pre>
  */
 @RestController
-@RequestMapping("/api/v1/ai/nl-report")
+@RequestMapping("/v1/ai/nl-report")
 @RequiredArgsConstructor
 public class AiNlReportController {
 

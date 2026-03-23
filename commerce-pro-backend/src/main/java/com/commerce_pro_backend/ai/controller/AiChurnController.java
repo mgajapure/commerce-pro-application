@@ -28,7 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
  * this controller.
  */
 @RestController
-@RequestMapping("/api/v1/ai/churn")
+@RequestMapping("/v1/ai/churn")
 @RequiredArgsConstructor
 public class AiChurnController {
 

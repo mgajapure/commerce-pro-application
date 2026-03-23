@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.*;
  * </ul>
  */
 @RestController
-@RequestMapping("/api/v1/ai/seo")
+@RequestMapping("/v1/ai/seo")
 @RequiredArgsConstructor
 public class AiSeoController {
 

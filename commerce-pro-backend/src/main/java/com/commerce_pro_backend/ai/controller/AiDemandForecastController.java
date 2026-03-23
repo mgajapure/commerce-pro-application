@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
  * The response tells them exactly how many units to order and at what urgency.
  */
 @RestController
-@RequestMapping("/api/v1/ai/forecast")
+@RequestMapping("/v1/ai/forecast")
 @RequiredArgsConstructor
 public class AiDemandForecastController {
 
