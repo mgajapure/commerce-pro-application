@@ -30,9 +30,15 @@ configurations {
 
 repositories {
 	mavenCentral()
+	maven { url 'https://repo.spring.io/milestone' }
 }
 
 dependencies {
+	// =============================================
+	// Spring AI BOM
+	// =============================================
+	implementation platform('org.springframework.ai:spring-ai-bom:1.0.0')
+
 	// =============================================
 	// Spring Boot Starters
 	// =============================================
@@ -108,9 +114,9 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
 
 	// =============================================
-	// AI Module (Anthropic Claude SDK)
+	// AI Module (Spring AI — Groq via OpenAI-compatible API)
 	// =============================================
-	implementation 'com.anthropic:anthropic-java:2.16.1'
+	implementation 'org.springframework.ai:spring-ai-openai-spring-boot-starter'
 	
 	// =============================================
 	// Development Tools

@@ -1,53 +1,41 @@
 package com.commerce_pro_backend.ai.config;
 
-import com.anthropic.client.AnthropicClient;
-import com.anthropic.client.okhttp.AnthropicOkHttpClient;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.math.BigDecimal;
-import java.time.Duration;
 import java.util.Map;
 
 /**
- * AiModuleConfig — binds all anthropic.* properties and exposes the AnthropicClient bean.
+ * AiModuleConfig — binds all ai.* custom properties.
  *
- * Properties are loaded from application.properties (prefix = "anthropic").
- * All values can be overridden per environment via environment variables.
+ * Spring AI auto-configures the ChatClient bean from spring.ai.openai.* properties.
+ * This class holds our application-level settings: budgets, rate limits, session TTLs,
+ * model aliases, retry policy, and scheduled job toggles.
+ *
+ * All values are overridable per environment via environment variables.
  */
 @Configuration
-@ConfigurationProperties(prefix = "anthropic")
+@ConfigurationProperties(prefix = "ai")
 @Data
 public class AiModuleConfig {
 
-    /** Anthropic API key. Set via ANTHROPIC_API_KEY environment variable. */
-    private String apiKey;
-
-    /** Model name shortcuts: haiku, sonnet, opus. */
+    /**
+     * Model name aliases.
+     * Keys: fast, balanced, powerful — mapped to Groq model IDs.
+     * Used when seeding default AiConfig records.
+     */
     private Map<String, String> models;
 
     /** Hard cap on max tokens for any single API call (safety guard). */
     private int maxTokensCap = 4096;
-
-    /** Whether to enable prompt caching globally (overridden per-feature by AiConfig). */
-    private boolean promptCacheEnabled = true;
 
     private BudgetConfig budget = new BudgetConfig();
     private TimeoutConfig timeout = new TimeoutConfig();
     private RetryConfig retry = new RetryConfig();
     private SessionConfig session = new SessionConfig();
     private JobsConfig jobs = new JobsConfig();
-
-    @Bean
-    public AnthropicClient anthropicClient() {
-        return AnthropicOkHttpClient.builder()
-            .apiKey(apiKey)
-            .connectTimeout(Duration.ofMillis(timeout.getConnectMs()))
-            .readTimeout(Duration.ofMillis(timeout.getReadMs()))
-            .build();
-    }
 
     @Data
     public static class BudgetConfig {
