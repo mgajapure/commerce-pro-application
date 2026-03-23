@@ -87,6 +87,7 @@ export class AiNlReport implements OnInit, OnDestroy, AfterViewChecked {
 
   toggleShowData(): void { this.showData.set(!this.showData()); }
 
+
   newSession(): void {
     this.sessionId.set(null);
     this.rawData.set('');
