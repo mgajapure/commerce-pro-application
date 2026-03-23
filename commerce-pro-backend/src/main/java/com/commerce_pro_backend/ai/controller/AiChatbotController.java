@@ -123,7 +123,7 @@ public class AiChatbotController {
         // The conversation.getTurnsAsList() list is ordered oldest-first, so getLast()
         // gives us the reply that was just generated.
         var turns = conversation.getTurnsAsList();
-        String assistantReply = turns.isEmpty() ? "" : turns.getLast().assistantMessage();
+        String assistantReply = turns.isEmpty() ? "" : turns.get(turns.size() - 1).assistantMessage();
 
         // Detect escalation: the system prompt instructs the model to start
         // escalation replies with "ESCALATE:" followed by the message.

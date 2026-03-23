@@ -281,7 +281,7 @@ public class AiOrchestrator {
         try {
             var usage = response.getMetadata().getUsage();
             inputTokens  = usage.getPromptTokens() != null  ? usage.getPromptTokens().intValue()  : 0;
-            outputTokens = usage.getGenerationTokens() != null ? usage.getGenerationTokens().intValue() : 0;
+            outputTokens = usage.getCompletionTokens() != null ? usage.getCompletionTokens().intValue() : 0;
         } catch (Exception ignored) { /* token counts are best-effort */ }
 
         CostCalculator.CostBreakdown cost =
@@ -334,7 +334,7 @@ public class AiOrchestrator {
         try {
             var usage = response.getMetadata().getUsage();
             inputTokens  = usage.getPromptTokens() != null  ? usage.getPromptTokens().intValue()  : 0;
-            outputTokens = usage.getGenerationTokens() != null ? usage.getGenerationTokens().intValue() : 0;
+            outputTokens = usage.getCompletionTokens() != null ? usage.getCompletionTokens().intValue() : 0;
         } catch (Exception ignored) {}
 
         BigDecimal cost = CostCalculator.calculate(config.getModel(), inputTokens, outputTokens);

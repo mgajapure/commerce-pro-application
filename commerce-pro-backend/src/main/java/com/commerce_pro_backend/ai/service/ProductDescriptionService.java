@@ -262,7 +262,8 @@ public class ProductDescriptionService {
         }
         var sb = new StringBuilder("Key attributes:\n");
         product.getAttributes().forEach(attr ->
-                sb.append("  - ").append(attr.getName()).append(": ").append(attr.getValue()).append("\n"));
+                sb.append("  - ").append(attr.getName()).append(": ")
+                  .append(String.join(", ", attr.getValues())).append("\n"));
         return sb.toString().stripTrailing();
     }
 

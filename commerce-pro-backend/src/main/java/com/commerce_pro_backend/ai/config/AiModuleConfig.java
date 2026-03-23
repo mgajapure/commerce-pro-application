@@ -1,7 +1,9 @@
 package com.commerce_pro_backend.ai.config;
 
 import lombok.Data;
+import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.math.BigDecimal;
@@ -30,6 +32,11 @@ public class AiModuleConfig {
 
     /** Hard cap on max tokens for any single API call (safety guard). */
     private int maxTokensCap = 4096;
+
+    @Bean
+    public ChatClient chatClient(ChatClient.Builder builder) {
+        return builder.build();
+    }
 
     private BudgetConfig budget = new BudgetConfig();
     private TimeoutConfig timeout = new TimeoutConfig();

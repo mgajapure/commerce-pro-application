@@ -80,7 +80,7 @@ public class AiNlReportController {
                 request.sessionId());
 
         var turns = session.getTurnsAsList();
-        String reply = turns.isEmpty() ? "" : turns.getLast().assistantMessage();
+        String reply = turns.isEmpty() ? "" : turns.get(turns.size() - 1).assistantMessage();
 
         return ResponseEntity.ok(ApiResponse.success(
                 new AiChatResponse(session.getId(), reply, session.getTurnCount())));

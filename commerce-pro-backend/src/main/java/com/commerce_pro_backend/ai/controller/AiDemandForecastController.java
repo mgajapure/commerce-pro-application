@@ -1,7 +1,7 @@
 package com.commerce_pro_backend.ai.controller;
 
-import com.commerce_pro_backend.ai.service.DemandForecastService;
-import com.commerce_pro_backend.ai.service.DemandForecastService.ForecastResult;
+import com.commerce_pro_backend.ai.service.AiDemandForecastService;
+import com.commerce_pro_backend.ai.service.AiDemandForecastService.ForecastResult;
 import com.commerce_pro_backend.common.dto.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.*;
 @PreAuthorize("hasRole('ADMIN')")
 public class AiDemandForecastController {
 
-    private final DemandForecastService forecastService;
+    private final AiDemandForecastService forecastService;
 
     /**
      * POST /api/v1/ai/forecast/products/{productId}?days={forecastDays}

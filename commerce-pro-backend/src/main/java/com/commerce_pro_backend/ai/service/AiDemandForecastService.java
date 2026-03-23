@@ -71,7 +71,7 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class DemandForecastService {
+public class AiDemandForecastService {
 
     private final AiOrchestrator          orchestrator;
     private final AiInsightRepository     insightRepo;

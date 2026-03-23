@@ -85,6 +85,8 @@ export class AiNlReport implements OnInit, OnDestroy, AfterViewChecked {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); this.send(); }
   }
 
+  toggleShowData(): void { this.showData.set(!this.showData()); }
+
   newSession(): void {
     this.sessionId.set(null);
     this.rawData.set('');
