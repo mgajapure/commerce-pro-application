@@ -284,6 +284,19 @@
                                 </td>
                                 <td class="px-6 py-4 text-right">
                                     <div class="flex items-center justify-end gap-1">
+                                        @if (getAiSeo(template.id); as aiRes) {
+                                          <button (click)="seoModalResult.set(aiRes); showSeoModal.set(true)"
+                                                  class="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium bg-violet-100 text-violet-700 hover:bg-violet-200">
+                                            <i class="bi bi-robot"></i> SEO
+                                          </button>
+                                        } @else {
+                                          <button (click)="previewAiSeo(template.id)" [disabled]="aiSeoLoading() === template.id"
+                                                  class="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-gray-500 border border-gray-200 hover:border-violet-300 hover:text-violet-600 transition disabled:opacity-40"
+                                                  title="AI SEO Optimise">
+                                            @if (aiSeoLoading() === template.id) { <i class="bi bi-hourglass-split animate-spin"></i> }
+                                            @else { <i class="bi bi-robot"></i> }
+                                          </button>
+                                        }
                                         <button (click)="openModal(template)"
                                             class="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
                                             title="Edit Template">
@@ -384,7 +397,19 @@
                             <i class="bi bi-eye"></i>
                             Preview
                         </button>
-                        <div class="flex gap-1">
+                        <div class="flex gap-1 items-center">
+                            @if (getAiSeo(template.id); as aiRes) {
+                              <button (click)="seoModalResult.set(aiRes); showSeoModal.set(true)"
+                                      class="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium bg-violet-100 text-violet-700 hover:bg-violet-200">
+                                <i class="bi bi-robot"></i> AI SEO
+                              </button>
+                            } @else {
+                              <button (click)="previewAiSeo(template.id)" [disabled]="aiSeoLoading() === template.id"
+                                      class="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-gray-500 border border-gray-200 hover:border-violet-300 hover:text-violet-600 transition disabled:opacity-40">
+                                @if (aiSeoLoading() === template.id) { <i class="bi bi-hourglass-split animate-spin"></i> Analysing... }
+                                @else { <i class="bi bi-robot"></i> AI SEO }
+                              </button>
+                            }
                             <button (click)="openModal(template)"
                                 class="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
                                 title="Edit Template">
@@ -681,4 +706,46 @@
         </div>
     </div>
 </div>
+}
+
+<!-- AI SEO Modal -->
+@if (showSeoModal() && seoModalResult()) {
+  <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg">
+      <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+        <h2 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+          <i class="bi bi-robot text-violet-500"></i> AI SEO Optimisation
+        </h2>
+        <button (click)="closeSeoModal()" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="p-6 space-y-4">
+        <div>
+          <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Optimised Title</p>
+          <p class="text-sm font-medium text-gray-900 bg-gray-50 rounded-xl p-3">{{ seoModalResult()!.seoTitle }}</p>
+        </div>
+        <div>
+          <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Optimised Description</p>
+          <p class="text-sm text-gray-700 bg-gray-50 rounded-xl p-3">{{ seoModalResult()!.seoDescription }}</p>
+        </div>
+        @if (seoModalResult()!.keywords?.length > 0) {
+          <div>
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Suggested Keywords</p>
+            <div class="flex flex-wrap gap-1.5">
+              @for (kw of seoModalResult()!.keywords; track kw) {
+                <span class="px-2.5 py-1 bg-violet-50 text-violet-700 text-xs rounded-full font-medium">{{ kw }}</span>
+              }
+            </div>
+          </div>
+        }
+        <div class="flex items-center justify-between">
+          <span class="text-sm text-gray-500">Status</span>
+          <span class="px-3 py-1 rounded-full text-xs font-medium {{ seoModalResult()!.saved ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600' }}">{{ seoModalResult()!.saved ? 'Saved' : 'Preview' }}</span>
+        </div>
+      </div>
+      <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
+        <button (click)="applyAiSeo(seoModalResult()!.productId)" class="px-4 py-2 bg-violet-600 text-white rounded-xl text-sm font-medium hover:bg-violet-700">Apply to Product</button>
+        <button (click)="closeSeoModal()" class="px-4 py-2 bg-gray-100 rounded-xl text-sm text-gray-700 hover:bg-gray-200">Close</button>
+      </div>
+    </div>
+  </div>
 }

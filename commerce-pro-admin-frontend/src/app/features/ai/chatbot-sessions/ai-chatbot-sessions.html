@@ -1,0 +1,116 @@
+<div class="p-6 space-y-6">
+
+  <!-- Header -->
+  <div>
+    <h1 class="text-2xl font-bold text-gray-900">Chatbot Sessions</h1>
+    <p class="text-sm text-gray-500 mt-0.5">Look up and review customer support conversations by session ID</p>
+  </div>
+
+  <!-- Session Lookup -->
+  <div class="bg-white rounded-xl border border-gray-200 p-5">
+    <label class="block text-sm font-medium text-gray-700 mb-2">Session ID</label>
+    <div class="flex gap-2">
+      <input type="text" [(ngModel)]="$any(this).sessionId"
+             (keydown.enter)="lookup()"
+             placeholder="Enter chatbot session ID..."
+             class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none font-mono">
+      <button (click)="lookup()" [disabled]="!sessionId().trim() || isLoading()"
+              class="px-4 py-2 bg-violet-600 text-white rounded-lg text-sm font-medium hover:bg-violet-700 transition disabled:opacity-40 flex items-center gap-1.5">
+        @if (isLoading()) {
+          <i class="bi bi-hourglass-split text-sm"></i> Loading...
+        } @else {
+          <i class="bi bi-search text-sm"></i> Look Up
+        }
+      </button>
+    </div>
+
+    <!-- Recent Sessions -->
+    @if (recentSessions().length > 0) {
+      <div class="mt-3">
+        <p class="text-xs text-gray-400 mb-2">Recent lookups:</p>
+        <div class="flex flex-wrap gap-1.5">
+          @for (id of recentSessions(); track id) {
+            <button (click)="loadRecent(id)"
+                    class="px-2.5 py-1 text-xs font-mono bg-gray-100 text-gray-600 rounded-full hover:bg-violet-100 hover:text-violet-700 transition">
+              {{ id | slice:0:16 }}...
+            </button>
+          }
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- Error -->
+  @if (error()) {
+    <div class="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 text-sm flex items-center gap-2">
+      <i class="bi bi-exclamation-circle"></i> {{ error() }}
+    </div>
+  }
+
+  <!-- Session Detail -->
+  @if (session()) {
+    <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+
+      <!-- Session Header -->
+      <div class="p-5 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+        <div>
+          <div class="font-medium text-gray-900 font-mono text-sm">{{ session()!.sessionId }}</div>
+          <div class="text-xs text-gray-400 mt-0.5">
+            Started: {{ formatDateTime(session()!.createdAt) }} &nbsp;·&nbsp;
+            {{ session()!.messages.length }} messages
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="px-2.5 py-1 text-xs rounded-full bg-violet-100 text-violet-700 font-medium">
+            <i class="bi bi-chat-dots mr-1"></i> Chatbot Session
+          </span>
+        </div>
+      </div>
+
+      <!-- Messages -->
+      <div class="p-5 space-y-3 max-h-[600px] overflow-y-auto">
+        @for (msg of session()!.messages; track $index) {
+          <div class="flex gap-3" [class]="msg.role === 'USER' ? 'justify-end' : 'justify-start'">
+
+            @if (msg.role === 'ASSISTANT') {
+              <div class="w-7 h-7 rounded-full bg-violet-100 flex items-center justify-center shrink-0">
+                <i class="bi bi-robot text-violet-600 text-xs"></i>
+              </div>
+            }
+
+            <div class="max-w-[70%]">
+              <div class="rounded-2xl px-3.5 py-2 text-sm leading-relaxed"
+                   [class]="msg.role === 'USER'
+                     ? 'bg-violet-600 text-white rounded-br-sm'
+                     : 'bg-gray-100 text-gray-800 rounded-bl-sm'">
+                {{ msg.content }}
+              </div>
+              <div class="text-xs text-gray-400 mt-0.5" [class]="msg.role === 'USER' ? 'text-right' : 'text-left'">
+                {{ msg.role === 'USER' ? 'Customer' : 'Bot' }} · {{ formatTime(msg.createdAt) }}
+              </div>
+            </div>
+
+            @if (msg.role === 'USER') {
+              <div class="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center shrink-0">
+                <i class="bi bi-person text-gray-600 text-xs"></i>
+              </div>
+            }
+          </div>
+        }
+
+        @if (session()!.messages.length === 0) {
+          <p class="text-center text-gray-400 text-sm py-8">No messages in this session</p>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Empty State -->
+  @if (!session() && !isLoading() && !error()) {
+    <div class="bg-white rounded-xl border border-gray-200 p-12 text-center">
+      <i class="bi bi-chat-square-dots text-4xl text-gray-300 block mb-3"></i>
+      <p class="text-gray-500 font-medium">No session loaded</p>
+      <p class="text-sm text-gray-400 mt-1">Enter a session ID above to view the conversation</p>
+    </div>
+  }
+</div>

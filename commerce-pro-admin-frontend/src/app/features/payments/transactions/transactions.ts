@@ -5,6 +5,8 @@ import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
 import { PaymentService } from '../../../core/services/payment/payment.service';
 import { PaymentTransactionSummaryDTO, PaymentStatsDTO, TransactionStatus, TransactionType, GatewayProvider } from '../../../core/models/payment/payment.model';
 import { PageParams } from '../../../core/models/common';
+import { AiService } from '../../../core/services/ai/ai.service';
+import { AiFraudResult } from '../../../core/models/ai/ai.model';
 
 @Component({
   selector: 'app-transactions',
@@ -15,9 +17,16 @@ import { PageParams } from '../../../core/models/common';
 })
 export class Transactions implements OnInit, OnDestroy {
   readonly Math = Math;
-  private svc = inject(PaymentService);
+  private svc   = inject(PaymentService);
+  private aiSvc = inject(AiService);
   private destroy$ = new Subject<void>();
   private searchSubject = new Subject<string>();
+
+  // AI Fraud
+  fraudResults     = signal<Record<string, AiFraudResult>>({});
+  fraudLoading     = signal<string | null>(null);
+  showFraudModal   = signal(false);
+  fraudModalResult = signal<AiFraudResult | null>(null);
 
   transactions  = signal<PaymentTransactionSummaryDTO[]>([]);
   stats         = signal<PaymentStatsDTO | null>(null);
@@ -223,5 +232,37 @@ export class Transactions implements OnInit, OnDestroy {
 
   fmtDate(iso: string): string {
     return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(iso));
+  }
+
+  // ─── AI Fraud Detection ────────────────────────────────────────────────────
+
+  analysefraud(txn: PaymentTransactionSummaryDTO, e: Event): void {
+    e.stopPropagation();
+    this.fraudLoading.set(txn.id);
+    this.aiSvc.analyseTransaction(txn.id).pipe(takeUntil(this.destroy$)).subscribe({
+      next: result => {
+        this.fraudResults.update(r => ({ ...r, [txn.id]: result }));
+        this.fraudLoading.set(null);
+        this.openFraudModal(result);
+      },
+      error: () => this.fraudLoading.set(null)
+    });
+  }
+
+  openFraudModal(result: AiFraudResult): void {
+    this.fraudModalResult.set(result);
+    this.showFraudModal.set(true);
+  }
+
+  closeFraudModal(): void { this.showFraudModal.set(false); this.fraudModalResult.set(null); }
+
+  getFraudBadge(score: number): { badge: string; label: string } {
+    if (score >= 80) return { badge: 'bg-red-100 text-red-700', label: 'HIGH RISK' };
+    if (score >= 50) return { badge: 'bg-yellow-100 text-yellow-700', label: 'MEDIUM' };
+    return { badge: 'bg-green-100 text-green-700', label: 'LOW RISK' };
+  }
+
+  getCachedFraud(id: string): AiFraudResult | null {
+    return this.fraudResults()[id] ?? null;
   }
 }

@@ -454,6 +454,24 @@
                                         title="Transfer Stock">
                                         <i class="bi bi-arrow-left-right"></i>
                                     </button>
+                                    @if (getInventoryAi(item.productId); as aiRes) {
+                                      <button (click)="inventoryAiModalResult.set(aiRes); showInventoryAiModal.set(true)"
+                                              class="p-2 rounded-lg {{ inventoryRecBadge(aiRes.recommendation) }}"
+                                              title="AI Recommendation">
+                                        <i class="bi bi-robot"></i>
+                                      </button>
+                                    } @else {
+                                      <button (click)="optimiseInventoryAi(item.productId)"
+                                              [disabled]="inventoryAiLoading() === item.productId"
+                                              class="p-2 text-gray-400 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-colors disabled:opacity-40"
+                                              title="AI Inventory Optimise">
+                                        @if (inventoryAiLoading() === item.productId) {
+                                          <i class="bi bi-hourglass-split animate-spin"></i>
+                                        } @else {
+                                          <i class="bi bi-robot"></i>
+                                        }
+                                      </button>
+                                    }
                                     <div class="relative">
                                         <button (click)="viewHistory(item)"
                                             class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
@@ -707,6 +725,43 @@
                 class="px-6 py-2.5 bg-indigo-600 text-white font-medium rounded-xl hover:bg-indigo-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-indigo-200">
                 Transfer Stock
             </button>
+        </div>
+    </div>
+</div>
+}
+
+<!-- AI Inventory Optimisation Modal -->
+@if (showInventoryAiModal() && inventoryAiModalResult()) {
+<div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+        <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+            <h2 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <i class="bi bi-robot text-violet-500"></i> AI Inventory Optimisation
+            </h2>
+            <button (click)="showInventoryAiModal.set(false)" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <div class="p-6 space-y-4">
+            <div class="flex items-center justify-between">
+                <span class="text-sm text-gray-500">Recommendation</span>
+                <span class="px-3 py-1 rounded-full text-sm font-medium {{ inventoryRecBadge(inventoryAiModalResult()!.recommendation) }}">{{ inventoryAiModalResult()!.recommendation }}</span>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div class="bg-blue-50 rounded-xl p-3 text-center border border-blue-100">
+                    <p class="text-xs text-blue-600 mb-1">Recommended Qty</p>
+                    <p class="font-bold text-blue-700">{{ inventoryAiModalResult()!.recommendedQuantity }}</p>
+                </div>
+                <div class="bg-amber-50 rounded-xl p-3 text-center border border-amber-100">
+                    <p class="text-xs text-amber-600 mb-1">Urgency</p>
+                    <p class="font-bold text-amber-700">{{ inventoryAiModalResult()!.urgencyLevel }}</p>
+                </div>
+            </div>
+            <div class="bg-gray-50 rounded-xl p-4">
+                <div class="text-xs font-medium text-gray-500 mb-1">AI Reasoning</div>
+                <p class="text-sm text-gray-700">{{ inventoryAiModalResult()!.reasoning }}</p>
+            </div>
+        </div>
+        <div class="px-6 py-4 border-t border-gray-100 flex justify-end">
+            <button (click)="showInventoryAiModal.set(false)" class="px-4 py-2 bg-gray-100 rounded-xl text-sm text-gray-700 hover:bg-gray-200">Close</button>
         </div>
     </div>
 </div>

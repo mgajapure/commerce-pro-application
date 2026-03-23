@@ -72,7 +72,9 @@ type Permission =
   | 'manage_multi_language'
   | 'manage_multi_currency'
   | 'manage_regions'
-  | 'manage_tax_rules';
+  | 'manage_tax_rules'
+  // AI Features
+  | 'manage_ai';
 
 interface MenuChild {
   id: string;
@@ -179,7 +181,8 @@ export class Sidebar implements OnInit {
     'manage_multi_language',
     'manage_multi_currency',
     'manage_regions',
-    'manage_tax_rules'
+    'manage_tax_rules',
+    'manage_ai'
   ];
 
   // Translation helper (replace with i18n service in real app)
@@ -663,6 +666,21 @@ export class Sidebar implements OnInit {
         { id: 'suppliers-procurement', label: 'menu.suppliers.procurement', route: '/suppliers/procurement', permissions: ['manage_procurement'] },
         { id: 'suppliers-evaluation', label: 'menu.suppliers.evaluation', route: '/suppliers/evaluation', permissions: ['manage_suppliers'] },
         { id: 'suppliers-contracts', label: 'menu.suppliers.contracts', route: '/suppliers/contracts', permissions: ['manage_suppliers'] }
+      ]
+    },
+
+    // AI SECTION
+    {
+      id: 'ai',
+      label: 'AI Features',
+      icon: 'robot',
+      permissions: ['manage_ai'],
+      description: 'AI-powered insights, forecasting, and automation',
+      children: [
+        { id: 'ai-dashboard',          label: 'AI Hub Dashboard',    route: '/ai/dashboard',          permissions: ['manage_ai'] },
+        { id: 'ai-config',             label: 'AI Configuration',    route: '/ai/config',             permissions: ['manage_ai'] },
+        { id: 'ai-nl-report',          label: 'NL Report Chat',      route: '/ai/nl-report',          permissions: ['manage_ai'] },
+        { id: 'ai-chatbot-sessions',   label: 'Chatbot Sessions',    route: '/ai/chatbot-sessions',   permissions: ['manage_ai'] },
       ]
     },
 

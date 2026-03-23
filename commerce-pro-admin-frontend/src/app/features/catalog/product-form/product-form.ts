@@ -29,6 +29,8 @@ import { BrandService } from '../../../core/services/catalog/brand.service';
 import { CollectionService } from '../../../core/services/catalog/collection.service';
 import { AttributeService } from '../../../core/services/catalog/attribute.service';
 import { AlertService } from '../../../shared/services/alert.service';
+import { AiService } from '../../../core/services/ai/ai.service';
+import { AiDescriptionResult, AiDemandForecastResult, AiPricingResult, AiReturnPatternResult } from '../../../core/models/ai/ai.model';
 
 @Component({
   selector: 'app-product-form',
@@ -47,9 +49,21 @@ export class ProductForm implements OnInit, OnDestroy {
   private collectionService= inject(CollectionService);
   private attributeService = inject(AttributeService);
   private alertSvc         = inject(AlertService);
+  private aiSvc            = inject(AiService);
 
   // Cleanup subject
   private destroy$ = new Subject<void>();
+
+  // AI Signals
+  aiDescResult    = signal<AiDescriptionResult | null>(null);
+  aiForecastResult= signal<AiDemandForecastResult | null>(null);
+  aiPricingResult = signal<AiPricingResult | null>(null);
+  aiReturnResult  = signal<AiReturnPatternResult | null>(null);
+  aiDescLoading   = signal(false);
+  aiForecastLoading = signal(false);
+  aiPricingLoading  = signal(false);
+  aiReturnLoading   = signal(false);
+  showAiPanel     = signal(false);
   private skuCheckSubject = new Subject<string>();
 
   productId = signal<string | null>(null);
@@ -708,5 +722,61 @@ export class ProductForm implements OnInit, OnDestroy {
         error: (err) => { console.error('Failed to delete product:', err); this.alertSvc.error('Failed to delete product', err?.message); }
       });
     });
+  }
+
+  // ─── AI Actions ───────────────────────────────────────────────────────────
+
+  previewAiDescription(): void {
+    const id = this.productId(); if (!id) return;
+    this.aiDescLoading.set(true);
+    this.aiSvc.previewDescription(id).pipe(takeUntil(this.destroy$)).subscribe({
+      next: r => { this.aiDescResult.set(r); this.aiDescLoading.set(false); },
+      error: () => this.aiDescLoading.set(false)
+    });
+  }
+
+  applyAiDescription(): void {
+    const id = this.productId(); if (!id) return;
+    this.aiDescLoading.set(true);
+    this.aiSvc.generateDescription(id).pipe(takeUntil(this.destroy$)).subscribe({
+      next: r => {
+        this.aiDescResult.set(r);
+        this.productForm.patchValue({ description: r.description, shortDescription: r.shortDescription });
+        this.aiDescLoading.set(false);
+        this.alertSvc.success('AI description applied');
+      },
+      error: () => { this.alertSvc.error('Failed to generate description'); this.aiDescLoading.set(false); }
+    });
+  }
+
+  runAiForecast(): void {
+    const id = this.productId(); if (!id) return;
+    this.aiForecastLoading.set(true);
+    this.aiSvc.forecastDemand(id).pipe(takeUntil(this.destroy$)).subscribe({
+      next: r => { this.aiForecastResult.set(r); this.aiForecastLoading.set(false); },
+      error: () => this.aiForecastLoading.set(false)
+    });
+  }
+
+  runAiPricing(): void {
+    const id = this.productId(); if (!id) return;
+    this.aiPricingLoading.set(true);
+    this.aiSvc.recommendPricing(id).pipe(takeUntil(this.destroy$)).subscribe({
+      next: r => { this.aiPricingResult.set(r); this.aiPricingLoading.set(false); },
+      error: () => this.aiPricingLoading.set(false)
+    });
+  }
+
+  runAiReturns(): void {
+    const id = this.productId(); if (!id) return;
+    this.aiReturnLoading.set(true);
+    this.aiSvc.analyseReturnPattern(id).pipe(takeUntil(this.destroy$)).subscribe({
+      next: r => { this.aiReturnResult.set(r); this.aiReturnLoading.set(false); },
+      error: () => this.aiReturnLoading.set(false)
+    });
+  }
+
+  fmtUsd(n: number): string {
+    return '$' + (n ?? 0).toFixed(2);
   }
 }

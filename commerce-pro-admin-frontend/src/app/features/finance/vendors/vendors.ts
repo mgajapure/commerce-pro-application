@@ -1,15 +1,26 @@
-import { Component, signal, OnInit, inject } from '@angular/core';
+import { Component, signal, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { FinanceService } from '../../../core/services/finance/finance.service';
 import { VendorSummaryDTO, VendorDTO, VendorStatus, CreateVendorRequest } from '../../../core/models/finance/finance.model';
+import { AiService } from '../../../core/services/ai/ai.service';
+import { AiVendorResult } from '../../../core/models/ai/ai.model';
+import { Subject, takeUntil } from 'rxjs';
 
 @Component({ selector: 'app-vendors', standalone: true, imports: [CommonModule, FormsModule, RouterModule], templateUrl: './vendors.html', styleUrl: './vendors.scss' })
-export class Vendors implements OnInit {
-  private svc = inject(FinanceService);
+export class Vendors implements OnInit, OnDestroy {
+  private svc    = inject(FinanceService);
+  private aiSvc  = inject(AiService);
+  private destroy$ = new Subject<void>();
   vendors = signal<VendorSummaryDTO[]>([]); detail = signal<VendorDTO | null>(null);
   isLoading = signal(false); actionLoading = signal<string | null>(null);
+
+  // AI Vendor Analysis
+  vendorAiResults  = signal<Record<string, AiVendorResult>>({});
+  vendorAiLoading  = signal<string | null>(null);
+  showVendorAiModal = signal(false);
+  vendorAiModalResult = signal<AiVendorResult | null>(null);
   totalElements = signal(0); totalPages = signal(0); currentPage = signal(1);
   filterStatus = signal(''); filterSearch = signal('');
   showDetail = signal(false); showModal = signal(false);
@@ -43,4 +54,26 @@ export class Vendors implements OnInit {
   nextPage(): void { if (this.currentPage() < this.totalPages()) { this.currentPage.update(p => p+1); this.load(); } }
   fmt(n: number): string { return '$' + (n ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
   fmtDate(iso?: string): string { if (!iso) return '—'; return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(iso)); }
+  ngOnDestroy(): void { this.destroy$.next(); this.destroy$.complete(); }
+
+  analyseVendorAi(vendorId: string): void {
+    this.vendorAiLoading.set(vendorId);
+    this.aiSvc.analyseVendor(vendorId).pipe(takeUntil(this.destroy$)).subscribe({
+      next: r => {
+        this.vendorAiResults.update(m => ({ ...m, [vendorId]: r }));
+        this.vendorAiModalResult.set(r);
+        this.showVendorAiModal.set(true);
+        this.vendorAiLoading.set(null);
+      },
+      error: () => this.vendorAiLoading.set(null)
+    });
+  }
+
+  getVendorAi(id: string): AiVendorResult | null { return this.vendorAiResults()[id] ?? null; }
+
+  vendorRiskBadge(r: string): string {
+    if (r === 'HIGH') return 'bg-red-100 text-red-700';
+    if (r === 'MEDIUM') return 'bg-yellow-100 text-yellow-700';
+    return 'bg-green-100 text-green-700';
+  }
 }

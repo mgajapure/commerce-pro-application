@@ -32,13 +32,29 @@
                 </div>
               </div>
             </div>
-            @if (b.status === 'DRAFT' || b.status === 'PENDING_APPROVAL') {
-              <div class="px-6 py-3 bg-gray-50 border-t border-gray-100 flex items-center justify-end gap-2" (click)="$event.stopPropagation()">
+            <div class="px-6 py-3 bg-gray-50 border-t border-gray-100 flex items-center justify-between gap-2" (click)="$event.stopPropagation()">
+              <!-- AI Anomaly -->
+              <div class="flex items-center gap-2">
+                @if (getAnomaly(b.id)) {
+                  <button (click)="anomalyModalResult.set(getAnomaly(b.id)); showAnomalyModal.set(true)"
+                          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium {{ anomalySeverityBadge(getAnomaly(b.id)!.severity) }}">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    Anomaly: {{ getAnomaly(b.id)!.severity }} — Score {{ getAnomaly(b.id)!.anomalyScore }}/100
+                  </button>
+                } @else {
+                  <button (click)="analyseAnomaly(b.id)" [disabled]="anomalyLoading() === b.id"
+                          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-gray-500 border border-gray-200 hover:border-violet-300 hover:text-violet-600 transition disabled:opacity-40">
+                    @if (anomalyLoading() === b.id) { <i class="bi bi-hourglass-split animate-spin"></i> Analysing... }
+                    @else { <i class="bi bi-robot"></i> AI Anomaly Check }
+                  </button>
+                }
+              </div>
+              @if (b.status === 'DRAFT' || b.status === 'PENDING_APPROVAL') {
                 <button (click)="approve(b.id)" [disabled]="actionLoading() === b.id" class="px-4 py-2 bg-green-600 text-white rounded-xl text-sm font-medium hover:bg-green-700 disabled:opacity-50 flex items-center gap-2">
                   @if (actionLoading() === b.id) { <i class="bi bi-arrow-repeat animate-spin"></i> } Approve Budget
                 </button>
-              </div>
-            }
+              }
+            </div>
           </div>
         } @empty {
           <div class="bg-white rounded-2xl border border-gray-100 p-12 text-center"><i class="bi bi-bar-chart text-3xl text-gray-300 block mb-3"></i><p class="text-gray-500">No budgets for FY{{ filterYear() }}</p></div>
@@ -47,6 +63,47 @@
     }
   </div>
 </div>
+
+<!-- AI Anomaly Modal -->
+@if (showAnomalyModal() && anomalyModalResult()) {
+  <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+      <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+        <h2 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+          <i class="bi bi-robot text-violet-500"></i> AI Budget Anomaly
+        </h2>
+        <button (click)="showAnomalyModal.set(false)" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="p-6 space-y-4">
+        <div class="flex items-center justify-between">
+          <span class="text-sm text-gray-500">Anomaly Score</span>
+          <span class="text-2xl font-bold text-gray-900">{{ anomalyModalResult()!.anomalyScore }}/100</span>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="px-3 py-1 rounded-full text-sm font-medium {{ anomalySeverityBadge(anomalyModalResult()!.severity) }}">{{ anomalyModalResult()!.severity }}</span>
+          <span class="text-sm text-gray-600">→ {{ anomalyModalResult()!.recommendation }}</span>
+        </div>
+        @if (anomalyModalResult()!.anomalousLines?.length > 0) {
+          <div>
+            <div class="text-sm font-medium text-gray-700 mb-2">Anomalous Lines</div>
+            <div class="flex flex-wrap gap-1.5">
+              @for (l of anomalyModalResult()!.anomalousLines; track l) {
+                <span class="px-2.5 py-1 bg-red-50 text-red-700 text-xs rounded-full">{{ l }}</span>
+              }
+            </div>
+          </div>
+        }
+        <div class="bg-gray-50 rounded-xl p-4">
+          <div class="text-xs font-medium text-gray-500 mb-1">AI Reasoning</div>
+          <p class="text-sm text-gray-700">{{ anomalyModalResult()!.reasoning }}</p>
+        </div>
+      </div>
+      <div class="px-6 py-4 border-t border-gray-100 flex justify-end">
+        <button (click)="showAnomalyModal.set(false)" class="px-4 py-2 bg-gray-100 rounded-xl text-sm text-gray-700 hover:bg-gray-200">Close</button>
+      </div>
+    </div>
+  </div>
+}
 
 <!-- Budget Variance Detail -->
 @if (showDetail() && detail()) {

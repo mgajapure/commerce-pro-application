@@ -5,6 +5,8 @@ import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil, forkJoin } from 'rxjs';
 import { CustomerApiService } from '../../../core/services/customers/customers.service';
 import { AlertService } from '../../../shared/services/alert.service';
+import { AiService } from '../../../core/services/ai/ai.service';
+import { AiChurnResult, AiMarketingResult } from '../../../core/models/ai/ai.model';
 import { Dropdown, DropdownItem } from '../../../shared/components/dropdown/dropdown';
 import {
   CustomerResponse, CustomerAddress, CommunicationLog,
@@ -26,7 +28,16 @@ export class CustomerDetail implements OnInit, OnDestroy {
   public router       = inject(Router);
   private customerSvc = inject(CustomerApiService);
   private alertSvc    = inject(AlertService);
+  private aiSvc       = inject(AiService);
   private destroy$    = new Subject<void>();
+
+  // AI
+  churnResult      = signal<AiChurnResult | null>(null);
+  marketingResult  = signal<AiMarketingResult | null>(null);
+  aiChurnLoading   = signal(false);
+  aiMktLoading     = signal(false);
+  showAiPanel      = signal(false);
+  aiError          = signal<string | null>(null);
 
   customerId    = signal('');
   customer      = signal<CustomerResponse | null>(null);
@@ -398,5 +409,35 @@ export class CustomerDetail implements OnInit, OnDestroy {
 
   formatCurrency(val: number): string {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 }).format(val ?? 0);
+  }
+
+  // ─── AI: Churn + Marketing ────────────────────────────────────────────────
+
+  runChurnPrediction(): void {
+    const id = this.customerId();
+    if (!id) return;
+    this.aiChurnLoading.set(true);
+    this.aiError.set(null);
+    this.aiSvc.predictChurn(id).pipe(takeUntil(this.destroy$)).subscribe({
+      next: r => { this.churnResult.set(r); this.aiChurnLoading.set(false); },
+      error: () => { this.aiError.set('Churn prediction failed'); this.aiChurnLoading.set(false); }
+    });
+  }
+
+  runMarketing(): void {
+    const id = this.customerId();
+    if (!id) return;
+    this.aiMktLoading.set(true);
+    this.aiError.set(null);
+    this.aiSvc.personaliseMarketing(id).pipe(takeUntil(this.destroy$)).subscribe({
+      next: r => { this.marketingResult.set(r); this.aiMktLoading.set(false); },
+      error: () => { this.aiError.set('Marketing personalisation failed'); this.aiMktLoading.set(false); }
+    });
+  }
+
+  churnBadge(score: number): string {
+    if (score >= 70) return 'bg-red-100 text-red-700';
+    if (score >= 40) return 'bg-yellow-100 text-yellow-700';
+    return 'bg-green-100 text-green-700';
   }
 }

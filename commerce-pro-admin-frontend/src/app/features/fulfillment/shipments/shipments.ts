@@ -7,6 +7,9 @@ import { FulfillmentService } from '../../../core/services/fulfillment/fulfillme
 import { ShipmentSummary, ShipmentDetail, ShipmentStats, CreateShipmentRequest, AddTrackingEventRequest, Carrier } from '../../../core/models/fulfillment/fulfillment.model';
 import { PageParams } from '../../../core/models/common';
 import { AlertService } from '../../../shared/services/alert.service';
+import { AiService } from '../../../core/services/ai/ai.service';
+import { AiShippingResult } from '../../../core/models/ai/ai.model';
+import { Subject, takeUntil } from 'rxjs';
 
 @Component({
   selector: 'app-shipments',
@@ -19,6 +22,14 @@ export class Shipments implements OnInit {
   private svc      = inject(ShipmentService);
   private fulfSvc  = inject(FulfillmentService);
   private alertSvc = inject(AlertService);
+  private aiSvc    = inject(AiService);
+  private destroy$ = new Subject<void>();
+
+  // AI Shipping
+  shippingAiResults = signal<Record<string, AiShippingResult>>({});
+  shippingAiLoading = signal<string | null>(null);
+  showShippingAiModal = signal(false);
+  shippingAiModalResult = signal<AiShippingResult | null>(null);
 
   shipments     = signal<ShipmentSummary[]>([]);
   stats         = signal<ShipmentStats | null>(null);
@@ -193,4 +204,22 @@ export class Shipments implements OnInit {
   setTrackFormLocation(location: any){
     this.trackForm.update(f => ({...f, location: location}))
   }
+
+  // ─── AI Shipping Optimisation ─────────────────────────────────────────────
+
+  optimiseShipping(orderId: string): void {
+    this.shippingAiLoading.set(orderId);
+    this.aiSvc.optimiseShipping(orderId).pipe(takeUntil(this.destroy$)).subscribe({
+      next: r => {
+        this.shippingAiResults.update(m => ({ ...m, [orderId]: r }));
+        this.shippingAiModalResult.set(r);
+        this.showShippingAiModal.set(true);
+        this.shippingAiLoading.set(null);
+      },
+      error: () => this.shippingAiLoading.set(null)
+    });
+  }
+
+  getShippingAi(orderId: string): AiShippingResult | null { return this.shippingAiResults()[orderId] ?? null; }
+  fmtUsd(n: number): string { return '$' + (n ?? 0).toFixed(2); }
 }

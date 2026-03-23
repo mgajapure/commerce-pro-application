@@ -58,6 +58,22 @@
                 <span class="font-bold text-rose-600 tabular-nums">{{ fmt(v.totalPayable) }}</span>
               </div>
             }
+            <!-- AI Scorecard button -->
+            <div class="mt-3 pt-3 border-t border-gray-100" (click)="$event.stopPropagation()">
+              @if (getVendorAi(v.id)) {
+                <button (click)="vendorAiModalResult.set(getVendorAi(v.id)); showVendorAiModal.set(true)"
+                        class="w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-xs font-medium {{ vendorRiskBadge(getVendorAi(v.id)!.riskLevel) }}">
+                  <span><i class="bi bi-robot mr-1"></i>AI Score: {{ getVendorAi(v.id)!.score }}/100</span>
+                  <span>{{ getVendorAi(v.id)!.riskLevel }} RISK</span>
+                </button>
+              } @else {
+                <button (click)="analyseVendorAi(v.id)" [disabled]="vendorAiLoading() === v.id"
+                        class="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-gray-400 border border-dashed border-gray-200 hover:border-violet-300 hover:text-violet-600 transition disabled:opacity-40">
+                  @if (vendorAiLoading() === v.id) { <i class="bi bi-hourglass-split animate-spin"></i> Analysing... }
+                  @else { <i class="bi bi-robot"></i> AI Scorecard }
+                </button>
+              }
+            </div>
           </div>
         } @empty {
           <div class="col-span-3 bg-white rounded-2xl border border-gray-100 p-16 text-center">
@@ -81,6 +97,57 @@
     }
   </div>
 </div>
+
+<!-- AI Vendor Scorecard Modal -->
+@if (showVendorAiModal() && vendorAiModalResult()) {
+  <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+      <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+        <h2 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+          <i class="bi bi-robot text-violet-500"></i> Vendor AI Scorecard
+        </h2>
+        <button (click)="showVendorAiModal.set(false)" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="p-6 space-y-4">
+        <div class="flex items-center justify-between">
+          <span class="text-3xl font-bold text-gray-900">{{ vendorAiModalResult()!.score }}<span class="text-lg text-gray-400">/100</span></span>
+          <span class="px-3 py-1 rounded-full text-sm font-semibold {{ vendorRiskBadge(vendorAiModalResult()!.riskLevel) }}">{{ vendorAiModalResult()!.riskLevel }} RISK</span>
+        </div>
+        @if (vendorAiModalResult()!.strengths?.length > 0) {
+          <div>
+            <div class="text-xs font-medium text-gray-500 uppercase mb-2">Strengths</div>
+            <div class="flex flex-wrap gap-1.5">
+              @for (s of vendorAiModalResult()!.strengths; track s) {
+                <span class="px-2.5 py-1 bg-green-50 text-green-700 text-xs rounded-full">{{ s }}</span>
+              }
+            </div>
+          </div>
+        }
+        @if (vendorAiModalResult()!.weaknesses?.length > 0) {
+          <div>
+            <div class="text-xs font-medium text-gray-500 uppercase mb-2">Weaknesses</div>
+            <div class="flex flex-wrap gap-1.5">
+              @for (w of vendorAiModalResult()!.weaknesses; track w) {
+                <span class="px-2.5 py-1 bg-red-50 text-red-700 text-xs rounded-full">{{ w }}</span>
+              }
+            </div>
+          </div>
+        }
+        <div class="bg-violet-50 rounded-xl p-3">
+          <div class="text-xs font-medium text-violet-700 mb-1">Recommendation</div>
+          <p class="text-sm text-violet-800">{{ vendorAiModalResult()!.recommendation }}</p>
+        </div>
+        <div class="bg-gray-50 rounded-xl p-3">
+          <div class="text-xs font-medium text-gray-500 mb-1">AI Reasoning</div>
+          <p class="text-sm text-gray-700">{{ vendorAiModalResult()!.reasoning }}</p>
+        </div>
+      </div>
+      <div class="px-6 py-4 border-t border-gray-100 flex justify-end">
+        <button (click)="showVendorAiModal.set(false)" class="px-4 py-2 bg-gray-100 rounded-xl text-sm text-gray-700 hover:bg-gray-200">Close</button>
+      </div>
+    </div>
+  </div>
+}
 
 <!-- Detail Drawer -->
 @if (showDetail() && detail()) {

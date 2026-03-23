@@ -302,6 +302,77 @@
                 </div>
               </div>
             </div>
+
+
+            <!-- AI Insights Panel -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                  <i class="bi bi-robot text-violet-600"></i> AI Insights
+                </h3>
+                <button (click)="showAiPanel.update(v => !v)"
+                        class="text-xs text-violet-600 hover:text-violet-800 border border-violet-200 px-2 py-1 rounded-lg hover:bg-violet-50 transition">
+                  {{ showAiPanel() ? 'Hide' : 'Show' }}
+                </button>
+              </div>
+
+              @if (showAiPanel()) {
+                @if (aiError()) {
+                  <p class="text-xs text-red-600 mb-2">{{ aiError() }}</p>
+                }
+
+                <!-- Churn Prediction -->
+                <div class="mb-3">
+                  <div class="flex items-center justify-between mb-1.5">
+                    <span class="text-xs font-medium text-gray-600">Churn Risk</span>
+                    <button (click)="runChurnPrediction()" [disabled]="aiChurnLoading()"
+                            class="text-xs px-2 py-0.5 border border-gray-200 rounded text-gray-500 hover:border-violet-300 hover:text-violet-600 transition disabled:opacity-40">
+                      @if (aiChurnLoading()) { <i class="bi bi-hourglass-split animate-spin"></i> } @else { Analyse }
+                    </button>
+                  </div>
+                  @if (churnResult()) {
+                    <div class="space-y-1.5">
+                      <div class="flex items-center justify-between">
+                        <span class="px-2 py-0.5 rounded-full text-xs font-medium {{ churnBadge(churnResult()!.churnScore) }}">
+                          {{ churnResult()!.riskLevel }} — {{ churnResult()!.churnScore }}/100
+                        </span>
+                      </div>
+                      <p class="text-xs text-gray-500 italic">{{ churnResult()!.recommendation }}</p>
+                      <div class="flex flex-wrap gap-1">
+                        @for (s of churnResult()!.signals; track s) {
+                          <span class="px-1.5 py-0.5 bg-red-50 text-red-600 text-xs rounded">{{ s }}</span>
+                        }
+                      </div>
+                    </div>
+                  } @else {
+                    <p class="text-xs text-gray-400">Click Analyse to predict churn risk</p>
+                  }
+                </div>
+
+                <div class="border-t border-gray-100 pt-3">
+                  <!-- Marketing Personalisation -->
+                  <div class="flex items-center justify-between mb-1.5">
+                    <span class="text-xs font-medium text-gray-600">Personalised Offer</span>
+                    <button (click)="runMarketing()" [disabled]="aiMktLoading()"
+                            class="text-xs px-2 py-0.5 border border-gray-200 rounded text-gray-500 hover:border-violet-300 hover:text-violet-600 transition disabled:opacity-40">
+                      @if (aiMktLoading()) { <i class="bi bi-hourglass-split animate-spin"></i> } @else { Generate }
+                    </button>
+                  </div>
+                  @if (marketingResult()) {
+                    <div class="bg-violet-50 rounded-lg p-2.5 space-y-1 text-xs">
+                      <div class="font-medium text-violet-800">{{ marketingResult()!.offerType }} — {{ marketingResult()!.discountPercent }}% off</div>
+                      <div class="text-violet-700 font-medium">{{ marketingResult()!.subjectLine }}</div>
+                      <div class="text-violet-600 italic">{{ marketingResult()!.messageBody }}</div>
+                      <div class="text-violet-500">Expires in {{ marketingResult()!.urgencyHours }}h</div>
+                    </div>
+                  } @else {
+                    <p class="text-xs text-gray-400">Generate a personalised marketing offer</p>
+                  }
+                </div>
+              } @else {
+                <p class="text-xs text-gray-400">AI-powered churn prediction and marketing personalisation</p>
+              }
+            </div>
           </div>
         </div>
       }
