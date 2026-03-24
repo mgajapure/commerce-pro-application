@@ -91,7 +91,21 @@
                   <td class="p-4"><span class="text-xs text-gray-500">{{ s.estimatedDeliveryDate ? formatDateShort(s.estimatedDeliveryDate) : '—' }}</span></td>
                   <td class="p-4"><span class="text-xs text-gray-500">{{ formatDate(s.createdAt) }}</span></td>
                   <td class="p-4">
-                    <button (click)="openDetail(s.id)" class="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"><i class="bi bi-eye"></i></button>
+                    <div class="flex items-center gap-1">
+                      <button (click)="openDetail(s.id)" class="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"><i class="bi bi-eye"></i></button>
+                      @if (getShippingAi(s.orderId); as aiRes) {
+                        <button (click)="shippingAiModalResult.set(aiRes); showShippingAiModal.set(true)"
+                                class="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium bg-violet-100 text-violet-700 hover:bg-violet-200">
+                          <i class="bi bi-robot"></i> {{ fmtUsd(aiRes.estimatedCostUsd) }}
+                        </button>
+                      } @else {
+                        <button (click)="optimiseShipping(s.orderId)" [disabled]="shippingAiLoading() === s.orderId"
+                                class="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-gray-500 border border-gray-200 hover:border-violet-300 hover:text-violet-600 transition disabled:opacity-40">
+                          @if (shippingAiLoading() === s.orderId) { <i class="bi bi-hourglass-split animate-spin"></i> }
+                          @else { <i class="bi bi-robot"></i> }
+                        </button>
+                      }
+                    </div>
                   </td>
                 </tr>
               }
@@ -207,6 +221,57 @@
         <button (click)="submitCreate()" [disabled]="submitting()" class="px-4 py-2.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl disabled:opacity-60 flex items-center gap-2">
           @if (submitting()) { <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div> } Create Shipment
         </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- AI Shipping Optimisation Modal -->
+@if (showShippingAiModal() && shippingAiModalResult()) {
+  <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+      <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+        <h2 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+          <i class="bi bi-robot text-violet-500"></i> AI Shipping Optimisation
+        </h2>
+        <button (click)="showShippingAiModal.set(false)" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="p-6 space-y-4">
+        <div class="grid grid-cols-2 gap-3">
+          <div class="bg-violet-50 rounded-xl p-3 text-center border border-violet-100">
+            <p class="text-xs text-violet-600 mb-1">Recommended Carrier</p>
+            <p class="font-bold text-violet-800">{{ shippingAiModalResult()!.carrier }}</p>
+          </div>
+          <div class="bg-emerald-50 rounded-xl p-3 text-center border border-emerald-100">
+            <p class="text-xs text-emerald-600 mb-1">Estimated Cost</p>
+            <p class="font-bold text-emerald-700">{{ fmtUsd(shippingAiModalResult()!.estimatedCostUsd) }}</p>
+          </div>
+          <div class="bg-blue-50 rounded-xl p-3 text-center border border-blue-100">
+            <p class="text-xs text-blue-600 mb-1">Estimated Days</p>
+            <p class="font-bold text-blue-700">{{ shippingAiModalResult()!.estimatedDays }}d</p>
+          </div>
+          <div class="bg-amber-50 rounded-xl p-3 text-center border border-amber-100">
+            <p class="text-xs text-amber-600 mb-1">Service Level</p>
+            <p class="font-bold text-amber-700">{{ shippingAiModalResult()!.serviceLevel }}</p>
+          </div>
+        </div>
+        @if (shippingAiModalResult()!.signals?.length > 0) {
+          <div>
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Signals</p>
+            <div class="flex flex-wrap gap-1.5">
+              @for (s of shippingAiModalResult()!.signals; track s) {
+                <span class="px-2.5 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">{{ s }}</span>
+              }
+            </div>
+          </div>
+        }
+        <div class="bg-gray-50 rounded-xl p-4">
+          <div class="text-xs font-medium text-gray-500 mb-1">AI Reasoning</div>
+          <p class="text-sm text-gray-700">{{ shippingAiModalResult()!.reasoning }}</p>
+        </div>
+      </div>
+      <div class="px-6 py-4 border-t border-gray-100 flex justify-end">
+        <button (click)="showShippingAiModal.set(false)" class="px-4 py-2 bg-gray-100 rounded-xl text-sm text-gray-700 hover:bg-gray-200">Close</button>
       </div>
     </div>
   </div>

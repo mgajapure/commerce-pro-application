@@ -7,6 +7,9 @@ import { HttpClientModule } from '@angular/common/http';
 
 import { DemandForecast, ForecastAccuracy } from '../../../core/models/inventory';
 import { DemandForecastService } from '../../../core/services/inventory/demand-forecast.service';
+import { AiService } from '../../../core/services/ai/ai.service';
+import { AiDemandForecastResult } from '../../../core/models/ai/ai.model';
+import { Subject, takeUntil } from 'rxjs';
 
 @Component({
   selector: 'app-forecasting',
@@ -18,6 +21,14 @@ import { DemandForecastService } from '../../../core/services/inventory/demand-f
 export class Forecasting implements OnInit {
   private fb = inject(FormBuilder);
   private forecastService = inject(DemandForecastService);
+  private aiSvc = inject(AiService);
+  private destroy$ = new Subject<void>();
+
+  // AI Demand Forecast
+  aiForecastResults = signal<Record<string, AiDemandForecastResult>>({});
+  aiForecastLoading = signal<string | null>(null);
+  showAiForecastModal = signal(false);
+  aiForecastModalResult = signal<AiDemandForecastResult | null>(null);
 
   activeView = signal<'list' | 'detail' | 'create'>('list');
   selectedForecast = signal<DemandForecast | null>(null);
@@ -293,4 +304,27 @@ export class Forecasting implements OnInit {
   });
 
   protected readonly Math = Math;
+
+  // ─── AI Demand Forecast ───────────────────────────────────────────────────
+
+  runAiForecast(productId: string, days = 30): void {
+    this.aiForecastLoading.set(productId);
+    this.aiSvc.forecastDemand(productId, days).pipe(takeUntil(this.destroy$)).subscribe({
+      next: r => {
+        this.aiForecastResults.update(m => ({ ...m, [productId]: r }));
+        this.aiForecastModalResult.set(r);
+        this.showAiForecastModal.set(true);
+        this.aiForecastLoading.set(null);
+      },
+      error: () => this.aiForecastLoading.set(null)
+    });
+  }
+
+  getAiForecast(productId: string): AiDemandForecastResult | null { return this.aiForecastResults()[productId] ?? null; }
+
+  confidenceBadge(level: string): string {
+    if (level === 'HIGH') return 'bg-green-100 text-green-700';
+    if (level === 'MEDIUM') return 'bg-yellow-100 text-yellow-700';
+    return 'bg-red-100 text-red-700';
+  }
 }

@@ -451,6 +451,23 @@
                                         title="View History">
                                         <i class="bi bi-clock-history"></i>
                                     </button>
+                                    @if (getAiForecast(forecast.productId); as aiRes) {
+                                      <button (click)="$event.stopPropagation(); aiForecastModalResult.set(aiRes); showAiForecastModal.set(true)"
+                                              class="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium {{ confidenceBadge(aiRes.confidenceLevel) }}">
+                                        <i class="bi bi-robot"></i>
+                                      </button>
+                                    } @else {
+                                      <button (click)="$event.stopPropagation(); runAiForecast(forecast.productId)"
+                                              [disabled]="aiForecastLoading() === forecast.productId"
+                                              class="p-2 text-gray-400 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-colors disabled:opacity-40"
+                                              title="AI Demand Forecast">
+                                        @if (aiForecastLoading() === forecast.productId) {
+                                          <i class="bi bi-hourglass-split animate-spin"></i>
+                                        } @else {
+                                          <i class="bi bi-robot"></i>
+                                        }
+                                      </button>
+                                    }
                                     <button
                                         class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
                                         <i class="bi bi-three-dots-vertical"></i>
@@ -696,6 +713,51 @@
                 <i class="bi bi-magic mr-2"></i>
                 Generate Forecast
             </button>
+        </div>
+    </div>
+</div>
+}
+
+<!-- AI Demand Forecast Modal -->
+@if (showAiForecastModal() && aiForecastModalResult()) {
+<div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md animate-slide-up">
+        <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+            <h2 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <i class="bi bi-robot text-violet-500"></i> AI Demand Forecast
+            </h2>
+            <button (click)="showAiForecastModal.set(false)" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <div class="p-6 space-y-4">
+            <div class="flex items-center justify-between">
+                <span class="text-sm text-gray-500">Confidence Level</span>
+                <span class="px-3 py-1 rounded-full text-sm font-medium {{ confidenceBadge(aiForecastModalResult()!.confidenceLevel) }}">{{ aiForecastModalResult()!.confidenceLevel }}</span>
+            </div>
+            <div class="grid grid-cols-3 gap-3">
+                <div class="bg-emerald-50 rounded-xl p-3 text-center border border-emerald-100">
+                    <p class="text-xs text-emerald-600 mb-1">Predicted Demand</p>
+                    <p class="font-bold text-emerald-700">{{ aiForecastModalResult()!.predictedDemand }}</p>
+                </div>
+                <div class="bg-blue-50 rounded-xl p-3 text-center border border-blue-100">
+                    <p class="text-xs text-blue-600 mb-1">Reorder Point</p>
+                    <p class="font-bold text-blue-700">{{ aiForecastModalResult()!.reorderPoint }}</p>
+                </div>
+                <div class="bg-amber-50 rounded-xl p-3 text-center border border-amber-100">
+                    <p class="text-xs text-amber-600 mb-1">Safety Stock</p>
+                    <p class="font-bold text-amber-700">{{ aiForecastModalResult()!.safetyStock }}</p>
+                </div>
+            </div>
+            <div class="flex items-center justify-between">
+                <span class="text-sm text-gray-500">Forecast Days</span>
+                <span class="text-sm font-medium text-gray-900">{{ aiForecastModalResult()!.forecastDays }} days</span>
+            </div>
+            <div class="bg-gray-50 rounded-xl p-4">
+                <div class="text-xs font-medium text-gray-500 mb-1">AI Reasoning</div>
+                <p class="text-sm text-gray-700">{{ aiForecastModalResult()!.reasoning }}</p>
+            </div>
+        </div>
+        <div class="px-6 py-4 border-t border-gray-100 flex justify-end">
+            <button (click)="showAiForecastModal.set(false)" class="px-4 py-2 bg-gray-100 rounded-xl text-sm text-gray-700 hover:bg-gray-200">Close</button>
         </div>
     </div>
 </div>

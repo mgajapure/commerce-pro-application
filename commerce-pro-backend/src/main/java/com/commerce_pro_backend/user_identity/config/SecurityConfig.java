@@ -328,6 +328,26 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/v1/finance/budgets/**").hasAuthority("finance:budget:manage")
                         .requestMatchers(HttpMethod.POST, "/v1/finance/budgets/*/approve").hasAuthority("finance:budget:approve")
 
+                        // AI Features
+                        .requestMatchers(HttpMethod.POST,  "/v1/ai/chatbot/chat").hasAuthority("ai:chatbot:use")
+                        .requestMatchers(HttpMethod.GET,   "/v1/ai/chatbot/sessions/**").hasAuthority("ai:admin")
+                        .requestMatchers(HttpMethod.POST,  "/v1/ai/fraud/**").hasAuthority("ai:fraud:analyse")
+                        .requestMatchers(HttpMethod.POST,  "/v1/ai/churn/**").hasAuthority("ai:churn:analyse")
+                        .requestMatchers(HttpMethod.POST,  "/v1/ai/forecast/**").hasAuthority("ai:forecast:run")
+                        .requestMatchers(HttpMethod.POST,  "/v1/ai/sentiment/**").hasAuthority("ai:sentiment:analyse")
+                        .requestMatchers(HttpMethod.POST,  "/v1/ai/pricing/**").hasAuthority("ai:pricing:run")
+                        .requestMatchers(HttpMethod.POST,  "/v1/ai/products/**").hasAuthority("ai:product:generate")
+                        .requestMatchers(HttpMethod.POST,  "/v1/ai/seo/**").hasAuthority("ai:seo:optimise")
+                        .requestMatchers(HttpMethod.POST,  "/v1/ai/inventory/**").hasAuthority("ai:inventory:optimise")
+                        .requestMatchers(HttpMethod.POST,  "/v1/ai/marketing/**").hasAuthority("ai:marketing:personalise")
+                        .requestMatchers(HttpMethod.POST,  "/v1/ai/returns/**").hasAuthority("ai:returns:analyse")
+                        .requestMatchers(HttpMethod.POST,  "/v1/ai/shipping/**").hasAuthority("ai:shipping:optimise")
+                        .requestMatchers(HttpMethod.POST,  "/v1/ai/vendors/**").hasAuthority("ai:vendor:analyse")
+                        .requestMatchers(HttpMethod.POST,  "/v1/ai/budget-anomaly/**").hasAuthority("ai:budget:analyse")
+                        .requestMatchers(HttpMethod.POST,  "/v1/ai/nl-report/**").hasAuthority("ai:nl-report:use")
+                        .requestMatchers(HttpMethod.GET,   "/v1/admin/ai/**").hasAuthority("ai:config:manage")
+                        .requestMatchers(HttpMethod.PATCH, "/v1/admin/ai/**").hasAuthority("ai:config:manage")
+
                         // Dashboard
                         // Permission registered (dashboard:read) — assign to roles via Identity UI
                         .requestMatchers("/v1/dashboard/**").authenticated()

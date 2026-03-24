@@ -205,6 +205,25 @@ public class PermissionRegistry {
         register("finance:rates:read",     "View Exchange Rates",                     PermissionCategory.FINANCE_MANAGEMENT, 1);
         register("finance:rates:manage",   "Manage Exchange Rates",                   PermissionCategory.FINANCE_MANAGEMENT, 2);
 
+        // AI Features
+        register("ai:chatbot:use",            "Use AI Support Chatbot",                  PermissionCategory.AI_FEATURES, 1);
+        register("ai:nl-report:use",          "Use AI NL Business Analyst",              PermissionCategory.AI_FEATURES, 2);
+        register("ai:fraud:analyse",          "Run AI Fraud Analysis",                   PermissionCategory.AI_FEATURES, 3);
+        register("ai:churn:analyse",          "Run AI Churn Prediction",                 PermissionCategory.AI_FEATURES, 2);
+        register("ai:forecast:run",           "Run AI Demand Forecast",                  PermissionCategory.AI_FEATURES, 2);
+        register("ai:sentiment:analyse",      "Run AI Sentiment Analysis",               PermissionCategory.AI_FEATURES, 2);
+        register("ai:pricing:run",            "Run AI Pricing Recommendations",          PermissionCategory.AI_FEATURES, 3);
+        register("ai:product:generate",       "Generate AI Product Content",             PermissionCategory.AI_FEATURES, 2);
+        register("ai:seo:optimise",           "Run AI SEO Optimisation",                 PermissionCategory.AI_FEATURES, 2);
+        register("ai:inventory:optimise",     "Run AI Inventory Optimisation",           PermissionCategory.AI_FEATURES, 2);
+        register("ai:marketing:personalise",  "Run AI Marketing Personalisation",        PermissionCategory.AI_FEATURES, 2);
+        register("ai:returns:analyse",        "Run AI Returns Analysis",                 PermissionCategory.AI_FEATURES, 2);
+        register("ai:shipping:optimise",      "Run AI Shipping Optimisation",            PermissionCategory.AI_FEATURES, 2);
+        register("ai:vendor:analyse",         "Run AI Vendor Analysis",                  PermissionCategory.AI_FEATURES, 2);
+        register("ai:budget:analyse",         "Run AI Budget Anomaly Detection",         PermissionCategory.AI_FEATURES, 3);
+        register("ai:admin",                  "View AI Sessions & Insights",             PermissionCategory.AI_FEATURES, 3);
+        register("ai:config:manage",          "Manage AI Configuration & Budgets",       PermissionCategory.AI_FEATURES, 4, true);
+
         log.info("Registered {} system permissions", systemPermissions.size());
     }
 

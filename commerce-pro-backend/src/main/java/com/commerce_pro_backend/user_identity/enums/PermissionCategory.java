@@ -15,5 +15,6 @@ public enum PermissionCategory {
     INVENTORY_MANAGEMENT,   // Stock levels, warehouses, valuations, forecasts
     ANALYTICS_REPORTING,    // Analytics, reports, KPIs
     PAYMENT_MANAGEMENT,     // Transactions, refunds, chargebacks, payouts, links
-    FINANCE_MANAGEMENT      // Analytics, reports, KPIs
+    FINANCE_MANAGEMENT,     // Analytics, reports, KPIs
+    AI_FEATURES             // AI-powered features: fraud, churn, forecast, chatbot, etc.
 }

@@ -9,6 +9,9 @@ import { Dropdown, DropdownItem } from '../../../shared/components/dropdown/drop
 import { Review, ReviewStatus, ReviewReply } from '../../../core/models/catalog/review.model';
 import { ReviewService } from '../../../core/services/catalog/review.service';
 import { AlertService } from '../../../shared/services/alert.service';
+import { AiService } from '../../../core/services/ai/ai.service';
+import { AiSentimentResult } from '../../../core/models/ai/ai.model';
+import { Subject, takeUntil } from 'rxjs';
 
 @Component({
   selector: 'app-reviews',
@@ -21,6 +24,13 @@ export class Reviews implements OnInit {
   private fb            = inject(FormBuilder);
   private reviewService = inject(ReviewService);
   private alertSvc      = inject(AlertService);
+  private aiSvc         = inject(AiService);
+  private destroy$      = new Subject<void>();
+
+  // AI Sentiment
+  sentimentResults  = signal<Record<string, AiSentimentResult>>({});
+  sentimentLoading  = signal<string | null>(null);
+  batchLoading      = signal(false);
 
   // View State
   showReplyModal = signal(false);
@@ -346,11 +356,45 @@ export class Reviews implements OnInit {
     const now = new Date();
     const reviewDate = new Date(date);
     const diffInDays = Math.floor((now.getTime() - reviewDate.getTime()) / (1000 * 60 * 60 * 24));
-    
+
     if (diffInDays === 0) return 'Today';
     if (diffInDays === 1) return 'Yesterday';
     if (diffInDays < 7) return `${diffInDays} days ago`;
     if (diffInDays < 30) return `${Math.floor(diffInDays / 7)} weeks ago`;
     return this.formatDate(date);
+  }
+
+  // ─── AI Sentiment ─────────────────────────────────────────────────────────
+
+  analyseSentiment(reviewId: string): void {
+    this.sentimentLoading.set(reviewId);
+    this.aiSvc.analyseReviewSentiment(reviewId).pipe(takeUntil(this.destroy$)).subscribe({
+      next: r => { this.sentimentResults.update(m => ({ ...m, [reviewId]: r })); this.sentimentLoading.set(null); },
+      error: () => this.sentimentLoading.set(null)
+    });
+  }
+
+  batchAnalyse(): void {
+    const ids = this.reviews().slice(0, 10).map((r: Review) => r.id);
+    if (!ids.length) return;
+    this.batchLoading.set(true);
+    this.aiSvc.batchAnalyseSentiment(ids).pipe(takeUntil(this.destroy$)).subscribe({
+      next: res => {
+        const map: Record<string, AiSentimentResult> = {};
+        res.results.forEach(r => { map[r.reviewId] = r; });
+        this.sentimentResults.update(m => ({ ...m, ...map }));
+        this.batchLoading.set(false);
+        this.alertSvc.success(`${res.results.length} reviews analysed`);
+      },
+      error: () => this.batchLoading.set(false)
+    });
+  }
+
+  getSentiment(id: string): AiSentimentResult | null { return this.sentimentResults()[id] ?? null; }
+
+  sentimentBadge(label: string): string {
+    if (label === 'POSITIVE') return 'bg-green-100 text-green-700';
+    if (label === 'NEGATIVE') return 'bg-red-100 text-red-700';
+    return 'bg-yellow-100 text-yellow-700';
   }
 }

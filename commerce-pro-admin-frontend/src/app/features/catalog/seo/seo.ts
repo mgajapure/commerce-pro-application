@@ -9,6 +9,9 @@ import { Dropdown, DropdownItem } from '../../../shared/components/dropdown/drop
 import { SeoTemplate, SeoMetadata } from '../../../core/models/catalog/seo.model';
 import { SeoService } from '../../../core/services/catalog/seo.service';
 import { AlertService } from '../../../shared/services/alert.service';
+import { AiService } from '../../../core/services/ai/ai.service';
+import { AiSeoResult } from '../../../core/models/ai/ai.model';
+import { Subject, takeUntil } from 'rxjs';
 
 interface SeoAlert {
   id: string;
@@ -28,6 +31,14 @@ export class Seo implements OnInit {
   private fb         = inject(FormBuilder);
   private seoService = inject(SeoService);
   private alertSvc   = inject(AlertService);
+  private aiSvc      = inject(AiService);
+  private destroy$   = new Subject<void>();
+
+  // AI SEO
+  aiSeoResults  = signal<Record<string, AiSeoResult>>({});
+  aiSeoLoading  = signal<string | null>(null);
+  showSeoModal  = signal(false);
+  seoModalResult = signal<AiSeoResult | null>(null);
 
   // View State
   showModal = signal(false);
@@ -386,4 +397,35 @@ export class Seo implements OnInit {
       this.generateRobotsTxt();
     }
   }
+
+  // ─── AI SEO ───────────────────────────────────────────────────────────────
+
+  previewAiSeo(productId: string): void {
+    this.aiSeoLoading.set(productId);
+    this.aiSvc.previewSeo(productId).pipe(takeUntil(this.destroy$)).subscribe({
+      next: r => {
+        this.aiSeoResults.update(m => ({ ...m, [productId]: r }));
+        this.seoModalResult.set(r);
+        this.showSeoModal.set(true);
+        this.aiSeoLoading.set(null);
+      },
+      error: () => { this.aiSeoLoading.set(null); this.alertSvc.error('AI SEO preview failed'); }
+    });
+  }
+
+  applyAiSeo(productId: string): void {
+    this.aiSeoLoading.set(productId + '_apply');
+    this.aiSvc.optimiseSeo(productId).pipe(takeUntil(this.destroy$)).subscribe({
+      next: r => {
+        this.aiSeoResults.update(m => ({ ...m, [productId]: r }));
+        this.aiSeoLoading.set(null);
+        this.alertSvc.success('AI SEO metadata saved to product');
+      },
+      error: () => { this.aiSeoLoading.set(null); this.alertSvc.error('AI SEO optimise failed'); }
+    });
+  }
+
+  getAiSeo(templateId: string): AiSeoResult | null { return this.aiSeoResults()[templateId] ?? null; }
+
+  closeSeoModal(): void { this.showSeoModal.set(false); this.seoModalResult.set(null); }
 }

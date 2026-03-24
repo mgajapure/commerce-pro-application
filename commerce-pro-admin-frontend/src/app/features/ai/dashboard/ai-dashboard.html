@@ -1,0 +1,203 @@
+<div class="p-6 space-y-6">
+
+  <!-- Header -->
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">AI Command Centre</h1>
+      <p class="text-sm text-gray-500 mt-0.5">Real-time AI usage, spend, and health overview</p>
+    </div>
+    <div class="flex gap-2">
+      <a routerLink="/ai/config"
+         class="flex items-center gap-1.5 px-3 py-2 text-sm border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">
+        <i class="bi bi-sliders text-sm"></i> Configure
+      </a>
+      <button (click)="load()"
+              class="flex items-center gap-1.5 px-3 py-2 text-sm bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition">
+        <i class="bi bi-arrow-clockwise text-sm"></i> Refresh
+      </button>
+    </div>
+  </div>
+
+  <!-- Error -->
+  @if (error()) {
+    <div class="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 text-sm flex items-center gap-2">
+      <i class="bi bi-exclamation-circle"></i> {{ error() }}
+    </div>
+  }
+
+  <!-- Loading skeleton -->
+  @if (isLoading()) {
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      @for (i of [1,2,3,4]; track i) {
+        <div class="bg-white rounded-xl border border-gray-200 p-5 animate-pulse">
+          <div class="h-4 bg-gray-200 rounded w-1/2 mb-3"></div>
+          <div class="h-8 bg-gray-200 rounded w-3/4"></div>
+        </div>
+      }
+    </div>
+  }
+
+  @if (!isLoading() && dashboard()) {
+    <!-- KPI Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+
+      <!-- Today Spend -->
+      <div class="bg-white rounded-xl border border-gray-200 p-5">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-sm text-gray-500 font-medium">Today's Spend</span>
+          <span class="w-8 h-8 flex items-center justify-center rounded-lg bg-violet-100">
+            <i class="bi bi-cash-stack text-violet-600 text-sm"></i>
+          </span>
+        </div>
+        <div class="text-2xl font-bold text-gray-900">{{ fmtUsd(dashboard()!.todaySpendUsd) }}</div>
+        <div class="mt-2">
+          <div class="flex justify-between text-xs text-gray-500 mb-1">
+            <span>Budget: {{ fmtUsd(dashboard()!.dailyBudgetUsd) }}</span>
+            <span>{{ spendPercent() }}%</span>
+          </div>
+          <div class="w-full bg-gray-100 rounded-full h-1.5">
+            <div class="h-1.5 rounded-full transition-all" [class]="spendBarColor(spendPercent())"
+                 [style.width]="spendPercent() + '%'"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Total Calls -->
+      <div class="bg-white rounded-xl border border-gray-200 p-5">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-sm text-gray-500 font-medium">Calls Today</span>
+          <span class="w-8 h-8 flex items-center justify-center rounded-lg bg-blue-100">
+            <i class="bi bi-lightning text-blue-600 text-sm"></i>
+          </span>
+        </div>
+        <div class="text-2xl font-bold text-gray-900">{{ formatNum(dashboard()!.totalCallsToday) }}</div>
+        <div class="text-xs text-gray-500 mt-1">
+          <span class="text-green-600 font-medium">{{ formatNum(dashboard()!.successCallsToday) }} success</span>
+          &nbsp;·&nbsp;
+          <span class="text-red-500">{{ formatNum(dashboard()!.failedCallsToday) }} failed</span>
+        </div>
+      </div>
+
+      <!-- Success Rate -->
+      <div class="bg-white rounded-xl border border-gray-200 p-5">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-sm text-gray-500 font-medium">Success Rate</span>
+          <span class="w-8 h-8 flex items-center justify-center rounded-lg bg-green-100">
+            <i class="bi bi-check-circle text-green-600 text-sm"></i>
+          </span>
+        </div>
+        <div class="text-2xl font-bold" [class]="successRateColor(successRate())">{{ successRate() }}%</div>
+        <div class="text-xs text-gray-500 mt-1">Last 24 hours</div>
+      </div>
+
+      <!-- Slow Calls -->
+      <div class="bg-white rounded-xl border border-gray-200 p-5">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-sm text-gray-500 font-medium">Slow Calls (>3s)</span>
+          <span class="w-8 h-8 flex items-center justify-center rounded-lg bg-yellow-100">
+            <i class="bi bi-hourglass-split text-yellow-600 text-sm"></i>
+          </span>
+        </div>
+        <div class="text-2xl font-bold text-gray-900">{{ formatNum(dashboard()!.slowCallsToday) }}</div>
+        <div class="text-xs text-gray-500 mt-1">Exceeding 3 000ms threshold</div>
+      </div>
+    </div>
+
+    <!-- Usage Table + Spend Bars -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+      <!-- Per-Feature Spend Bars -->
+      <div class="bg-white rounded-xl border border-gray-200 p-5">
+        <h2 class="text-base font-semibold text-gray-800 mb-4">Spend by Feature (Today)</h2>
+        @if (topFeatureBySpend().length === 0) {
+          <p class="text-sm text-gray-400 text-center py-8">No spend data yet</p>
+        }
+        <div class="space-y-3">
+          @for (item of topFeatureBySpend(); track item.feature) {
+            <div>
+              <div class="flex items-center justify-between text-sm mb-1">
+                <div class="flex items-center gap-2">
+                  <i class="bi bi-{{ featureIcon(item.feature) }} text-violet-500 text-xs"></i>
+                  <span class="text-gray-700 font-medium">{{ featureLabel(item.feature) }}</span>
+                </div>
+                <span class="text-gray-500 text-xs">{{ fmt(item.totalCostUsd) }}</span>
+              </div>
+              <div class="w-full bg-gray-100 rounded-full h-2">
+                <div class="h-2 rounded-full bg-violet-500 transition-all"
+                     [style.width]="spendBarWidth(item) + '%'"></div>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Usage Summary Table -->
+      <div class="bg-white rounded-xl border border-gray-200 p-5">
+        <h2 class="text-base font-semibold text-gray-800 mb-4">Feature Usage Summary</h2>
+        <div class="overflow-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-xs text-gray-500 border-b border-gray-100">
+                <th class="pb-2 text-left font-medium">Feature</th>
+                <th class="pb-2 text-right font-medium">Calls</th>
+                <th class="pb-2 text-right font-medium">Tokens</th>
+                <th class="pb-2 text-right font-medium">Cost</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of usage(); track item.feature) {
+                <tr class="border-b border-gray-50 hover:bg-gray-50">
+                  <td class="py-2.5">
+                    <div class="flex items-center gap-2">
+                      <i class="bi bi-{{ featureIcon(item.feature) }} text-violet-400 text-xs"></i>
+                      <span class="text-gray-800">{{ featureLabel(item.feature) }}</span>
+                    </div>
+                  </td>
+                  <td class="py-2.5 text-right text-gray-600">{{ formatNum(item.totalCalls) }}</td>
+                  <td class="py-2.5 text-right text-gray-600">{{ formatNum(item.totalTokens) }}</td>
+                  <td class="py-2.5 text-right font-medium text-gray-800">{{ fmt(item.totalCostUsd) }}</td>
+                </tr>
+              }
+              @if (usage().length === 0) {
+                <tr>
+                  <td colspan="4" class="py-8 text-center text-gray-400">No usage data for this period</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Links -->
+    <div class="bg-white rounded-xl border border-gray-200 p-5">
+      <h2 class="text-base font-semibold text-gray-800 mb-4">AI Tools</h2>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <a routerLink="/ai/config"
+           class="flex flex-col items-center gap-2 p-4 rounded-lg border border-gray-200 hover:border-violet-300 hover:bg-violet-50 transition text-center">
+          <i class="bi bi-sliders text-violet-600 text-xl"></i>
+          <span class="text-sm font-medium text-gray-700">Feature Config</span>
+          <span class="text-xs text-gray-400">Toggle & tune each AI feature</span>
+        </a>
+        <a routerLink="/ai/nl-report"
+           class="flex flex-col items-center gap-2 p-4 rounded-lg border border-gray-200 hover:border-violet-300 hover:bg-violet-50 transition text-center">
+          <i class="bi bi-bar-chart-line text-violet-600 text-xl"></i>
+          <span class="text-sm font-medium text-gray-700">NL Analyst</span>
+          <span class="text-xs text-gray-400">Ask business questions in plain English</span>
+        </a>
+        <a routerLink="/ai/chatbot-sessions"
+           class="flex flex-col items-center gap-2 p-4 rounded-lg border border-gray-200 hover:border-violet-300 hover:bg-violet-50 transition text-center">
+          <i class="bi bi-chat-dots text-violet-600 text-xl"></i>
+          <span class="text-sm font-medium text-gray-700">Chatbot Sessions</span>
+          <span class="text-xs text-gray-400">Review customer support conversations</span>
+        </a>
+        <a routerLink="/payments/transactions"
+           class="flex flex-col items-center gap-2 p-4 rounded-lg border border-gray-200 hover:border-violet-300 hover:bg-violet-50 transition text-center">
+          <i class="bi bi-shield-exclamation text-violet-600 text-xl"></i>
+          <span class="text-sm font-medium text-gray-700">Fraud Detection</span>
+          <span class="text-xs text-gray-400">Analyse transactions for risk</span>
+        </a>
+      </div>
+    </div>
+  }
+</div>

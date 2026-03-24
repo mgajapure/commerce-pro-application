@@ -7,17 +7,20 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 
 import { InventoryService } from '../../../core/services/inventory/inventory.service';
-import { 
-  InventoryItem, 
-  InventoryStats, 
-  Warehouse, 
+import {
+  InventoryItem,
+  InventoryStats,
+  Warehouse,
   StockMovement,
   StockStatus,
-  InventoryFilter 
+  InventoryFilter
 } from '../../../core/models/inventory';
 
 import { PageParams } from '../../../core/models/common';
 import { AlertService } from '../../../shared/services/alert.service';
+import { AiService } from '../../../core/services/ai/ai.service';
+import { AiInventoryResult } from '../../../core/models/ai/ai.model';
+import { Subject, takeUntil } from 'rxjs';
 
 interface InventoryAlert {
   id: string;
@@ -47,6 +50,14 @@ export class InventoryOverview implements OnInit {
   // Services
   private inventoryService = inject(InventoryService);
   private alertSvc         = inject(AlertService);
+  private aiSvc            = inject(AiService);
+  private destroy$         = new Subject<void>();
+
+  // AI Inventory Optimisation
+  inventoryAiResults = signal<Record<string, AiInventoryResult>>({});
+  inventoryAiLoading = signal<string | null>(null);
+  showInventoryAiModal = signal(false);
+  inventoryAiModalResult = signal<AiInventoryResult | null>(null);
 
   // Loading states
   isLoadingStats = signal(false);
@@ -691,4 +702,27 @@ export class InventoryOverview implements OnInit {
   }
 
   protected readonly Math = Math;
+
+  // ─── AI Inventory Optimisation ────────────────────────────────────────────
+
+  optimiseInventoryAi(productId: string): void {
+    this.inventoryAiLoading.set(productId);
+    this.aiSvc.optimiseInventory(productId).pipe(takeUntil(this.destroy$)).subscribe({
+      next: r => {
+        this.inventoryAiResults.update(m => ({ ...m, [productId]: r }));
+        this.inventoryAiModalResult.set(r);
+        this.showInventoryAiModal.set(true);
+        this.inventoryAiLoading.set(null);
+      },
+      error: () => this.inventoryAiLoading.set(null)
+    });
+  }
+
+  getInventoryAi(productId: string): AiInventoryResult | null { return this.inventoryAiResults()[productId] ?? null; }
+
+  inventoryRecBadge(rec: string): string {
+    if (rec === 'RESTOCK') return 'bg-red-100 text-red-700';
+    if (rec === 'REDUCE') return 'bg-yellow-100 text-yellow-700';
+    return 'bg-green-100 text-green-700';
+  }
 }
