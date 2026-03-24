@@ -1,3 +1,4 @@
+import { API_HOST } from '../../config/api-config';
 // src/app/core/services/attribute.service.ts
 // Attribute service wired to real backend API
 
@@ -13,7 +14,7 @@ import {
 } from '../../models/catalog/attribute.model';
 import { ApiResponse, PageResponse, PageParams, buildPageParams } from '../../models/common';
 
-const BASE = 'http://localhost:8080/api/v1/attributes';
+const BASE = `${API_HOST}/api/v1/attributes`;
 
 @Injectable({ providedIn: 'root' })
 export class AttributeService {

@@ -1,3 +1,4 @@
+import { API_HOST } from '../../config/api-config';
 // src/app/core/services/seo.service.ts
 // SEO service wired to real Spring Boot backend API
 
@@ -79,7 +80,7 @@ export interface SeoStatsResponse {
   providedIn: 'root'
 })
 export class SeoService {
-  private readonly BASE_URL = 'http://localhost:8080/api/v1/seo';
+  private readonly BASE_URL = `${API_HOST}/api/v1/seo`;
   private readonly http = inject(HttpClient);
 
   // ── Signals ──────────────────────────────────────────────────────────────

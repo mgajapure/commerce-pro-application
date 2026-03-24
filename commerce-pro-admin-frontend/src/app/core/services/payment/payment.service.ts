@@ -1,3 +1,4 @@
+import { API_HOST } from '../../config/api-config';
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
@@ -22,7 +23,7 @@ import {
 import { ApiResponse, PageResponse } from '../../models/common';
 import { buildPageParams, PageParams } from '../../models/common';
 
-const BASE = 'http://localhost:8080/api/v1/payments';
+const BASE = `${API_HOST}/api/v1/payments`;
 
 const EMPTY_PAGE = <T>(): PageResponse<T> => ({
   content: [], page: 0, size: 20, totalElements: 0, totalPages: 0, first: true, last: true, empty: true

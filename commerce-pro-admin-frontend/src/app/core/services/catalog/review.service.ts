@@ -1,3 +1,4 @@
+import { API_HOST } from '../../config/api-config';
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
@@ -5,7 +6,7 @@ import { catchError, map, tap } from 'rxjs/operators';
 import { Review, ReviewStats, ReviewReply, ReviewStatus } from '../../models/catalog/review.model';
 import { ApiResponse, PageParams, PageResponse } from '../../models/common';
 
-const BASE = 'http://localhost:8080/api/v1/reviews';
+const BASE = `${API_HOST}/api/v1/reviews`;
 
 export interface ReviewFilterParams extends PageParams {
   productId?: string;

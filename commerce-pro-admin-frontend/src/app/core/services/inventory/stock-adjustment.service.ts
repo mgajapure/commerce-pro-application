@@ -1,3 +1,4 @@
+import { API_HOST } from '../../config/api-config';
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
@@ -5,7 +6,7 @@ import { catchError, map } from 'rxjs/operators';
 import { ApiResponse } from '../../models/common';
 import { StockMovement } from '../../models/inventory';
 
-const BASE = 'http://localhost:8080/api/v1/inventory';
+const BASE = `${API_HOST}/api/v1/inventory`;
 
 export type AdjustmentType = 'count' | 'damage' | 'receiving' | 'return' | 'transfer' | 'correction' | 'expiry';
 export type AdjustmentStatus = 'draft' | 'pending' | 'approved' | 'rejected' | 'completed';

@@ -90,10 +90,10 @@ dependencies {
 	// =============================================
 	// H2 Database (Development)
 	runtimeOnly 'com.h2database:h2'
-	// MySQL Connector (Production) - Uncomment when needed
+	// MySQL Connector (Production)
 	// runtimeOnly 'com.mysql:mysql-connector-j:9.2.0'
-	// PostgreSQL (Production) - Uncomment when needed
-	// runtimeOnly 'org.postgresql:postgresql:42.7.5'
+	// PostgreSQL (Production — Render)
+	runtimeOnly 'org.postgresql:postgresql'
 	
 	// =============================================
 	// Caching (Optional - for performance)

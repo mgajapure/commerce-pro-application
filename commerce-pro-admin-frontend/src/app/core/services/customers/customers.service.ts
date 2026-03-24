@@ -1,3 +1,4 @@
+import { API_HOST } from '../../config/api-config';
 // src/app/core/services/customer/customer-api.service.ts
 // Full backend integration — calls Commerce Pro Spring Boot API
 
@@ -21,7 +22,7 @@ import {
 
 import { ApiResponse, PageResponse, PageParams, buildPageParams } from '../../models/common';
 
-const BASE = 'http://localhost:8080/api';
+const BASE = `${API_HOST}/api`;
 
 @Injectable({ providedIn: 'root' })
 export class CustomerApiService {

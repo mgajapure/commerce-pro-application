@@ -1,3 +1,4 @@
+import { API_HOST } from '../../config/api-config';
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -15,7 +16,7 @@ import {
   AiFeatureType, AiInsightsPage
 } from '../../models/ai/ai.model';
 
-const BASE = 'http://localhost:8080/api/v1';
+const BASE = `${API_HOST}/api/v1`;
 
 /** Unwraps the standard ApiResponse<T> envelope `{ success, data, timestamp }`. */
 type Api<T> = { data: T };

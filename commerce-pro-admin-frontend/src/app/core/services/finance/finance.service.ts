@@ -1,3 +1,4 @@
+import { API_HOST } from '../../config/api-config';
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
@@ -19,7 +20,7 @@ import {
   InvoiceStatus, VendorStatus, VendorInvoiceStatus, ExpenseStatus, JournalEntryType,
 } from '../../models/finance/finance.model';
 
-const BASE = 'http://localhost:8080/api/v1/finance';
+const BASE = `${API_HOST}/api/v1/finance`;
 const empty = <T>(): PageResponse<T> => ({ content:[], page:0, size:20, totalElements:0, totalPages:0, first:true, last:true, empty:true });
 
 @Injectable({ providedIn: 'root' })

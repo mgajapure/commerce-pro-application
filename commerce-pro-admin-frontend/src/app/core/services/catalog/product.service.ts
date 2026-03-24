@@ -1,3 +1,4 @@
+import { API_HOST } from '../../config/api-config';
 // src/app/core/services/product.service.ts
 // Product service - Angular HTTP Client integration with Spring Boot backend
 
@@ -36,7 +37,7 @@ import {
 
 // API Configuration
 const API_CONFIG = {
-  baseUrl: 'http://localhost:8080/api',
+  baseUrl: `${API_HOST}/api`,
   endpoints: {
     products: '/v1/products',
     search: '/v1/products/search',

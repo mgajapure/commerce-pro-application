@@ -1,3 +1,4 @@
+import { API_HOST } from '../../config/api-config';
 // src/app/core/services/fulfillment/shipment.service.ts
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
@@ -9,7 +10,7 @@ import {
 } from '../../models/fulfillment/fulfillment.model';
 import { ApiResponse, PageResponse, PageParams, buildPageParams } from '../../models/common';
 
-const BASE = 'http://localhost:8080/api/v1/shipments';
+const BASE = `${API_HOST}/api/v1/shipments`;
 
 @Injectable({ providedIn: 'root' })
 export class ShipmentService {

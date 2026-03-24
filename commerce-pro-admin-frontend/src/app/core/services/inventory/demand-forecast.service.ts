@@ -1,3 +1,4 @@
+import { API_HOST } from '../../config/api-config';
 // src/app/core/services/inventory/demand-forecast.service.ts
 // Demand forecasting service with API-ready patterns
 
@@ -36,7 +37,7 @@ export interface GenerateForecastRequest {
   providedIn: 'root'
 })
 export class DemandForecastService {
-  private readonly BASE = 'http://localhost:8080/api/v1/inventory/forecasts';
+  private readonly BASE = `${API_HOST}/api/v1/inventory/forecasts`;
 
   private http = inject(HttpClient);
   
