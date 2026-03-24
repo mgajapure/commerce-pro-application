@@ -58,8 +58,7 @@ export class AiInsights implements OnInit, OnDestroy {
     if (this.filterEntityType) opts.entityType = this.filterEntityType;
 
     this.aiSvc.getInsights(opts).pipe(takeUntil(this.destroy$)).subscribe({
-      next: res => {
-        const p = res.data;
+      next: p => {
         this.insights.set(p.content);
         this.totalElements.set(p.totalElements);
         this.totalPages.set(p.totalPages);
