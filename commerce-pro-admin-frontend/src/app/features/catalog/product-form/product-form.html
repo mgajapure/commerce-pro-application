@@ -115,9 +115,29 @@
 
                     <!-- Description -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
-                            Description <span class="text-red-500">*</span>
-                        </label>
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="block text-sm font-medium text-gray-700">
+                                Description <span class="text-red-500">*</span>
+                            </label>
+                            <div class="flex items-center gap-1">
+                                <button type="button" (click)="previewAiDescription()" [disabled]="aiDescLoading()"
+                                        class="ai-btn">
+                                    <i class="bi bi-stars"></i>
+                                    @if (aiDescLoading()) { Writing... } @else { AI Write }
+                                </button>
+                                @if (aiDescResult()) {
+                                    <button type="button" (click)="applyAiDescription()"
+                                            class="text-xs px-2.5 py-1 bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition font-medium">
+                                        Apply
+                                    </button>
+                                }
+                            </div>
+                        </div>
+                        @if (aiDescResult()) {
+                            <div class="mb-2 p-2 text-xs text-gray-700 bg-violet-50 border border-violet-200 rounded-lg max-h-20 overflow-y-auto leading-relaxed">
+                                {{ aiDescResult()!.description }}
+                            </div>
+                        }
                         <div class="border border-gray-200 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500 transition-all"
                             [class.border-red-300]="productForm.get('description')?.invalid && productForm.get('description')?.touched">
                             <!-- Toolbar -->
@@ -249,9 +269,32 @@
                     <!-- Pricing -->
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
-                                Price <span class="text-red-500">*</span>
-                            </label>
+                            <div class="flex items-center justify-between mb-2">
+                                <label class="block text-sm font-medium text-gray-700">
+                                    Price <span class="text-red-500">*</span>
+                                </label>
+                                <button type="button" (click)="runAiPricing()" [disabled]="aiPricingLoading()"
+                                        class="ai-btn">
+                                    <i class="bi bi-tag"></i>
+                                    @if (aiPricingLoading()) { ... } @else { AI Price }
+                                </button>
+                            </div>
+                            @if (aiPricingResult()) {
+                                <div class="mb-2 p-2 text-xs bg-violet-50 border border-violet-200 rounded-lg space-y-0.5">
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-500">Recommended</span>
+                                        <span class="font-bold text-violet-700">{{ fmtUsd(aiPricingResult()!.recommendedPrice) }}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-500">Range</span>
+                                        <span class="text-gray-700">{{ fmtUsd(aiPricingResult()!.minAcceptablePrice) }} – {{ fmtUsd(aiPricingResult()!.maxAcceptablePrice) }}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-500">Margin</span>
+                                        <span class="text-green-600 font-medium">{{ aiPricingResult()!.expectedMarginPercent }}%</span>
+                                    </div>
+                                </div>
+                            }
                             <div class="relative">
                                 <span
                                     class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium">$</span>
@@ -335,9 +378,32 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
-                                Quantity <span class="text-red-500">*</span>
-                            </label>
+                            <div class="flex items-center justify-between mb-2">
+                                <label class="block text-sm font-medium text-gray-700">
+                                    Quantity <span class="text-red-500">*</span>
+                                </label>
+                                <button type="button" (click)="runAiForecast()" [disabled]="aiForecastLoading()"
+                                        class="ai-btn">
+                                    <i class="bi bi-graph-up-arrow"></i>
+                                    @if (aiForecastLoading()) { ... } @else { Forecast }
+                                </button>
+                            </div>
+                            @if (aiForecastResult()) {
+                                <div class="mb-2 grid grid-cols-3 gap-1 text-xs">
+                                    <div class="bg-violet-50 border border-violet-200 rounded p-1.5 text-center">
+                                        <div class="font-bold text-gray-900">{{ aiForecastResult()!.predictedDemand }}</div>
+                                        <div class="text-gray-400">Demand</div>
+                                    </div>
+                                    <div class="bg-violet-50 border border-violet-200 rounded p-1.5 text-center">
+                                        <div class="font-bold text-gray-900">{{ aiForecastResult()!.reorderPoint }}</div>
+                                        <div class="text-gray-400">Reorder</div>
+                                    </div>
+                                    <div class="bg-violet-50 border border-violet-200 rounded p-1.5 text-center">
+                                        <div class="font-bold text-gray-900">{{ aiForecastResult()!.safetyStock }}</div>
+                                        <div class="text-gray-400">Safety</div>
+                                    </div>
+                                </div>
+                            }
                             <div class="relative">
                                 <input type="number" formControlName="quantity" min="0" placeholder="0"
                                     class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
@@ -852,123 +918,34 @@
                 </div>
             </div>
 
-            <!-- AI Actions Panel -->
-            @if (isEditMode()) {
-              <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                <div class="flex items-center justify-between mb-4">
-                  <h3 class="text-sm font-semibold text-gray-900 flex items-center gap-2">
-                    <i class="bi bi-robot text-violet-600"></i> AI Actions
-                  </h3>
-                  <button type="button" (click)="showAiPanel.update(v => !v)"
-                          class="text-xs text-violet-600 border border-violet-200 px-2 py-1 rounded-lg hover:bg-violet-50 transition">
-                    {{ showAiPanel() ? 'Collapse' : 'Expand' }}
-                  </button>
-                </div>
-
-                @if (showAiPanel()) {
-                  <div class="space-y-4">
-
-                    <!-- Description -->
-                    <div class="p-3 bg-gray-50 rounded-xl">
-                      <div class="flex items-center justify-between mb-2">
-                        <span class="text-xs font-medium text-gray-700 flex items-center gap-1.5">
-                          <i class="bi bi-file-text text-violet-500"></i> AI Description
-                        </span>
-                        <div class="flex gap-1">
-                          <button type="button" (click)="previewAiDescription()" [disabled]="aiDescLoading()"
-                                  class="text-xs px-2 py-0.5 border border-gray-300 rounded text-gray-500 hover:border-violet-400 hover:text-violet-600 transition disabled:opacity-40">
-                            Preview
-                          </button>
-                          <button type="button" (click)="applyAiDescription()" [disabled]="aiDescLoading()"
-                                  class="text-xs px-2 py-0.5 bg-violet-600 text-white rounded hover:bg-violet-700 transition disabled:opacity-40">
-                            @if (aiDescLoading()) { <i class="bi bi-hourglass-split animate-spin"></i> } @else { Apply }
-                          </button>
-                        </div>
-                      </div>
-                      @if (aiDescResult()) {
-                        <div class="text-xs text-gray-600 bg-white rounded-lg p-2 border border-gray-200 max-h-24 overflow-y-auto">
-                          {{ aiDescResult()!.description }}
-                        </div>
-                      }
-                    </div>
-
-                    <!-- Demand Forecast -->
-                    <div class="p-3 bg-gray-50 rounded-xl">
-                      <div class="flex items-center justify-between mb-2">
-                        <span class="text-xs font-medium text-gray-700 flex items-center gap-1.5">
-                          <i class="bi bi-graph-up-arrow text-violet-500"></i> Demand Forecast (30d)
-                        </span>
-                        <button type="button" (click)="runAiForecast()" [disabled]="aiForecastLoading()"
-                                class="text-xs px-2 py-0.5 border border-gray-300 rounded text-gray-500 hover:border-violet-400 hover:text-violet-600 transition disabled:opacity-40">
-                          @if (aiForecastLoading()) { <i class="bi bi-hourglass-split animate-spin"></i> } @else { Forecast }
-                        </button>
-                      </div>
-                      @if (aiForecastResult()) {
-                        <div class="grid grid-cols-3 gap-2 text-xs">
-                          <div class="bg-white rounded p-1.5 text-center border border-gray-200">
-                            <div class="font-bold text-gray-900">{{ aiForecastResult()!.predictedDemand }}</div>
-                            <div class="text-gray-400">Demand</div>
-                          </div>
-                          <div class="bg-white rounded p-1.5 text-center border border-gray-200">
-                            <div class="font-bold text-gray-900">{{ aiForecastResult()!.reorderPoint }}</div>
-                            <div class="text-gray-400">Reorder</div>
-                          </div>
-                          <div class="bg-white rounded p-1.5 text-center border border-gray-200">
-                            <div class="font-bold text-gray-900">{{ aiForecastResult()!.safetyStock }}</div>
-                            <div class="text-gray-400">Safety Stock</div>
-                          </div>
-                        </div>
-                      }
-                    </div>
-
-                    <!-- Pricing -->
-                    <div class="p-3 bg-gray-50 rounded-xl">
-                      <div class="flex items-center justify-between mb-2">
-                        <span class="text-xs font-medium text-gray-700 flex items-center gap-1.5">
-                          <i class="bi bi-tag text-violet-500"></i> Pricing Recommendation
-                        </span>
-                        <button type="button" (click)="runAiPricing()" [disabled]="aiPricingLoading()"
-                                class="text-xs px-2 py-0.5 border border-gray-300 rounded text-gray-500 hover:border-violet-400 hover:text-violet-600 transition disabled:opacity-40">
-                          @if (aiPricingLoading()) { <i class="bi bi-hourglass-split animate-spin"></i> } @else { Recommend }
-                        </button>
-                      </div>
-                      @if (aiPricingResult()) {
-                        <div class="text-xs space-y-1">
-                          <div class="flex justify-between"><span class="text-gray-500">Recommended</span><span class="font-bold text-violet-700">{{ fmtUsd(aiPricingResult()!.recommendedPrice) }}</span></div>
-                          <div class="flex justify-between"><span class="text-gray-500">Range</span><span class="text-gray-700">{{ fmtUsd(aiPricingResult()!.minAcceptablePrice) }} – {{ fmtUsd(aiPricingResult()!.maxAcceptablePrice) }}</span></div>
-                          <div class="flex justify-between"><span class="text-gray-500">Margin</span><span class="text-green-600 font-medium">{{ aiPricingResult()!.expectedMarginPercent }}%</span></div>
-                        </div>
-                      }
-                    </div>
-
-                    <!-- Return Pattern -->
-                    <div class="p-3 bg-gray-50 rounded-xl">
-                      <div class="flex items-center justify-between mb-2">
-                        <span class="text-xs font-medium text-gray-700 flex items-center gap-1.5">
-                          <i class="bi bi-arrow-return-left text-violet-500"></i> Return Pattern (90d)
-                        </span>
-                        <button type="button" (click)="runAiReturns()" [disabled]="aiReturnLoading()"
-                                class="text-xs px-2 py-0.5 border border-gray-300 rounded text-gray-500 hover:border-violet-400 hover:text-violet-600 transition disabled:opacity-40">
-                          @if (aiReturnLoading()) { <i class="bi bi-hourglass-split animate-spin"></i> } @else { Analyse }
-                        </button>
-                      </div>
-                      @if (aiReturnResult()) {
-                        <div class="text-xs space-y-1">
-                          <div class="flex justify-between"><span class="text-gray-500">Return Rate</span><span class="font-bold text-red-600">{{ aiReturnResult()!.returnRate }}%</span></div>
-                          <div class="flex flex-wrap gap-1 mt-1">
-                            @for (c of aiReturnResult()!.suspectedCauses; track c) {
-                              <span class="px-1.5 py-0.5 bg-red-50 text-red-600 rounded text-xs">{{ c }}</span>
-                            }
-                          </div>
-                        </div>
-                      }
-                    </div>
-                  </div>
-                } @else {
-                  <p class="text-xs text-gray-400">AI description, demand forecast, pricing &amp; return analysis</p>
-                }
+            <!-- AI Return Pattern Panel -->
+            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                  <i class="bi bi-arrow-return-left text-violet-600"></i> Return Pattern
+                </h3>
+                <button type="button" (click)="runAiReturns()" [disabled]="aiReturnLoading()"
+                        class="ai-btn">
+                  <i class="bi bi-arrow-return-left"></i>
+                  @if (aiReturnLoading()) { Analysing... } @else { Analyse (90d) }
+                </button>
               </div>
-            }
+              @if (aiReturnResult()) {
+                <div class="text-xs space-y-2">
+                  <div class="flex justify-between items-center">
+                    <span class="text-gray-500">Return Rate</span>
+                    <span class="font-bold text-red-600 text-sm">{{ aiReturnResult()!.returnRate }}%</span>
+                  </div>
+                  <div class="flex flex-wrap gap-1">
+                    @for (c of aiReturnResult()!.suspectedCauses; track c) {
+                      <span class="px-2 py-0.5 bg-red-50 text-red-600 border border-red-100 rounded-full text-xs">{{ c }}</span>
+                    }
+                  </div>
+                </div>
+              } @else {
+                <p class="text-xs text-gray-400">Analyse 90-day return patterns and suspected causes</p>
+              }
+            </div>
 
             <!-- Quick Tips -->
             <div class="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl p-6 text-white">

@@ -252,12 +252,9 @@
                       </button>
                     } @else {
                       <button (click)="analysefraud(txn, $event)" [disabled]="fraudLoading() === txn.id"
-                              class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs text-gray-400 border border-gray-200 hover:border-violet-300 hover:text-violet-600 transition disabled:opacity-40">
-                        @if (fraudLoading() === txn.id) {
-                          <i class="bi bi-hourglass-split animate-spin text-xs"></i> Analysing...
-                        } @else {
-                          <i class="bi bi-shield text-xs"></i> Analyse
-                        }
+                              class="ai-btn">
+                        <i class="bi bi-shield-exclamation"></i>
+                        @if (fraudLoading() === txn.id) { Analysing... } @else { AI Fraud }
                       </button>
                     }
                   </td>

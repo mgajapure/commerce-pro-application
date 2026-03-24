@@ -326,8 +326,9 @@
                   <div class="flex items-center justify-between mb-1.5">
                     <span class="text-xs font-medium text-gray-600">Churn Risk</span>
                     <button (click)="runChurnPrediction()" [disabled]="aiChurnLoading()"
-                            class="text-xs px-2 py-0.5 border border-gray-200 rounded text-gray-500 hover:border-violet-300 hover:text-violet-600 transition disabled:opacity-40">
-                      @if (aiChurnLoading()) { <i class="bi bi-hourglass-split animate-spin"></i> } @else { Analyse }
+                            class="ai-btn">
+                      <i class="bi bi-person-dash"></i>
+                      @if (aiChurnLoading()) { Analysing... } @else { Analyse }
                     </button>
                   </div>
                   @if (churnResult()) {
@@ -354,8 +355,9 @@
                   <div class="flex items-center justify-between mb-1.5">
                     <span class="text-xs font-medium text-gray-600">Personalised Offer</span>
                     <button (click)="runMarketing()" [disabled]="aiMktLoading()"
-                            class="text-xs px-2 py-0.5 border border-gray-200 rounded text-gray-500 hover:border-violet-300 hover:text-violet-600 transition disabled:opacity-40">
-                      @if (aiMktLoading()) { <i class="bi bi-hourglass-split animate-spin"></i> } @else { Generate }
+                            class="ai-btn">
+                      <i class="bi bi-megaphone"></i>
+                      @if (aiMktLoading()) { Generating... } @else { Generate }
                     </button>
                   </div>
                   @if (marketingResult()) {

@@ -3,6 +3,8 @@ package com.commerce_pro_backend.ai.controller;
 import com.commerce_pro_backend.ai.dto.request.AiChatRequest;
 import com.commerce_pro_backend.ai.dto.response.AiChatResponse;
 import com.commerce_pro_backend.ai.entity.AiConversation;
+import com.commerce_pro_backend.ai.enums.SessionType;
+import com.commerce_pro_backend.ai.repository.AiConversationRepository;
 import com.commerce_pro_backend.ai.service.NlReportService;
 import com.commerce_pro_backend.common.dto.ApiResponse;
 import jakarta.validation.Valid;
@@ -36,7 +38,8 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class AiNlReportController {
 
-    private final NlReportService nlReportService;
+    private final NlReportService            nlReportService;
+    private final AiConversationRepository   conversationRepo;
 
     /**
      * POST /api/v1/ai/nl-report/chat
@@ -85,4 +88,75 @@ public class AiNlReportController {
         return ResponseEntity.ok(ApiResponse.success(
                 new AiChatResponse(session.getId(), reply, session.getTurnCount())));
     }
+
+    /**
+     * GET /api/v1/ai/nl-report/sessions
+     * Lists active NL report sessions for the authenticated admin user, newest first.
+     */
+    @GetMapping("/sessions")
+    @PreAuthorize("hasAuthority('ai:nl-report:use')")
+    public ResponseEntity<ApiResponse<java.util.List<NlSessionSummary>>> listSessions(
+            @AuthenticationPrincipal UserDetails principal) {
+
+        var sessions = conversationRepo
+                .findByUserIdAndSessionTypeAndStatusOrderByLastActiveAtDesc(
+                        principal.getUsername(), SessionType.NL_REPORT, "ACTIVE")
+                .stream()
+                .map(NlSessionSummary::from)
+                .toList();
+
+        return ResponseEntity.ok(ApiResponse.success(sessions));
+    }
+
+    /**
+     * GET /api/v1/ai/nl-report/sessions/{sessionId}
+     * Returns full turn history for a specific NL report session.
+     */
+    @GetMapping("/sessions/{sessionId}")
+    @PreAuthorize("hasAuthority('ai:nl-report:use')")
+    public ResponseEntity<ApiResponse<NlSessionDetail>> getSession(
+            @PathVariable String sessionId) {
+
+        AiConversation conv = conversationRepo.findById(sessionId)
+                .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException(
+                        "Session not found: " + sessionId));
+
+        return ResponseEntity.ok(ApiResponse.success(NlSessionDetail.from(conv)));
+    }
+
+    // ── Nested projections ────────────────────────────────────────────────────
+
+    /** Lightweight session summary for the sidebar list. */
+    public record NlSessionSummary(
+            String id,
+            String preview,
+            int turnCount,
+            java.time.LocalDateTime lastActiveAt,
+            java.time.LocalDateTime createdAt
+    ) {
+        static NlSessionSummary from(AiConversation c) {
+            var turns = c.getTurnsAsList();
+            String preview = turns.isEmpty() ? "(empty)"
+                    : turns.get(0).userMessage().substring(0, Math.min(80, turns.get(0).userMessage().length()));
+            return new NlSessionSummary(c.getId(), preview, c.getTurnCount(),
+                    c.getLastActiveAt(), c.getCreatedAt());
+        }
+    }
+
+    /** Full session detail including all turns, for loading a past session. */
+    public record NlSessionDetail(
+            String id,
+            int turnCount,
+            java.util.List<TurnDto> turns,
+            java.time.LocalDateTime createdAt
+    ) {
+        static NlSessionDetail from(AiConversation c) {
+            var turns = c.getTurnsAsList().stream()
+                    .map(t -> new TurnDto(t.userMessage(), t.assistantMessage()))
+                    .toList();
+            return new NlSessionDetail(c.getId(), c.getTurnCount(), turns, c.getCreatedAt());
+        }
+    }
+
+    public record TurnDto(String userMessage, String assistantMessage) {}
 }

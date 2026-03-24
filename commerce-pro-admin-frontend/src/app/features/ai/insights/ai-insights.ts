@@ -3,17 +3,20 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 import { AiService } from '../../../core/services/ai/ai.service';
+import { AlertService } from '../../../shared/services/alert.service';
+import { AlertComponent } from '../../../shared/components/alert/alert';
 import { AiInsight, AiFeatureType } from '../../../core/models/ai/ai.model';
 
 @Component({
   selector: 'app-ai-insights',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AlertComponent],
   templateUrl: './ai-insights.html',
   styleUrl: './ai-insights.scss'
 })
 export class AiInsights implements OnInit, OnDestroy {
-  private aiSvc   = inject(AiService);
+  private aiSvc    = inject(AiService);
+  private alertSvc = inject(AlertService);
   private destroy$ = new Subject<void>();
 
   insights      = signal<AiInsight[]>([]);
@@ -66,6 +69,7 @@ export class AiInsights implements OnInit, OnDestroy {
       },
       error: () => {
         this.error.set('Failed to load AI insights');
+        this.alertSvc.error('Failed to load AI insights');
         this.isLoading.set(false);
       }
     });

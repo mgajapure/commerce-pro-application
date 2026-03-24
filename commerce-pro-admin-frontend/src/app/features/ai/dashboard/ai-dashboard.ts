@@ -3,17 +3,20 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { AiService } from '../../../core/services/ai/ai.service';
+import { AlertService } from '../../../shared/services/alert.service';
+import { AlertComponent } from '../../../shared/components/alert/alert';
 import { AiDashboardResponse, AiUsageSummaryItem, AiFeatureType } from '../../../core/models/ai/ai.model';
 
 @Component({
   selector: 'app-ai-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, AlertComponent],
   templateUrl: './ai-dashboard.html',
   styleUrl: './ai-dashboard.scss'
 })
 export class AiDashboard implements OnInit, OnDestroy {
-  private aiSvc = inject(AiService);
+  private aiSvc    = inject(AiService);
+  private alertSvc = inject(AlertService);
   private destroy$ = new Subject<void>();
 
   dashboard    = signal<AiDashboardResponse | null>(null);
@@ -46,7 +49,7 @@ export class AiDashboard implements OnInit, OnDestroy {
 
     this.aiSvc.getDashboard().pipe(takeUntil(this.destroy$)).subscribe({
       next: d => { this.dashboard.set(d); this.loadUsage(); },
-      error: () => { this.error.set('Failed to load AI dashboard'); this.isLoading.set(false); }
+      error: () => { this.error.set('Failed to load AI dashboard'); this.alertSvc.error('Failed to load AI dashboard'); this.isLoading.set(false); }
     });
   }
 

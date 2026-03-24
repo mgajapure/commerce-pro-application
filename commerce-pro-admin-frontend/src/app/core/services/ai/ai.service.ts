@@ -11,7 +11,7 @@ import {
   AiPricingResult, AiInventoryResult, AiBudgetAnomalyResult,
   AiSeoResult, AiReturnPatternResult, AiVendorResult, AiShippingResult,
   AiChatRequest, AiChatResponse, AiChatSession,
-  AiNlReportRequest, AiNlReportResponse,
+  AiNlReportRequest, AiNlReportResponse, AiNlSessionSummary, AiNlSessionDetail,
   AiFeatureType, AiInsightsPage
 } from '../../models/ai/ai.model';
 
@@ -157,6 +157,14 @@ export class AiService {
 
   nlReportChat(req: AiNlReportRequest): Observable<AiNlReportResponse> {
     return this.http.post<Api<AiNlReportResponse>>(`${BASE}/ai/nl-report/chat`, req).pipe(map(r => r.data));
+  }
+
+  getNlReportSessions(): Observable<AiNlSessionSummary[]> {
+    return this.http.get<Api<AiNlSessionSummary[]>>(`${BASE}/ai/nl-report/sessions`).pipe(map(r => r.data));
+  }
+
+  getNlReportSession(sessionId: string): Observable<AiNlSessionDetail> {
+    return this.http.get<Api<AiNlSessionDetail>>(`${BASE}/ai/nl-report/sessions/${sessionId}`).pipe(map(r => r.data));
   }
 
   // ─── AI Insights ──────────────────────────────────────────────────────────

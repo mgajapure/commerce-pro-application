@@ -724,19 +724,54 @@ export class ProductForm implements OnInit, OnDestroy {
     });
   }
 
+  // ─── AI Guards ────────────────────────────────────────────────────────────
+
+  /**
+   * Returns true when AI can proceed. For new products (no saved ID) we check
+   * that the minimum required data is present; otherwise we show a warning.
+   */
+  private canRunAi(requiredFields: string[] = ['name', 'category']): boolean {
+    const id = this.productId();
+    if (id) return true; // edit mode — product exists in backend
+
+    // New product: check if required form fields have values
+    const missing = requiredFields.filter(f => !this.productForm.get(f)?.value?.toString().trim());
+    if (missing.length > 0) {
+      const labels: Record<string, string> = {
+        name: 'Product Name', category: 'Category', brand: 'Brand',
+        price: 'Price', sku: 'SKU'
+      };
+      const readable = missing.map(m => labels[m] ?? m).join(', ');
+      this.alertSvc.warning(
+        'Save product first',
+        `Please save the product before using AI features. Missing: ${readable}.`
+      );
+      return false;
+    }
+
+    // Has basic data but not saved yet
+    this.alertSvc.warning(
+      'Product not saved yet',
+      'Please save (or publish) the product first so AI features can access its full data.'
+    );
+    return false;
+  }
+
   // ─── AI Actions ───────────────────────────────────────────────────────────
 
   previewAiDescription(): void {
-    const id = this.productId(); if (!id) return;
+    if (!this.canRunAi(['name', 'category', 'brand'])) return;
+    const id = this.productId()!;
     this.aiDescLoading.set(true);
     this.aiSvc.previewDescription(id).pipe(takeUntil(this.destroy$)).subscribe({
       next: r => { this.aiDescResult.set(r); this.aiDescLoading.set(false); },
-      error: () => this.aiDescLoading.set(false)
+      error: () => { this.alertSvc.error('Failed to preview description'); this.aiDescLoading.set(false); }
     });
   }
 
   applyAiDescription(): void {
-    const id = this.productId(); if (!id) return;
+    if (!this.canRunAi(['name', 'category', 'brand'])) return;
+    const id = this.productId()!;
     this.aiDescLoading.set(true);
     this.aiSvc.generateDescription(id).pipe(takeUntil(this.destroy$)).subscribe({
       next: r => {
@@ -750,29 +785,32 @@ export class ProductForm implements OnInit, OnDestroy {
   }
 
   runAiForecast(): void {
-    const id = this.productId(); if (!id) return;
+    if (!this.canRunAi(['name', 'category'])) return;
+    const id = this.productId()!;
     this.aiForecastLoading.set(true);
     this.aiSvc.forecastDemand(id).pipe(takeUntil(this.destroy$)).subscribe({
       next: r => { this.aiForecastResult.set(r); this.aiForecastLoading.set(false); },
-      error: () => this.aiForecastLoading.set(false)
+      error: () => { this.alertSvc.error('Demand forecast failed'); this.aiForecastLoading.set(false); }
     });
   }
 
   runAiPricing(): void {
-    const id = this.productId(); if (!id) return;
+    if (!this.canRunAi(['name', 'category', 'price'])) return;
+    const id = this.productId()!;
     this.aiPricingLoading.set(true);
     this.aiSvc.recommendPricing(id).pipe(takeUntil(this.destroy$)).subscribe({
       next: r => { this.aiPricingResult.set(r); this.aiPricingLoading.set(false); },
-      error: () => this.aiPricingLoading.set(false)
+      error: () => { this.alertSvc.error('Pricing recommendation failed'); this.aiPricingLoading.set(false); }
     });
   }
 
   runAiReturns(): void {
-    const id = this.productId(); if (!id) return;
+    if (!this.canRunAi(['name', 'category'])) return;
+    const id = this.productId()!;
     this.aiReturnLoading.set(true);
     this.aiSvc.analyseReturnPattern(id).pipe(takeUntil(this.destroy$)).subscribe({
       next: r => { this.aiReturnResult.set(r); this.aiReturnLoading.set(false); },
-      error: () => this.aiReturnLoading.set(false)
+      error: () => { this.alertSvc.error('Return analysis failed'); this.aiReturnLoading.set(false); }
     });
   }
 

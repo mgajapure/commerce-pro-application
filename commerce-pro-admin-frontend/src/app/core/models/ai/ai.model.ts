@@ -215,8 +215,8 @@ export interface AiChatRequest {
 
 export interface AiChatResponse {
   sessionId: string;
-  reply: string;
-  escalate: boolean;
+  message: string;   // matches Java AiChatResponse record field name
+  turnCount: number;
 }
 
 export interface AiConversationMessage {
@@ -271,5 +271,26 @@ export interface AiNlReportRequest {
 
 export interface AiNlReportResponse {
   sessionId: string;
-  reply: string;
+  message: string;   // matches Java AiChatResponse record field name
+  turnCount: number;
+}
+
+export interface AiNlSessionSummary {
+  id: string;
+  preview: string;
+  turnCount: number;
+  lastActiveAt: string;
+  createdAt: string;
+}
+
+export interface AiNlSessionTurn {
+  userMessage: string;
+  assistantMessage: string;
+}
+
+export interface AiNlSessionDetail {
+  id: string;
+  turnCount: number;
+  turns: AiNlSessionTurn[];
+  createdAt: string;
 }
