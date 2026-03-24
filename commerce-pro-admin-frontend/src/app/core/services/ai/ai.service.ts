@@ -10,7 +10,8 @@ import {
   AiPricingResult, AiInventoryResult, AiBudgetAnomalyResult,
   AiSeoResult, AiReturnPatternResult, AiVendorResult, AiShippingResult,
   AiChatRequest, AiChatResponse, AiChatSession,
-  AiNlReportRequest, AiNlReportResponse
+  AiNlReportRequest, AiNlReportResponse,
+  AiFeatureType, AiInsightsPage
 } from '../../models/ai/ai.model';
 
 const BASE = 'http://localhost:8080/api/v1';
@@ -152,5 +153,25 @@ export class AiService {
 
   nlReportChat(req: AiNlReportRequest): Observable<AiNlReportResponse> {
     return this.http.post<AiNlReportResponse>(`${BASE}/ai/nl-report/chat`, req);
+  }
+
+  // ─── AI Insights ──────────────────────────────────────────────────────────
+
+  getInsights(opts: {
+    feature?: AiFeatureType;
+    riskLevel?: string;
+    entityType?: string;
+    since?: string;
+    page?: number;
+    size?: number;
+  } = {}): Observable<{ data: AiInsightsPage }> {
+    let params = new HttpParams();
+    if (opts.feature)    params = params.set('feature',    opts.feature);
+    if (opts.riskLevel)  params = params.set('riskLevel',  opts.riskLevel);
+    if (opts.entityType) params = params.set('entityType', opts.entityType);
+    if (opts.since)      params = params.set('since',      opts.since);
+    if (opts.page != null) params = params.set('page',     opts.page);
+    if (opts.size != null) params = params.set('size',     opts.size);
+    return this.http.get<{ data: AiInsightsPage }>(`${BASE}/admin/ai/insights`, { params });
   }
 }

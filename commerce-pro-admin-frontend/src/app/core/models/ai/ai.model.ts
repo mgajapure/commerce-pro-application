@@ -231,6 +231,36 @@ export interface AiChatSession {
   createdAt: string;
 }
 
+// ─── AI Insights ─────────────────────────────────────────────────────────────
+
+export interface AiInsight {
+  id: string;
+  featureType: AiFeatureType;
+  entityId: string;
+  entityType: string;
+  score: number | null;
+  riskLevel: string | null;
+  recommendation: string | null;
+  reasoning: string | null;
+  signals: string | null;
+  status: string;
+  reviewStatus: string;
+  modelUsed: string | null;
+  tokensInput: number | null;
+  tokensOutput: number | null;
+  estimatedCostUsd: number | null;
+  latencyMs: number | null;
+  createdAt: string;
+}
+
+export interface AiInsightsPage {
+  content: AiInsight[];
+  totalElements: number;
+  totalPages: number;
+  page: number;
+  size: number;
+}
+
 // ─── NL Report ───────────────────────────────────────────────────────────────
 
 export interface AiNlReportRequest {

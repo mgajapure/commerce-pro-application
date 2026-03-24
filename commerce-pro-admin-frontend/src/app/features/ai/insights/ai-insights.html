@@ -1,0 +1,232 @@
+<div class="p-6 space-y-6">
+
+  <!-- Header -->
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">AI Insights</h1>
+      <p class="text-sm text-gray-500 mt-1">Browse all AI decisions across every feature</p>
+    </div>
+    <span class="text-sm text-gray-500">{{ totalElements() | number }} total insights</span>
+  </div>
+
+  <!-- Filters -->
+  <div class="bg-white rounded-xl border border-gray-200 p-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Feature</label>
+        <select [(ngModel)]="filterFeature"
+                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-violet-500 focus:border-violet-500">
+          <option value="">All features</option>
+          @for (f of featureOptions; track f) {
+            <option [value]="f">{{ featureLabel(f) }}</option>
+          }
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Risk Level</label>
+        <select [(ngModel)]="filterRiskLevel"
+                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-violet-500 focus:border-violet-500">
+          <option value="">All levels</option>
+          @for (r of riskLevels; track r) {
+            <option [value]="r">{{ r }}</option>
+          }
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-gray-600 mb-1">Entity Type</label>
+        <select [(ngModel)]="filterEntityType"
+                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-violet-500 focus:border-violet-500">
+          <option value="">All entities</option>
+          @for (e of entityTypes; track e) {
+            <option [value]="e">{{ e }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="flex items-end gap-2">
+        <button (click)="applyFilters()"
+                class="flex-1 bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+          Apply
+        </button>
+        <button (click)="clearFilters()"
+                class="flex-1 border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+          Clear
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Error -->
+  @if (error()) {
+    <div class="bg-red-50 border border-red-200 rounded-xl p-4 text-red-700 text-sm">{{ error() }}</div>
+  }
+
+  <!-- Loading skeleton -->
+  @if (isLoading()) {
+    <div class="space-y-3">
+      @for (i of [1,2,3,4,5]; track i) {
+        <div class="bg-white rounded-xl border border-gray-200 p-4 animate-pulse">
+          <div class="flex gap-4">
+            <div class="h-4 bg-gray-200 rounded w-32"></div>
+            <div class="h-4 bg-gray-200 rounded w-20"></div>
+            <div class="h-4 bg-gray-200 rounded w-24"></div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Insights list -->
+  @if (!isLoading()) {
+    @if (insights().length === 0) {
+      <div class="bg-white rounded-xl border border-gray-200 p-12 text-center text-gray-400">
+        <p class="text-lg font-medium">No insights found</p>
+        <p class="text-sm mt-1">Try adjusting the filters or wait for AI features to run</p>
+      </div>
+    } @else {
+      <div class="space-y-2">
+        @for (insight of insights(); track insight.id) {
+          <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+
+            <!-- Row summary -->
+            <button (click)="toggleExpand(insight.id)"
+                    class="w-full text-left px-4 py-3 flex flex-wrap items-center gap-3 hover:bg-gray-50 transition-colors">
+
+              <!-- Feature badge -->
+              <span class="text-xs font-semibold text-violet-700 bg-violet-50 px-2 py-0.5 rounded-full whitespace-nowrap">
+                {{ featureLabel(insight.featureType) }}
+              </span>
+
+              <!-- Entity -->
+              <span class="text-xs text-gray-500 font-mono">
+                {{ insight.entityType }}: {{ insight.entityId | slice:0:12 }}…
+              </span>
+
+              <!-- Score bar -->
+              @if (insight.score != null) {
+                <div class="flex items-center gap-1.5">
+                  <div class="w-20 h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div class="h-full rounded-full transition-all"
+                         [class]="scoreBarColor(insight.score)"
+                         [style.width.%]="insight.score"></div>
+                  </div>
+                  <span class="text-xs font-medium text-gray-700">{{ insight.score }}</span>
+                </div>
+              }
+
+              <!-- Risk level -->
+              @if (insight.riskLevel) {
+                <span class="text-xs font-medium px-2 py-0.5 rounded-full"
+                      [class]="riskBadgeClass(insight.riskLevel)">
+                  {{ insight.riskLevel }}
+                </span>
+              }
+
+              <!-- Recommendation -->
+              @if (insight.recommendation) {
+                <span class="text-xs text-gray-600 bg-gray-100 px-2 py-0.5 rounded-full">
+                  {{ insight.recommendation }}
+                </span>
+              }
+
+              <!-- Review status -->
+              <span class="text-xs font-medium px-2 py-0.5 rounded-full"
+                    [class]="reviewBadgeClass(insight.reviewStatus)">
+                {{ insight.reviewStatus | titlecase }}
+              </span>
+
+              <span class="ml-auto text-xs text-gray-400">{{ formatDate(insight.createdAt) }}</span>
+
+              <!-- Expand chevron -->
+              <svg class="w-4 h-4 text-gray-400 transition-transform"
+                   [class.rotate-180]="expandedId() === insight.id"
+                   fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </button>
+
+            <!-- Expanded detail -->
+            @if (expandedId() === insight.id) {
+              <div class="border-t border-gray-100 px-4 py-4 bg-gray-50 space-y-3">
+
+                <!-- Reasoning -->
+                @if (insight.reasoning) {
+                  <div>
+                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Reasoning</p>
+                    <p class="text-sm text-gray-700 leading-relaxed">{{ insight.reasoning }}</p>
+                  </div>
+                }
+
+                <!-- Signals -->
+                @if (insight.signals) {
+                  <div>
+                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Signals</p>
+                    <div class="flex flex-wrap gap-1.5">
+                      @for (sig of insight.signals.split(','); track sig) {
+                        <span class="text-xs bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full">
+                          {{ sig.trim() }}
+                        </span>
+                      }
+                    </div>
+                  </div>
+                }
+
+                <!-- Metadata grid -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                  <div class="bg-white rounded-lg border border-gray-200 p-2">
+                    <p class="text-gray-500">Model</p>
+                    <p class="font-medium text-gray-800 truncate">{{ insight.modelUsed ?? '—' }}</p>
+                  </div>
+                  <div class="bg-white rounded-lg border border-gray-200 p-2">
+                    <p class="text-gray-500">Tokens</p>
+                    <p class="font-medium text-gray-800">
+                      {{ (insight.tokensInput ?? 0) + (insight.tokensOutput ?? 0) | number }}
+                    </p>
+                  </div>
+                  <div class="bg-white rounded-lg border border-gray-200 p-2">
+                    <p class="text-gray-500">Cost</p>
+                    <p class="font-medium text-gray-800">{{ fmt(insight.estimatedCostUsd) }}</p>
+                  </div>
+                  <div class="bg-white rounded-lg border border-gray-200 p-2">
+                    <p class="text-gray-500">Latency</p>
+                    <p class="font-medium text-gray-800">{{ insight.latencyMs ?? '—' }} ms</p>
+                  </div>
+                </div>
+
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Pagination -->
+      @if (totalPages() > 1) {
+        <div class="flex items-center justify-center gap-1 mt-4">
+          <button (click)="goToPage(page - 1)" [disabled]="page === 0"
+                  class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg disabled:opacity-40 hover:bg-gray-50">
+            &laquo;
+          </button>
+          @for (p of pages(); track p) {
+            <button (click)="goToPage(p)"
+                    class="px-3 py-1.5 text-sm border rounded-lg transition-colors"
+                    [class]="p === page
+                      ? 'bg-violet-600 text-white border-violet-600'
+                      : 'border-gray-300 hover:bg-gray-50 text-gray-700'">
+              {{ p + 1 }}
+            </button>
+          }
+          <button (click)="goToPage(page + 1)" [disabled]="page >= totalPages() - 1"
+                  class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg disabled:opacity-40 hover:bg-gray-50">
+            &raquo;
+          </button>
+        </div>
+      }
+
+    }
+  }
+
+</div>

@@ -17,5 +17,9 @@ export const AI_ROUTES: Routes = [
   {
     path: 'chatbot-sessions',
     loadComponent: () => import('./chatbot-sessions/ai-chatbot-sessions').then(m => m.AiChatbotSessions)
+  },
+  {
+    path: 'insights',
+    loadComponent: () => import('./insights/ai-insights').then(m => m.AiInsights)
   }
 ];

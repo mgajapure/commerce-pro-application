@@ -2,9 +2,11 @@ package com.commerce_pro_backend.ai.repository;
 
 import com.commerce_pro_backend.ai.entity.AiInsight;
 import com.commerce_pro_backend.ai.enums.AiFeatureType;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -31,4 +33,23 @@ public interface AiInsightRepository extends JpaRepository<AiInsight, String> {
 
     /** Cleanup job — delete insights whose TTL has elapsed */
     int deleteByExpiresAtBefore(LocalDateTime cutoff);
+
+    /**
+     * Admin insights browser — all optional filters, ordered by createdAt DESC.
+     * Pass null for any parameter to skip that filter.
+     */
+    @Query("""
+        SELECT a FROM AiInsight a
+        WHERE (:feature    IS NULL OR a.featureType = :feature)
+          AND (:riskLevel  IS NULL OR a.riskLevel   = :riskLevel)
+          AND (:entityType IS NULL OR a.entityType  = :entityType)
+          AND (:since      IS NULL OR a.createdAt  >= :since)
+        ORDER BY a.createdAt DESC
+        """)
+    Page<AiInsight> findByFilters(
+            @Param("feature")    AiFeatureType   feature,
+            @Param("riskLevel")  String          riskLevel,
+            @Param("entityType") String          entityType,
+            @Param("since")      LocalDateTime   since,
+            Pageable             pageable);
 }
