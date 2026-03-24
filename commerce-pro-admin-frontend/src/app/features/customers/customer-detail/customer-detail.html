@@ -310,7 +310,7 @@
                 <h3 class="text-sm font-semibold text-gray-900 flex items-center gap-2">
                   <i class="bi bi-robot text-violet-600"></i> AI Insights
                 </h3>
-                <button (click)="showAiPanel.update(v => !v)"
+                <button (click)="toggleAiPanel()"
                         class="text-xs text-violet-600 hover:text-violet-800 border border-violet-200 px-2 py-1 rounded-lg hover:bg-violet-50 transition">
                   {{ showAiPanel() ? 'Hide' : 'Show' }}
                 </button>

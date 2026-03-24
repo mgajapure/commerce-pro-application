@@ -113,7 +113,7 @@
           <span class="text-3xl font-bold text-gray-900">{{ vendorAiModalResult()!.score }}<span class="text-lg text-gray-400">/100</span></span>
           <span class="px-3 py-1 rounded-full text-sm font-semibold {{ vendorRiskBadge(vendorAiModalResult()!.riskLevel) }}">{{ vendorAiModalResult()!.riskLevel }} RISK</span>
         </div>
-        @if (vendorAiModalResult()!.strengths?.length > 0) {
+        @if ((vendorAiModalResult()?.strengths?.length ?? 0) > 0) {
           <div>
             <div class="text-xs font-medium text-gray-500 uppercase mb-2">Strengths</div>
             <div class="flex flex-wrap gap-1.5">
@@ -123,7 +123,7 @@
             </div>
           </div>
         }
-        @if (vendorAiModalResult()!.weaknesses?.length > 0) {
+        @if ((vendorAiModalResult()?.weaknesses?.length ?? 0) > 0) {
           <div>
             <div class="text-xs font-medium text-gray-500 uppercase mb-2">Weaknesses</div>
             <div class="flex flex-wrap gap-1.5">

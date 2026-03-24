@@ -735,8 +735,7 @@
                         </h3>
                         <div class="bg-white p-4 rounded-lg shadow-sm">
                             <p class="text-blue-800 text-lg hover:underline cursor-pointer">
-                                {{ productForm.get('seoTitle')?.value || productForm.get('name')?.value || 'Product
-                                Name' }}
+                                {{ productForm.get('seoTitle')?.value || productForm.get('name')?.value || 'ProductName' }}
                             </p>
                             <p class="text-green-700 text-sm">
                                 www.yourstore.com/products/{{ productForm.get('urlHandle')?.value || 'product-handle' }}
@@ -859,7 +858,7 @@
                   <h3 class="text-sm font-semibold text-gray-900 flex items-center gap-2">
                     <i class="bi bi-robot text-violet-600"></i> AI Actions
                   </h3>
-                  <button type="button" (click)="showAiPanel.update(v => !v)"
+                  <button type="button" (click)="toggleAiPanel()"
                           class="text-xs text-violet-600 border border-violet-200 px-2 py-1 rounded-lg hover:bg-violet-50 transition">
                     {{ showAiPanel() ? 'Collapse' : 'Expand' }}
                   </button>
