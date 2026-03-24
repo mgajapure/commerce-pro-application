@@ -12,29 +12,29 @@
 #
 # Deployment order:
 #   commerce-pro-db  →  commerce-pro-backend  →  commerce-pro-admin-frontend
+#
+# Note: Free tier web services spin down after 15 min of inactivity
+# and have a cold-start delay of ~30s on the first request.
 # ============================================================
 
 databases:
   - name: commerce-pro-db
     databaseName: commerce_pro
-    plan: free          # upgrade to starter ($7/mo) for persistent storage
+    plan: free
 
 services:
 
   # ──────────────────────────────────────────────────────────
-  # 1. Spring Boot Backend  (Web Service)
+  # 1. Spring Boot Backend  (Docker Web Service)
+  # Render does not have a native Java runtime — Docker is used.
+  # Dockerfile: commerce-pro-backend/Dockerfile
   # ──────────────────────────────────────────────────────────
   - type: web
     name: commerce-pro-backend
-    runtime: java
+    runtime: docker
     rootDir: commerce-pro-backend
-    buildCommand: ./gradlew bootJar -x test
-    startCommand: >
-      java
-      -Dspring.profiles.active=prod
-      -Dserver.port=$PORT
-      -jar build/libs/commerce-pro-backend-0.0.1-SNAPSHOT.jar
-    plan: starter          # free plan spins down after inactivity
+    dockerfilePath: ./Dockerfile
+    plan: free
     healthCheckPath: /api/actuator/health
     autoDeploy: true
     envVars:
@@ -86,7 +86,7 @@ services:
         value: https://commerce-pro-admin.onrender.com/pay
 
   # ──────────────────────────────────────────────────────────
-  # 2. Angular Admin Frontend  (Static Site)
+  # 2. Angular Admin Frontend  (Static Site — always free)
   # ──────────────────────────────────────────────────────────
   - type: web
     name: commerce-pro-admin-frontend
@@ -102,6 +102,6 @@ services:
         destination: /index.html
     envVars:
       # Angular 17+ (esbuild) inlines NG_APP_* vars at build time.
-      # Set this to your backend service URL after it is deployed.
+      # Set this to your Render backend URL after the backend is deployed.
       - key: NG_APP_API_URL
         value: https://commerce-pro-backend.onrender.com
