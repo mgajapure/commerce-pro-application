@@ -59,12 +59,12 @@ services:
           name: commerce-pro-db
           property: password
 
-     - key: DB_HOST
+      - key: DB_HOST
         fromDatabase:
           name: commerce-pro-db
           property: host
 
-     - key: DB_PORT
+      - key: DB_PORT
         fromDatabase:
           name: commerce-pro-db
           property: port
