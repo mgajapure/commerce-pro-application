@@ -40,7 +40,7 @@
   }
 
   <!-- Config Cards -->
-  @if (!isLoading()) {
+  @if (!isLoading() && configs() && configs().length > 0) {
     <div class="space-y-3">
       @for (cfg of configs(); track cfg.feature) {
         <div class="bg-white rounded-xl border border-gray-200 p-5 hover:border-violet-200 transition">
