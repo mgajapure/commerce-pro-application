@@ -517,6 +517,45 @@
             </div>
         </div>
 
+        <!-- Alerts Section -->
+        @if (alertForecasts().length > 0) {
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-100 flex items-center gap-3">
+                <div class="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
+                    <i class="bi bi-bell-fill text-red-600"></i>
+                </div>
+                <h3 class="font-semibold text-gray-900">Stock Alerts &amp; Warnings</h3>
+                <span class="ml-auto px-2.5 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium">
+                    {{ alertForecasts().length }} items need attention
+                </span>
+            </div>
+            <div class="divide-y divide-gray-100">
+                @for (forecast of alertForecasts(); track forecast.id) {
+                <div class="px-6 py-4 flex items-center gap-4 hover:bg-gray-50 transition-colors">
+                    <img [src]="forecast.product?.image || PLACEHOLDER_IMAGE"
+                        (error)="onImgError($event)"
+                        class="w-10 h-10 rounded-lg object-cover bg-gray-100 flex-shrink-0">
+                    <div class="flex-1 min-w-0">
+                        <p class="font-medium text-gray-900 truncate">{{ forecast.productName }}</p>
+                        <p class="text-xs text-gray-500">{{ forecast.sku }} &bull; Stock: {{ forecast.currentStock }} units &bull; {{ forecast.avgDailySales ? Math.round(forecast.currentStock / forecast.avgDailySales) : 0 }} days cover</p>
+                    </div>
+                    <div class="flex items-center gap-3 flex-shrink-0">
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border"
+                            [class]="getAlertColor(forecast.alertLevel)">
+                            <i class="bi mr-1" [class]="getAlertIcon(forecast.alertLevel)"></i>
+                            {{ forecast.alertLevel === 'high' ? 'Critical' : 'Warning' }}
+                        </span>
+                        <button (click)="viewForecastDetail(forecast)"
+                            class="px-3 py-1.5 text-xs font-medium bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition-colors">
+                            View Details
+                        </button>
+                    </div>
+                </div>
+                }
+            </div>
+        </div>
+        }
+
         <!-- Accuracy Footer -->
         <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
             <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
@@ -688,7 +727,7 @@
                         <input type="checkbox" [value]="product.id"
                             class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
                         <div class="flex items-center gap-2">
-                            <img [src]="product.image" class="w-8 h-8 rounded-lg object-cover">
+                            <img [src]="product.image || PLACEHOLDER_IMAGE" (error)="onImgError($event)" class="w-8 h-8 rounded-lg object-cover bg-gray-100">
                             <div>
                                 <p class="text-sm font-medium text-gray-900">{{ product.name }}</p>
                                 <p class="text-xs text-gray-500">{{ product.sku }}</p>
@@ -813,6 +852,249 @@
             class="px-4 py-2.5 text-gray-700 font-medium hover:bg-gray-100 rounded-xl transition-colors">
             Cancel
         </button>
+    </div>
+</div>
+}
+
+<!-- Detail Modal -->
+@if (showDetailModal() && selectedForecast()) {
+<div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in"
+    (click)="closeDetailModal()">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden animate-slide-up"
+        (click)="$event.stopPropagation()">
+        <!-- Header -->
+        <div class="px-6 py-4 border-b border-gray-100 flex items-center gap-4 bg-gray-50/50">
+            <img [src]="selectedForecast()!.product?.image || PLACEHOLDER_IMAGE"
+                (error)="onImgError($event)"
+                class="w-12 h-12 rounded-xl object-cover bg-gray-100">
+            <div class="flex-1 min-w-0">
+                <h2 class="text-lg font-semibold text-gray-900 truncate">{{ selectedForecast()!.productName }}</h2>
+                <p class="text-sm text-gray-500">{{ selectedForecast()!.sku }} &bull; {{ selectedForecast()!.product?.category }}</p>
+            </div>
+            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border"
+                [class]="getAlertColor(selectedForecast()!.alertLevel)">
+                <i class="bi mr-1" [class]="getAlertIcon(selectedForecast()!.alertLevel)"></i>
+                {{ selectedForecast()!.alertLevel === 'none' ? 'Normal' : selectedForecast()!.alertLevel | titlecase }}
+            </span>
+            <button (click)="closeDetailModal()"
+                class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+
+        <!-- Body -->
+        <div class="p-6 overflow-y-auto max-h-[calc(90vh-8rem)] space-y-6">
+            <!-- Key Metrics -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="bg-indigo-50 rounded-xl p-4 text-center border border-indigo-100">
+                    <p class="text-xs text-indigo-600 mb-1 font-medium">Current Stock</p>
+                    <p class="text-xl font-bold text-indigo-700">{{ selectedForecast()!.currentStock }}</p>
+                    <p class="text-xs text-indigo-500">units</p>
+                </div>
+                <div class="bg-emerald-50 rounded-xl p-4 text-center border border-emerald-100">
+                    <p class="text-xs text-emerald-600 mb-1 font-medium">30-Day Forecast</p>
+                    <p class="text-xl font-bold text-emerald-700">{{ formatNumber(getForeCastCount(selectedForecast()!)) }}</p>
+                    <p class="text-xs text-emerald-500">units</p>
+                </div>
+                <div class="bg-amber-50 rounded-xl p-4 text-center border border-amber-100">
+                    <p class="text-xs text-amber-600 mb-1 font-medium">Avg Daily Sales</p>
+                    <p class="text-xl font-bold text-amber-700">{{ selectedForecast()!.avgDailySales }}</p>
+                    <p class="text-xs text-amber-500">/ day</p>
+                </div>
+                <div class="bg-purple-50 rounded-xl p-4 text-center border border-purple-100">
+                    <p class="text-xs text-purple-600 mb-1 font-medium">Days Cover</p>
+                    <p class="text-xl font-bold text-purple-700">{{ selectedForecast()!.avgDailySales ? Math.round(selectedForecast()!.currentStock / selectedForecast()!.avgDailySales) : 0 }}</p>
+                    <p class="text-xs text-purple-500">days</p>
+                </div>
+            </div>
+
+            <!-- Trend & Reorder Info -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-gray-50 rounded-xl p-4 space-y-3">
+                    <h4 class="text-sm font-semibold text-gray-900">Trend Analysis</h4>
+                    <div class="flex items-center gap-3">
+                        <span class="w-10 h-10 rounded-lg flex items-center justify-center"
+                            [class]="getTrendColor(selectedForecast()!.trend)">
+                            <i class="bi text-lg" [class]="getTrendIcon(selectedForecast()!.trend)"></i>
+                        </span>
+                        <div>
+                            <p class="font-medium text-gray-900 capitalize">{{ selectedForecast()!.trend }} Trend</p>
+                            @if (computeTrendPercentage(selectedForecast()!); as pct) {
+                            <p class="text-sm" [class.text-green-600]="selectedForecast()!.trend === 'up'"
+                                [class.text-red-600]="selectedForecast()!.trend === 'down'"
+                                [class.text-gray-500]="selectedForecast()!.trend === 'stable'">
+                                {{ selectedForecast()!.trend === 'up' ? '+' : '' }}{{ pct }}% over forecast period
+                            </p>
+                            }
+                        </div>
+                    </div>
+                    <div class="pt-2 border-t border-gray-200 space-y-1">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-500">Algorithm</span>
+                            <span class="font-medium text-gray-900 capitalize">{{ selectedForecast()!.algorithm?.replace('_', ' ') }}</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-500">Period</span>
+                            <span class="font-medium text-gray-900 capitalize">{{ selectedForecast()!.period }}</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-500">Forecast Horizon</span>
+                            <span class="font-medium text-gray-900">{{ selectedForecast()!.forecastHorizon }} days</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-50 rounded-xl p-4 space-y-3">
+                    <h4 class="text-sm font-semibold text-gray-900">Reorder Recommendations</h4>
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center p-3 bg-white rounded-lg border border-gray-200">
+                            <span class="text-sm text-gray-600">Safety Stock</span>
+                            <span class="font-semibold text-gray-900">{{ selectedForecast()!.safetyStockRecommendation ?? '—' }} units</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-white rounded-lg border border-gray-200">
+                            <span class="text-sm text-gray-600">Reorder Point</span>
+                            <span class="font-semibold text-gray-900">{{ selectedForecast()!.reorderPointRecommendation ?? '—' }} units</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-white rounded-lg border border-gray-200">
+                            <span class="text-sm text-gray-600">Total Predicted</span>
+                            <span class="font-semibold text-gray-900">{{ formatNumber(selectedForecast()!.totalPredictedDemand) }} units</span>
+                        </div>
+                        @if (selectedForecast()!.product?.leadTimeDays) {
+                        <div class="flex justify-between items-center p-3 bg-white rounded-lg border border-gray-200">
+                            <span class="text-sm text-gray-600">Lead Time</span>
+                            <span class="font-semibold text-gray-900">{{ selectedForecast()!.product.leadTimeDays }} days</span>
+                        </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Forecast Data Preview -->
+            @if (hasForecastData(selectedForecast()!)) {
+            <div>
+                <h4 class="text-sm font-semibold text-gray-900 mb-3">Forecast Data Preview (first 10 periods)</h4>
+                <div class="overflow-x-auto rounded-xl border border-gray-200">
+                    <table class="w-full text-sm">
+                        <thead class="bg-gray-50 border-b border-gray-200">
+                            <tr>
+                                <th class="px-4 py-2 text-left text-xs font-semibold text-gray-500">Date</th>
+                                <th class="px-4 py-2 text-right text-xs font-semibold text-gray-500">Predicted Demand</th>
+                                <th class="px-4 py-2 text-right text-xs font-semibold text-gray-500">Lower Bound</th>
+                                <th class="px-4 py-2 text-right text-xs font-semibold text-gray-500">Upper Bound</th>
+                                <th class="px-4 py-2 text-right text-xs font-semibold text-gray-500">Confidence</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            @for (row of (selectedForecast()!.forecastData?.length ? selectedForecast()!.forecastData : (selectedForecast()!.forecasts ?? [])).slice(0, 10); track $index) {
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-2 text-gray-700">{{ row.date | date:'mediumDate' }}</td>
+                                <td class="px-4 py-2 text-right font-medium text-gray-900">{{ formatNumber(row.predictedDemand) }}</td>
+                                <td class="px-4 py-2 text-right text-gray-500">{{ formatNumber(row.lowerBound ?? row.confidenceLower ?? 0) }}</td>
+                                <td class="px-4 py-2 text-right text-gray-500">{{ formatNumber(row.upperBound ?? row.confidenceUpper ?? 0) }}</td>
+                                <td class="px-4 py-2 text-right">
+                                    <span class="text-green-600 font-medium">{{ Math.round((row.confidence ?? 0) * 100) }}%</span>
+                                </td>
+                            </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            }
+
+            @if (selectedForecast()!.notes) {
+            <div class="bg-blue-50 rounded-xl p-4 border border-blue-100">
+                <h4 class="text-sm font-semibold text-blue-900 mb-1">Notes</h4>
+                <p class="text-sm text-blue-700">{{ selectedForecast()!.notes }}</p>
+            </div>
+            }
+        </div>
+
+        <!-- Footer -->
+        <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-between gap-3 bg-gray-50/50">
+            <button (click)="viewHistory(selectedForecast()!); closeDetailModal()"
+                class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-700 bg-blue-50 rounded-xl hover:bg-blue-100 transition-colors">
+                <i class="bi bi-clock-history"></i> View History
+            </button>
+            <div class="flex items-center gap-2">
+                <button (click)="runAiForecast(selectedForecast()!.productId)"
+                    [disabled]="aiForecastLoading() === selectedForecast()!.productId"
+                    class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-violet-700 bg-violet-50 rounded-xl hover:bg-violet-100 transition-colors disabled:opacity-50">
+                    <i class="bi bi-robot"></i> AI Forecast
+                </button>
+                <button (click)="closeDetailModal()"
+                    class="px-4 py-2 bg-gray-100 rounded-xl text-sm text-gray-700 hover:bg-gray-200 transition-colors">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+}
+
+<!-- History Modal -->
+@if (showHistoryModal() && historyForecast()) {
+<div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in"
+    (click)="closeHistoryModal()">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[90vh] overflow-hidden animate-slide-up"
+        (click)="$event.stopPropagation()">
+        <!-- Header -->
+        <div class="px-6 py-4 border-b border-gray-100 flex items-center gap-4 bg-gray-50/50">
+            <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                <i class="bi bi-clock-history text-blue-600"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+                <h2 class="text-lg font-semibold text-gray-900">Historical Data</h2>
+                <p class="text-sm text-gray-500 truncate">{{ historyForecast()!.productName }} &bull; {{ historyForecast()!.sku }}</p>
+            </div>
+            <button (click)="closeHistoryModal()"
+                class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+
+        <!-- Body -->
+        <div class="p-6 overflow-y-auto max-h-[calc(90vh-8rem)]">
+            @if (historyForecast()!.historicalData && historyForecast()!.historicalData.length > 0) {
+            <div class="overflow-x-auto rounded-xl border border-gray-200">
+                <table class="w-full text-sm">
+                    <thead class="bg-gray-50 border-b border-gray-200">
+                        <tr>
+                            <th class="px-4 py-2 text-left text-xs font-semibold text-gray-500">Date</th>
+                            <th class="px-4 py-2 text-right text-xs font-semibold text-gray-500">Quantity</th>
+                            <th class="px-4 py-2 text-right text-xs font-semibold text-gray-500">Orders</th>
+                            <th class="px-4 py-2 text-right text-xs font-semibold text-gray-500">Revenue</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        @for (h of historyForecast()!.historicalData; track $index) {
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-4 py-2 text-gray-700">{{ h.date | date:'mediumDate' }}</td>
+                            <td class="px-4 py-2 text-right font-medium text-gray-900">{{ formatNumber(h.quantity) }}</td>
+                            <td class="px-4 py-2 text-right text-gray-600">{{ h.orders }}</td>
+                            <td class="px-4 py-2 text-right text-gray-600">{{ formatCurrency(h.revenue) }}</td>
+                        </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            } @else {
+            <div class="text-center py-12">
+                <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <i class="bi bi-clock-history text-gray-400 text-2xl"></i>
+                </div>
+                <h3 class="text-base font-medium text-gray-900 mb-1">No historical data</h3>
+                <p class="text-sm text-gray-500">Historical data for this product is not yet available.</p>
+            </div>
+            }
+        </div>
+
+        <div class="px-6 py-4 border-t border-gray-100 flex justify-end bg-gray-50/50">
+            <button (click)="closeHistoryModal()"
+                class="px-4 py-2 bg-gray-100 rounded-xl text-sm text-gray-700 hover:bg-gray-200 transition-colors">
+                Close
+            </button>
+        </div>
     </div>
 </div>
 }

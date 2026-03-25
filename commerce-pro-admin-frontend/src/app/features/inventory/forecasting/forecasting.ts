@@ -119,7 +119,8 @@ export class Forecasting implements OnInit {
 
   totalProjectedDemand = computed(() => {
     return this.forecasts().reduce((sum, f) => {
-      return sum + (f.forecasts?.reduce((fs, forecast) => fs + (forecast.predictedDemand || 0), 0) || 0);
+      const data = f.forecastData?.length ? f.forecastData : (f.forecasts ?? []);
+      return sum + data.reduce((fs, d) => fs + (d.predictedDemand || 0), 0);
     }, 0);
   });
 
@@ -127,7 +128,10 @@ export class Forecasting implements OnInit {
     return this.forecasts()
       .filter(f => f.alertLevel === 'high' || f.alertLevel === 'medium')
       .reduce((sum, f) => {
-        const avgForecast = (f.forecasts?.reduce((a, b) => a + (b.predictedDemand || 0), 0) || 0) / (f.forecasts?.length || 1);
+        const data = f.forecastData?.length ? f.forecastData : (f.forecasts ?? []);
+        const avgForecast = data.length > 0
+          ? data.reduce((a, b) => a + (b.predictedDemand || 0), 0) / data.length
+          : 0;
         const recommendedStock = avgForecast * (f.forecastHorizon || 30) * 1.5;
         return sum + Math.max(0, recommendedStock - (f.currentStock || 0));
       }, 0);
