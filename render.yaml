@@ -68,9 +68,6 @@ services:
         fromDatabase:
           name: commerce-pro-db
           property: port
-          
-      - key: JDBC_DATABASE_URL
-        value: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
 
       # ── Spring ──
       - key: SPRING_PROFILES_ACTIVE
