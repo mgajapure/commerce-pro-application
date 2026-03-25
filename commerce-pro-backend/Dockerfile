@@ -16,8 +16,8 @@ FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 
 # Non-root user for security
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
-USER appuser
+#RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+#USER appuser
 
 # Copy only the fat JAR from the build stage
 COPY --from=builder /app/build/libs/*.jar app.jar
