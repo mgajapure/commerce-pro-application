@@ -25,9 +25,9 @@
                 </button>
 
                 <button (click)="batchAnalyse()" [disabled]="batchLoading()"
-                    class="px-4 py-2.5 bg-violet-600 text-white rounded-xl text-sm font-medium hover:bg-violet-700 transition-all flex items-center gap-2 shadow-lg shadow-violet-200 disabled:opacity-60">
-                    @if (batchLoading()) { <i class="bi bi-hourglass-split animate-spin"></i> Analysing... }
-                    @else { <i class="bi bi-robot"></i> Batch AI Sentiment }
+                    class="ai-btn px-4 py-2.5 text-sm rounded-xl shadow-lg">
+                    <i class="bi bi-emoji-smile"></i>
+                    @if (batchLoading()) { Analysing... } @else { Batch AI Sentiment }
                 </button>
 
                 <app-dropdown label="Export" [items]="exportItems" [showChevron]="true"
@@ -340,9 +340,9 @@
                                 } @else {
                                   <button (click)="analyseSentiment(review.id)"
                                           [disabled]="sentimentLoading() === review.id"
-                                          class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs text-gray-500 border border-gray-200 hover:border-violet-300 hover:text-violet-600 transition disabled:opacity-40">
-                                    @if (sentimentLoading() === review.id) { <i class="bi bi-hourglass-split animate-spin"></i> Analysing... }
-                                    @else { <i class="bi bi-robot"></i> AI Sentiment }
+                                          class="ai-btn">
+                                    <i class="bi bi-emoji-smile"></i>
+                                    @if (sentimentLoading() === review.id) { Analysing... } @else { AI Sentiment }
                                   </button>
                                 }
                             </div>

@@ -68,9 +68,9 @@
                 </button>
               } @else {
                 <button (click)="analyseVendorAi(v.id)" [disabled]="vendorAiLoading() === v.id"
-                        class="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-gray-400 border border-dashed border-gray-200 hover:border-violet-300 hover:text-violet-600 transition disabled:opacity-40">
-                  @if (vendorAiLoading() === v.id) { <i class="bi bi-hourglass-split animate-spin"></i> Analysing... }
-                  @else { <i class="bi bi-robot"></i> AI Scorecard }
+                        class="ai-btn w-full justify-center">
+                  <i class="bi bi-building"></i>
+                  @if (vendorAiLoading() === v.id) { Analysing... } @else { AI Scorecard }
                 </button>
               }
             </div>

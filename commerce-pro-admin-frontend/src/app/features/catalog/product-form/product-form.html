@@ -115,9 +115,29 @@
 
                     <!-- Description -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
-                            Description <span class="text-red-500">*</span>
-                        </label>
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="block text-sm font-medium text-gray-700">
+                                Description <span class="text-red-500">*</span>
+                            </label>
+                            <div class="flex items-center gap-1">
+                                <button type="button" (click)="previewAiDescription()" [disabled]="aiDescLoading()"
+                                        class="ai-btn">
+                                    <i class="bi bi-stars"></i>
+                                    @if (aiDescLoading()) { Writing... } @else { AI Write }
+                                </button>
+                                @if (aiDescResult()) {
+                                    <button type="button" (click)="applyAiDescription()"
+                                            class="text-xs px-2.5 py-1 bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition font-medium">
+                                        Apply
+                                    </button>
+                                }
+                            </div>
+                        </div>
+                        @if (aiDescResult()) {
+                            <div class="mb-2 p-2 text-xs text-gray-700 bg-violet-50 border border-violet-200 rounded-lg max-h-20 overflow-y-auto leading-relaxed">
+                                {{ aiDescResult()!.description }}
+                            </div>
+                        }
                         <div class="border border-gray-200 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500 transition-all"
                             [class.border-red-300]="productForm.get('description')?.invalid && productForm.get('description')?.touched">
                             <!-- Toolbar -->
@@ -249,9 +269,32 @@
                     <!-- Pricing -->
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
-                                Price <span class="text-red-500">*</span>
-                            </label>
+                            <div class="flex items-center justify-between mb-2">
+                                <label class="block text-sm font-medium text-gray-700">
+                                    Price <span class="text-red-500">*</span>
+                                </label>
+                                <button type="button" (click)="runAiPricing()" [disabled]="aiPricingLoading()"
+                                        class="ai-btn">
+                                    <i class="bi bi-tag"></i>
+                                    @if (aiPricingLoading()) { ... } @else { AI Price }
+                                </button>
+                            </div>
+                            @if (aiPricingResult()) {
+                                <div class="mb-2 p-2 text-xs bg-violet-50 border border-violet-200 rounded-lg space-y-0.5">
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-500">Recommended</span>
+                                        <span class="font-bold text-violet-700">{{ fmtUsd(aiPricingResult()!.recommendedPrice) }}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-500">Range</span>
+                                        <span class="text-gray-700">{{ fmtUsd(aiPricingResult()!.minAcceptablePrice) }} – {{ fmtUsd(aiPricingResult()!.maxAcceptablePrice) }}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-500">Margin</span>
+                                        <span class="text-green-600 font-medium">{{ aiPricingResult()!.expectedMarginPercent }}%</span>
+                                    </div>
+                                </div>
+                            }
                             <div class="relative">
                                 <span
                                     class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium">$</span>
@@ -335,9 +378,32 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
-                                Quantity <span class="text-red-500">*</span>
-                            </label>
+                            <div class="flex items-center justify-between mb-2">
+                                <label class="block text-sm font-medium text-gray-700">
+                                    Quantity <span class="text-red-500">*</span>
+                                </label>
+                                <button type="button" (click)="runAiForecast()" [disabled]="aiForecastLoading()"
+                                        class="ai-btn">
+                                    <i class="bi bi-graph-up-arrow"></i>
+                                    @if (aiForecastLoading()) { ... } @else { Forecast }
+                                </button>
+                            </div>
+                            @if (aiForecastResult()) {
+                                <div class="mb-2 grid grid-cols-3 gap-1 text-xs">
+                                    <div class="bg-violet-50 border border-violet-200 rounded p-1.5 text-center">
+                                        <div class="font-bold text-gray-900">{{ aiForecastResult()!.predictedDemand }}</div>
+                                        <div class="text-gray-400">Demand</div>
+                                    </div>
+                                    <div class="bg-violet-50 border border-violet-200 rounded p-1.5 text-center">
+                                        <div class="font-bold text-gray-900">{{ aiForecastResult()!.reorderPoint }}</div>
+                                        <div class="text-gray-400">Reorder</div>
+                                    </div>
+                                    <div class="bg-violet-50 border border-violet-200 rounded p-1.5 text-center">
+                                        <div class="font-bold text-gray-900">{{ aiForecastResult()!.safetyStock }}</div>
+                                        <div class="text-gray-400">Safety</div>
+                                    </div>
+                                </div>
+                            }
                             <div class="relative">
                                 <input type="number" formControlName="quantity" min="0" placeholder="0"
                                     class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
@@ -967,7 +1033,22 @@
                   <p class="text-xs text-gray-400">AI description, demand forecast, pricing &amp; return analysis</p>
                 }
               </div>
-            }
+              @if (aiReturnResult()) {
+                <div class="text-xs space-y-2">
+                  <div class="flex justify-between items-center">
+                    <span class="text-gray-500">Return Rate</span>
+                    <span class="font-bold text-red-600 text-sm">{{ aiReturnResult()!.returnRate }}%</span>
+                  </div>
+                  <div class="flex flex-wrap gap-1">
+                    @for (c of aiReturnResult()!.suspectedCauses; track c) {
+                      <span class="px-2 py-0.5 bg-red-50 text-red-600 border border-red-100 rounded-full text-xs">{{ c }}</span>
+                    }
+                  </div>
+                </div>
+              } @else {
+                <p class="text-xs text-gray-400">Analyse 90-day return patterns and suspected causes</p>
+              }
+            </div>
 
             <!-- Quick Tips -->
             <div class="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl p-6 text-white">

@@ -1,3 +1,4 @@
+import { API_HOST } from '../../config/api-config';
 // src/app/core/services/inventory/warehouse.service.ts
 // Warehouse management service - Angular HTTP Client integration with Spring Boot backend
 
@@ -16,7 +17,7 @@ import {
 
 // API Configuration
 const API_CONFIG = {
-  baseUrl: 'http://localhost:8080/api',
+  baseUrl: `${API_HOST}/api`,
   endpoints: {
     warehouses: '/v1/inventory/warehouses'
   }

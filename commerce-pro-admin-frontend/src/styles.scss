@@ -40,3 +40,46 @@ body {
     }
   }
 }
+
+/* ─── AI Button — animated gradient ─────────────────────────────────────── */
+.ai-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #fff;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  background: linear-gradient(270deg, #7c3aed, #6366f1, #a855f7, #7c3aed);
+  background-size: 300% 300%;
+  animation: aiGradientShift 3s ease infinite;
+  transition: opacity 0.2s, transform 0.15s;
+  white-space: nowrap;
+
+  &:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    transform: none;
+    animation: none;
+    background: #9ca3af;
+  }
+}
+
+@keyframes aiGradientShift {
+  0%   { background-position: 0%   50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0%   50%; }
+}

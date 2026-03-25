@@ -463,13 +463,10 @@
                                     } @else {
                                       <button (click)="optimiseInventoryAi(item.productId)"
                                               [disabled]="inventoryAiLoading() === item.productId"
-                                              class="p-2 text-gray-400 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-colors disabled:opacity-40"
+                                              class="ai-btn"
                                               title="AI Inventory Optimise">
-                                        @if (inventoryAiLoading() === item.productId) {
-                                          <i class="bi bi-hourglass-split animate-spin"></i>
-                                        } @else {
-                                          <i class="bi bi-robot"></i>
-                                        }
+                                        <i class="bi bi-box-seam"></i>
+                                        @if (inventoryAiLoading() === item.productId) { Optimising... } @else { AI Optimise }
                                       </button>
                                     }
                                     <div class="relative">

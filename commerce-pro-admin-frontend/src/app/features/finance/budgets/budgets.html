@@ -43,9 +43,9 @@
                   </button>
                 } @else {
                   <button (click)="analyseAnomaly(b.id)" [disabled]="anomalyLoading() === b.id"
-                          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-gray-500 border border-gray-200 hover:border-violet-300 hover:text-violet-600 transition disabled:opacity-40">
-                    @if (anomalyLoading() === b.id) { <i class="bi bi-hourglass-split animate-spin"></i> Analysing... }
-                    @else { <i class="bi bi-robot"></i> AI Anomaly Check }
+                          class="ai-btn">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    @if (anomalyLoading() === b.id) { Analysing... } @else { AI Anomaly }
                   </button>
                 }
               </div>

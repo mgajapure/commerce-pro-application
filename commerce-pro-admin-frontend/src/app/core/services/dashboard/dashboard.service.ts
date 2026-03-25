@@ -1,3 +1,4 @@
+import { API_HOST } from '../../config/api-config';
 // src/app/core/services/dashboard.service.ts
 // Dashboard service wired to real Spring Boot backend API
 
@@ -81,7 +82,7 @@ export interface SalesChartDTO {
   providedIn: 'root'
 })
 export class DashboardService {
-  private readonly BASE_URL = 'http://localhost:8080/api/v1/dashboard';
+  private readonly BASE_URL = `${API_HOST}/api/v1/dashboard`;
   private readonly http = inject(HttpClient);
 
   // ── Signals ──────────────────────────────────────────────────────────────

@@ -1,3 +1,4 @@
+import { API_HOST } from '../../config/api-config';
 import { Injectable, Injector, computed, inject, signal } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, catchError, map, of, tap } from 'rxjs';
@@ -10,7 +11,7 @@ import { NotificationService } from '../notification/notification.service';
   providedIn: 'root'
 })
 export class AuthService {
-  private readonly apiBase = 'http://localhost:8080/api';
+  private readonly apiBase = `${API_HOST}/api`;
   private readonly authBase = `${this.apiBase}/v1/auth`;
   private readonly storageKey = 'commerce-pro-admin-auth';
   private readonly injector = inject(Injector);

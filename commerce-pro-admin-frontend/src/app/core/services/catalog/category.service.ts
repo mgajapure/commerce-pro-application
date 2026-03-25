@@ -1,3 +1,4 @@
+import { API_HOST } from '../../config/api-config';
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, of, forkJoin } from 'rxjs';
@@ -10,7 +11,7 @@ import {
 } from '../../models/catalog/category.model';
 import { ApiResponse, PageResponse, PageParams, buildPageParams } from '../../models/common';
 
-const BASE = 'http://localhost:8080/api/v1/categories';
+const BASE = `${API_HOST}/api/v1/categories`;
 
 @Injectable({ providedIn: 'root' })
 export class CategoryService {

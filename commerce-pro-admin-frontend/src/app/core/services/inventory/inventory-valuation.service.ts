@@ -1,3 +1,4 @@
+import { API_HOST } from '../../config/api-config';
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
@@ -11,7 +12,7 @@ import {
   ValuationMethodConfig
 } from '../../models/inventory/inventory-valuation.model';
 
-const BASE = 'http://localhost:8080/api/v1/inventory/valuations';
+const BASE = `${API_HOST}/api/v1/inventory/valuations`;
 
 export interface ValuationStats {
   totalValuations: number;

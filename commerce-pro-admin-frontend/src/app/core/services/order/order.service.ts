@@ -1,3 +1,4 @@
+import { API_HOST } from '../../config/api-config';
 // src/app/core/services/order.service.ts
 // Order service - Angular HTTP Client integration with Spring Boot backend
 // Follows the exact same pattern as product.service.ts
@@ -25,7 +26,7 @@ import { ApiResponse, PageResponse, PageParams, buildPageParams } from '../../mo
 // ─── API config — mirrors product.service.ts structure ───────────────────────
 
 const API_CONFIG = {
-  baseUrl: 'http://localhost:8080/api',
+  baseUrl: `${API_HOST}/api`,
   endpoints: {
     orders:     '/v1/orders',
     stats:      '/v1/orders/stats'

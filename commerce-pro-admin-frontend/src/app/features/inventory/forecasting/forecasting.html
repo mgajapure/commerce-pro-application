@@ -459,13 +459,10 @@
                                     } @else {
                                       <button (click)="$event.stopPropagation(); runAiForecast(forecast.productId)"
                                               [disabled]="aiForecastLoading() === forecast.productId"
-                                              class="p-2 text-gray-400 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-colors disabled:opacity-40"
+                                              class="ai-btn"
                                               title="AI Demand Forecast">
-                                        @if (aiForecastLoading() === forecast.productId) {
-                                          <i class="bi bi-hourglass-split animate-spin"></i>
-                                        } @else {
-                                          <i class="bi bi-robot"></i>
-                                        }
+                                        <i class="bi bi-graph-up-arrow"></i>
+                                        @if (aiForecastLoading() === forecast.productId) { Forecasting... } @else { Forecast }
                                       </button>
                                     }
                                     <button

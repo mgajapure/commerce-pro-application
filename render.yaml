@@ -1,0 +1,107 @@
+# ============================================================
+# Render Blueprint — Commerce Pro Application
+# Deploy: https://render.com/docs/blueprint-spec
+#
+# How to use:
+#   1. Push this repo to GitHub.
+#   2. In Render Dashboard → New → Blueprint.
+#   3. Connect your repo — Render reads this file automatically.
+#   4. Fill in the "sync: false" env vars in the dashboard
+#      (marked with "# <-- SET IN DASHBOARD").
+#   5. Deploy.
+#
+# Deployment order:
+#   commerce-pro-db  →  commerce-pro-backend  →  commerce-pro-admin-frontend
+#
+# Note: Free tier web services spin down after 15 min of inactivity
+# and have a cold-start delay of ~30s on the first request.
+# ============================================================
+
+databases:
+  - name: commerce-pro-db
+    databaseName: commerce_pro
+    plan: free
+
+services:
+
+  # ──────────────────────────────────────────────────────────
+  # 1. Spring Boot Backend  (Docker Web Service)
+  # Render does not have a native Java runtime — Docker is used.
+  # Dockerfile: commerce-pro-backend/Dockerfile
+  # ──────────────────────────────────────────────────────────
+  - type: web
+    name: commerce-pro-backend
+    runtime: docker
+    rootDir: commerce-pro-backend
+    dockerfilePath: ./Dockerfile
+    plan: free
+    healthCheckPath: /api/actuator/health
+    autoDeploy: true
+    envVars:
+      # ── Database (auto-injected from the linked Postgres DB above) ──
+      - key: DATABASE_URL
+        fromDatabase:
+          name: commerce-pro-db
+          property: connectionString
+
+      # ── Spring ──
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+
+      # ── Secrets — fill these in the Render dashboard ──
+      - key: JWT_SECRET
+        sync: false          # <-- SET IN DASHBOARD (min 64-char hex string)
+      - key: MFA_ENCRYPTION_KEY
+        sync: false          # <-- SET IN DASHBOARD (min 32 chars)
+      - key: ADMIN_PASSWORD
+        sync: false          # <-- SET IN DASHBOARD
+      - key: SUPERADMIN_PASSWORD
+        sync: false          # <-- SET IN DASHBOARD
+      - key: PAYMENT_ENCRYPTION_KEY
+        sync: false          # <-- SET IN DASHBOARD (AES-256 key)
+
+      # ── AI (Groq) ──
+      - key: GROQ_API_KEY
+        sync: false          # <-- SET IN DASHBOARD (https://console.groq.com)
+
+      # ── Mail ──
+      - key: MAIL_HOST
+        value: smtp.gmail.com
+      - key: MAIL_PORT
+        value: "587"
+      - key: MAIL_USERNAME
+        sync: false          # <-- SET IN DASHBOARD
+      - key: MAIL_PASSWORD
+        sync: false          # <-- SET IN DASHBOARD (Gmail App Password)
+      - key: MAIL_FROM
+        sync: false          # <-- SET IN DASHBOARD
+
+      # ── CORS & URLs ──
+      # After frontend is deployed, update these with the actual Render URLs.
+      - key: CORS_ALLOWED_ORIGINS
+        value: https://commerce-pro-admin.onrender.com
+      - key: FRONTEND_URL
+        value: https://commerce-pro-admin.onrender.com
+      - key: PAYMENT_LINK_BASE_URL
+        value: https://commerce-pro-admin.onrender.com/pay
+
+  # ──────────────────────────────────────────────────────────
+  # 2. Angular Admin Frontend  (Static Site — always free)
+  # ──────────────────────────────────────────────────────────
+  - type: web
+    name: commerce-pro-admin-frontend
+    runtime: static
+    rootDir: commerce-pro-admin-frontend
+    buildCommand: npm install && npm run build -- --configuration production
+    staticPublishPath: dist/commerce-pro/browser
+    pullRequestPreviewsEnabled: false
+    routes:
+      # Angular uses client-side routing — serve index.html for all routes
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      # Angular 17+ (esbuild) inlines NG_APP_* vars at build time.
+      # Set this to your Render backend URL after the backend is deployed.
+      - key: NG_APP_API_URL
+        value: https://commerce-pro-backend.onrender.com

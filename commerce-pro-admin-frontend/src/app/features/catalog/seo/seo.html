@@ -291,10 +291,10 @@
                                           </button>
                                         } @else {
                                           <button (click)="previewAiSeo(template.id)" [disabled]="aiSeoLoading() === template.id"
-                                                  class="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-gray-500 border border-gray-200 hover:border-violet-300 hover:text-violet-600 transition disabled:opacity-40"
+                                                  class="ai-btn"
                                                   title="AI SEO Optimise">
-                                            @if (aiSeoLoading() === template.id) { <i class="bi bi-hourglass-split animate-spin"></i> }
-                                            @else { <i class="bi bi-robot"></i> }
+                                            <i class="bi bi-robot"></i>
+                                            @if (aiSeoLoading() === template.id) { Optimising... } @else { AI SEO }
                                           </button>
                                         }
                                         <button (click)="openModal(template)"
@@ -405,9 +405,9 @@
                               </button>
                             } @else {
                               <button (click)="previewAiSeo(template.id)" [disabled]="aiSeoLoading() === template.id"
-                                      class="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-gray-500 border border-gray-200 hover:border-violet-300 hover:text-violet-600 transition disabled:opacity-40">
-                                @if (aiSeoLoading() === template.id) { <i class="bi bi-hourglass-split animate-spin"></i> Analysing... }
-                                @else { <i class="bi bi-robot"></i> AI SEO }
+                                      class="ai-btn">
+                                <i class="bi bi-robot"></i>
+                                @if (aiSeoLoading() === template.id) { Optimising... } @else { AI SEO }
                               </button>
                             }
                             <button (click)="openModal(template)"

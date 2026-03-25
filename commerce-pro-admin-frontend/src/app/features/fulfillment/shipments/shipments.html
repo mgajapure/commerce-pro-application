@@ -100,9 +100,9 @@
                         </button>
                       } @else {
                         <button (click)="optimiseShipping(s.orderId)" [disabled]="shippingAiLoading() === s.orderId"
-                                class="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-gray-500 border border-gray-200 hover:border-violet-300 hover:text-violet-600 transition disabled:opacity-40">
-                          @if (shippingAiLoading() === s.orderId) { <i class="bi bi-hourglass-split animate-spin"></i> }
-                          @else { <i class="bi bi-robot"></i> }
+                                class="ai-btn">
+                          <i class="bi bi-truck"></i>
+                          @if (shippingAiLoading() === s.orderId) { Optimising... } @else { AI Ship }
                         </button>
                       }
                     </div>

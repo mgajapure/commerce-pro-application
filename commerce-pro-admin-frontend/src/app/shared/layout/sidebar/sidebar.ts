@@ -678,6 +678,7 @@ export class Sidebar implements OnInit {
       description: 'AI-powered insights, forecasting, and automation',
       children: [
         { id: 'ai-dashboard',          label: 'AI Hub Dashboard',    route: '/ai/dashboard',          permissions: ['manage_ai'] },
+        { id: 'ai-insights',           label: 'AI Insights',         route: '/ai/insights',           permissions: ['manage_ai'] },
         { id: 'ai-config',             label: 'AI Configuration',    route: '/ai/config',             permissions: ['manage_ai'] },
         { id: 'ai-nl-report',          label: 'NL Report Chat',      route: '/ai/nl-report',          permissions: ['manage_ai'] },
         { id: 'ai-chatbot-sessions',   label: 'Chatbot Sessions',    route: '/ai/chatbot-sessions',   permissions: ['manage_ai'] },

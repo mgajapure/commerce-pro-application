@@ -1,3 +1,4 @@
+import { API_HOST } from '../../config/api-config';
 import { Injectable, inject, signal, computed, OnDestroy } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, of, Subscription, interval } from 'rxjs';
@@ -10,7 +11,7 @@ import {
 } from '../../models/notification/notification.model';
 import { ApiResponse, PageResponse } from '../../models/common';
 
-const BASE = 'http://localhost:8080/api/v1/notifications';
+const BASE = `${API_HOST}/api/v1/notifications`;
 const POLL_INTERVAL_MS = 30_000; // 30 seconds
 
 @Injectable({ providedIn: 'root' })

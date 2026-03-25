@@ -78,7 +78,13 @@ public class AiOrchestrator {
         costGuard.checkDailyBudget(feature);
 
         long start = System.currentTimeMillis();
-        ChatResponse response = callGroq(config, systemPrompt, List.of(new UserMessage(userMessage)));
+        ChatResponse response;
+        try {
+            response = callWithRetry(config, systemPrompt, List.of(new UserMessage(userMessage)));
+        } catch (Exception ex) {
+            persistFailedLog(feature, config, System.currentTimeMillis() - start, ex);
+            throw ex;
+        }
         long latency = System.currentTimeMillis() - start;
 
         String content = extractContent(response, feature);
@@ -113,7 +119,7 @@ public class AiOrchestrator {
         long start = System.currentTimeMillis();
         ChatResponse response;
         try {
-            response = callGroq(config, systemPrompt, List.of(new UserMessage(userMessage)));
+            response = callWithRetry(config, systemPrompt, List.of(new UserMessage(userMessage)));
         } catch (Exception ex) {
             persistFailedLog(feature, config, System.currentTimeMillis() - start, ex);
             throw ex;
@@ -161,7 +167,7 @@ public class AiOrchestrator {
         long start = System.currentTimeMillis();
         ChatResponse response;
         try {
-            response = callGroq(config, null /* system already in history */, history);
+            response = callWithRetry(config, null /* system already in history */, history);
         } catch (Exception ex) {
             persistFailedLog(feature, config, System.currentTimeMillis() - start, ex);
             throw ex;
@@ -188,25 +194,62 @@ public class AiOrchestrator {
         return config;
     }
 
-    private ChatResponse callGroq(AiConfig config, String systemPrompt, List<Message> messages) {
-        // Cap maxTokens to the global safety ceiling
+    /**
+     * Calls the AI model with exponential-backoff retry.
+     * Uses the {@link com.commerce_pro_backend.ai.config.AiModuleConfig.RetryConfig} settings
+     * (maxAttempts, backoffMs) configured in application.properties.
+     */
+    private ChatResponse callWithRetry(AiConfig config, String systemPrompt, List<Message> messages) {
+        int maxAttempts = moduleConfig.getRetry().getMaxAttempts();
+        long backoffMs  = moduleConfig.getRetry().getBackoffMs();
+
+        Exception lastEx = null;
+        for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+            try {
+                return callModel(config, systemPrompt, messages);
+            } catch (Exception ex) {
+                lastEx = ex;
+                if (attempt < maxAttempts) {
+                    long delay = backoffMs * (1L << (attempt - 1)); // 1x, 2x, 4x …
+                    log.warn("AI call failed (attempt {}/{}), retrying in {}ms: {}",
+                            attempt, maxAttempts, delay, ex.getMessage());
+                    try { Thread.sleep(delay); } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        throw new RuntimeException("Interrupted during AI retry backoff", ie);
+                    }
+                }
+            }
+        }
+        log.error("AI call failed after {} attempts", maxAttempts);
+        throw new RuntimeException("AI call failed after " + maxAttempts + " attempts", lastEx);
+    }
+
+    /**
+     * Single attempt to call the AI model via Spring AI ChatClient.
+     * Correctly passes the system prompt when provided (single-turn), or uses
+     * the messages list directly when it already contains a SystemMessage (multi-turn).
+     */
+    private ChatResponse callModel(AiConfig config, String systemPrompt, List<Message> messages) {
         int maxTokens = Math.min(config.getMaxTokens(), moduleConfig.getMaxTokensCap());
 
-        ChatClient.ChatClientRequestSpec spec = chatClient.prompt();
+        var options = org.springframework.ai.openai.OpenAiChatOptions.builder()
+                .model(config.getModel())
+                .maxTokens(maxTokens)
+                .build();
 
         if (systemPrompt != null && !systemPrompt.isBlank()) {
-            spec = spec.system(systemPrompt);
+            // Single-turn: pass system prompt via the fluent API so it is correctly set
+            return chatClient.prompt()
+                    .system(systemPrompt)
+                    .messages(messages)
+                    .options(options)
+                    .call()
+                    .chatResponse();
         }
 
-        // For multi-turn history, messages already include the system instruction
-        // as the first message; just pass them as a Prompt.
-        Prompt prompt = new Prompt(messages);
-
-        return chatClient.prompt(prompt)
-                .options(org.springframework.ai.openai.OpenAiChatOptions.builder()
-                        .model(config.getModel())
-                        .maxTokens(maxTokens)
-                        .build())
+        // Multi-turn: the messages list already contains a SystemMessage as the first element
+        return chatClient.prompt(new Prompt(messages))
+                .options(options)
                 .call()
                 .chatResponse();
     }

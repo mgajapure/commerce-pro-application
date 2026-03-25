@@ -1,3 +1,4 @@
+import { API_HOST } from '../../config/api-config';
 // src/app/core/services/collection.service.ts
 // Collection service wired to real backend API
 
@@ -13,7 +14,7 @@ import {
   buildPageParams
 } from '../../models/common';
 
-const BASE = 'http://localhost:8080/api/v1/collections';
+const BASE = `${API_HOST}/api/v1/collections`;
 
 // ── Backend DTO shapes ────────────────────────────────────────────────────────
 

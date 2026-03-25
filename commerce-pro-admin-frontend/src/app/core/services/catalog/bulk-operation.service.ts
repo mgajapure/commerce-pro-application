@@ -1,3 +1,4 @@
+import { API_HOST } from '../../config/api-config';
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of, throwError } from 'rxjs';
@@ -14,7 +15,7 @@ import {
 } from '../../models/catalog/catalog-shared.model';
 import { ApiResponse } from '../../models/common';
 
-const BASE = 'http://localhost:8080/api/v1/products';
+const BASE = `${API_HOST}/api/v1/products`;
 
 export interface BulkOperationResult {
   success: boolean;
