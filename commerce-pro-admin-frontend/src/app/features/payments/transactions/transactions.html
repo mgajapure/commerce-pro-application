@@ -368,7 +368,7 @@
                [style.width]="fraudModalResult()!.riskScore + '%'"></div>
         </div>
         <!-- Signals -->
-        @if (fraudModalResult()!.signals?.length > 0) {
+        @if ((fraudModalResult()?.signals?.length ?? 0) > 0) {
           <div>
             <div class="text-sm font-medium text-gray-700 mb-2">Risk Signals</div>
             <div class="flex flex-wrap gap-1.5">

@@ -8,14 +8,14 @@ import { RouterModule, Router, ActivatedRoute } from '@angular/router';
 import { Subject, debounceTime, distinctUntilChanged, takeUntil, switchMap, of, catchError, map } from 'rxjs';
 
 // Import models from new locations
-import {  
+import {
   ProductVariant,
   Product,
   ProductStatus,
   ProductDimensions
 } from '../../../core/models/catalog/product.model';
 
-import {  
+import {
   Category
 } from '../../../core/models/catalog/category.model';
 
@@ -86,7 +86,7 @@ export class ProductForm implements OnInit, OnDestroy {
 
   // Data from services
   categories = this.categoryService.allCategories;
-  brands = computed(() => 
+  brands = computed(() =>
     this.brandService.allBrands().map(b => b.name)
   );
   collections = this.collectionService.allCollections;
@@ -106,7 +106,7 @@ export class ProductForm implements OnInit, OnDestroy {
     this.initForm();
     this.setupSkuValidation();
     this.loadReferenceData();
-    
+
     // Check for edit mode
     this.route.paramMap.subscribe(paramMap => {
       const id = paramMap.get('id');
@@ -287,7 +287,7 @@ export class ProductForm implements OnInit, OnDestroy {
         height: product.dimensions?.height
       }
     });
-    
+
     this.featuredImage.set(product.image);
     this.galleryImages.set(product.gallery || []);
     this.selectedTags.set(product.tags || []);
@@ -474,7 +474,7 @@ export class ProductForm implements OnInit, OnDestroy {
       }
     };
     reader.readAsDataURL(file);
-    
+
     // TODO: Implement actual file upload
     // this.fileStorageService.uploadProductImage(file).subscribe(url => {
     //   this.featuredImage.set(url);
@@ -577,7 +577,7 @@ export class ProductForm implements OnInit, OnDestroy {
 
   private buildProductRequest(): ProductRequest {
     const formValue = this.productForm.value;
-    
+
     // Build dimensions only if at least one value exists
     let dimensions: ProductDimensions | undefined;
     if (formValue.dimensions?.length || formValue.dimensions?.width || formValue.dimensions?.height) {
@@ -603,7 +603,7 @@ export class ProductForm implements OnInit, OnDestroy {
       featured: false,
       trackInventory: formValue.trackInventory ?? true,
       allowBackorders: formValue.allowBackorders ?? false,
-      
+
       // Optional fields with defaults
       description: formValue.description?.trim() || '',
       shortDescription: formValue.shortDescription?.trim() || '',
@@ -618,17 +618,17 @@ export class ProductForm implements OnInit, OnDestroy {
           name: v.name || '',
           options: v.options || []
         };
-        
+
         // Keep ID if:
         // 1. We're in edit mode AND
         // 2. The variant has an ID that looks like a UUID (has dashes and is long enough)
         if (this.isEditMode() && v.id && v.id.length > 10 && v.id.includes('-')) {
           variant.id = v.id;
         }
-        
+
         return variant;
       }),
-      
+
       // Optional nullable fields
       compareAtPrice: formValue.comparePrice || undefined,
       cost: formValue.cost || undefined,
@@ -816,5 +816,9 @@ export class ProductForm implements OnInit, OnDestroy {
 
   fmtUsd(n: number): string {
     return '$' + (n ?? 0).toFixed(2);
+  }
+
+  toggleAiPanel(){
+    this.showAiPanel.update(v => !v);
   }
 }

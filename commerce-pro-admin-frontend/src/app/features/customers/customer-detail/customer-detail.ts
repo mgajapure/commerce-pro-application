@@ -440,4 +440,8 @@ export class CustomerDetail implements OnInit, OnDestroy {
     if (score >= 40) return 'bg-yellow-100 text-yellow-700';
     return 'bg-green-100 text-green-700';
   }
+
+  toggleAiPanel(){
+    this.showAiPanel.update(v => !v);
+  }
 }

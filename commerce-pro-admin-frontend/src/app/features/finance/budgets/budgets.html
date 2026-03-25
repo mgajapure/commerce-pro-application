@@ -83,7 +83,7 @@
           <span class="px-3 py-1 rounded-full text-sm font-medium {{ anomalySeverityBadge(anomalyModalResult()!.severity) }}">{{ anomalyModalResult()!.severity }}</span>
           <span class="text-sm text-gray-600">→ {{ anomalyModalResult()!.recommendation }}</span>
         </div>
-        @if (anomalyModalResult()!.anomalousLines?.length > 0) {
+        @if ((anomalyModalResult()?.anomalousLines?.length ?? 0) > 0) {
           <div>
             <div class="text-sm font-medium text-gray-700 mb-2">Anomalous Lines</div>
             <div class="flex flex-wrap gap-1.5">
