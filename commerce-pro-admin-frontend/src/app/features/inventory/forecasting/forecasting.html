@@ -361,8 +361,7 @@
                             (click)="viewForecastDetail(forecast)">
                             <td class="px-4 py-4">
                                 <div class="flex items-center gap-3">
-                                    <img [src]="forecast.product && forecast.product.image ? forecast.product.image : ''"
-                                        class="w-12 h-12 rounded-xl object-cover bg-gray-100">
+                                    <img [src]="forecast.product?.image || PLACEHOLDER_IMAGE" (error)="onImgError($event)" class="w-12 h-12 rounded-xl object-cover bg-gray-100">
                                     <div>
                                         <p
                                             class="font-medium text-gray-900 group-hover:text-indigo-600 transition-colors">
@@ -395,21 +394,16 @@
                             </td>
                             <td class="px-4 py-4">
                                 <div class="space-y-1">
-                                    @if (forecast.forecasts && forecast.forecasts.length > 0) {
+                                    @if (hasForecastData(forecast)) {
                                     <span class="text-sm font-medium text-gray-900">
                                         {{ formatNumber(getForeCastCount(forecast)) }} units
                                     </span>
                                     <div class="flex items-center gap-2 text-xs">
                                         <span class="text-gray-500">Confidence:</span>
-                                        @if (forecast.forecasts[0].confidenceUpper != null && forecast.forecasts[0].confidenceLower != null && forecast.forecasts[0].predictedDemand) {
-                                        <span class="text-green-600">±{{
-                                            Math.round(((forecast.forecasts[0].confidenceUpper -
-                                            forecast.forecasts[0].confidenceLower) /
-                                            forecast.forecasts[0].predictedDemand) * 50) }}%</span>
-                                        } @else {
-                                        <span class="text-green-600">±0%</span>
-                                        }
+                                        <span class="text-green-600">±{{ getForecastConfidenceRange(forecast) }}%</span>
                                     </div>
+                                    } @else {
+                                    <span class="text-sm text-gray-400">No data</span>
                                     }
                                 </div>
                             </td>
@@ -422,11 +416,13 @@
                                     <div>
                                         <span class="text-sm font-medium text-gray-900 capitalize">{{ forecast.trend
                                             }}</span>
-                                        @if (forecast.trend !== 'stable' && forecast.trendPercentage != null) {
-                                        <p class="text-xs" [class.text-green-600]="forecast.trend === 'up'"
-                                            [class.text-red-600]="forecast.trend === 'down'">
-                                            {{ forecast.trend === 'up' ? '+' : '' }}{{ forecast.trendPercentage }}%
-                                        </p>
+                                        @if (forecast.trend !== 'stable') {
+                                          @if (computeTrendPercentage(forecast); as pct) {
+                                          <p class="text-xs" [class.text-green-600]="forecast.trend === 'up'"
+                                              [class.text-red-600]="forecast.trend === 'down'">
+                                              {{ forecast.trend === 'up' ? '+' : '' }}{{ pct }}%
+                                          </p>
+                                          }
                                         }
                                     </div>
                                 </div>
@@ -440,35 +436,60 @@
                                 </span>
                             </td>
                             <td class="px-4 py-4">
-                                <div class="flex items-center justify-center gap-1">
+                                <div class="flex items-center justify-center gap-1 relative">
                                     <button (click)="$event.stopPropagation(); viewForecastDetail(forecast)"
                                         class="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
                                         title="View Details">
                                         <i class="bi bi-graph-up-arrow"></i>
                                     </button>
-                                    <button
+                                    <button (click)="viewHistory(forecast, $event)"
                                         class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                                         title="View History">
                                         <i class="bi bi-clock-history"></i>
                                     </button>
                                     @if (getAiForecast(forecast.productId); as aiRes) {
                                       <button (click)="$event.stopPropagation(); aiForecastModalResult.set(aiRes); showAiForecastModal.set(true)"
-                                              class="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium {{ confidenceBadge(aiRes.confidenceLevel) }}">
+                                              class="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium"
+                                              [class]="confidenceBadge(aiRes.confidenceLevel)">
                                         <i class="bi bi-robot"></i>
                                       </button>
                                     } @else {
                                       <button (click)="$event.stopPropagation(); runAiForecast(forecast.productId)"
                                               [disabled]="aiForecastLoading() === forecast.productId"
-                                              class="ai-btn"
+                                              class="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium bg-violet-100 text-violet-700 hover:bg-violet-200 transition-colors disabled:opacity-50"
                                               title="AI Demand Forecast">
-                                        <i class="bi bi-graph-up-arrow"></i>
-                                        @if (aiForecastLoading() === forecast.productId) { Forecasting... } @else { Forecast }
+                                        <i class="bi bi-robot"></i>
+                                        @if (aiForecastLoading() === forecast.productId) { <span>...</span> } @else { <span>AI</span> }
                                       </button>
                                     }
-                                    <button
-                                        class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
-                                        <i class="bi bi-three-dots-vertical"></i>
-                                    </button>
+                                    <div class="relative">
+                                        <button (click)="toggleActionMenu(forecast.id, $event)"
+                                            class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                                            title="More actions">
+                                            <i class="bi bi-three-dots-vertical"></i>
+                                        </button>
+                                        @if (activeActionMenu() === forecast.id) {
+                                        <div class="absolute right-0 top-full mt-1 w-44 bg-white rounded-xl shadow-lg border border-gray-100 z-20 py-1 animate-fade-in">
+                                            <button (click)="viewForecastDetail(forecast)"
+                                                class="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                                                <i class="bi bi-eye text-indigo-500"></i>View Details
+                                            </button>
+                                            <button (click)="viewHistory(forecast, $event)"
+                                                class="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                                                <i class="bi bi-clock-history text-blue-500"></i>View History
+                                            </button>
+                                            <button (click)="$event.stopPropagation(); runAiForecast(forecast.productId); closeActionMenu()"
+                                                class="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                                                <i class="bi bi-robot text-violet-500"></i>AI Forecast
+                                            </button>
+                                            <hr class="my-1 border-gray-100">
+                                            <button (click)="closeActionMenu()"
+                                                class="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors">
+                                                <i class="bi bi-archive text-red-500"></i>Archive
+                                            </button>
+                                        </div>
+                                        }
+                                    </div>
                                 </div>
                             </td>
                         </tr>

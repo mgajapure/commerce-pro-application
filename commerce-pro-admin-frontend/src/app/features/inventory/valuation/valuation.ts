@@ -45,6 +45,7 @@ export class Valuation implements OnInit {
   showAdjustModal = signal(false);
   showExportModal = signal(false);
   showRecalculateModal = signal(false);
+  showDetailModal = signal(false);
 
   // Forms
   filterForm!: FormGroup;
@@ -180,7 +181,14 @@ export class Valuation implements OnInit {
   // Methods
   viewValuationDetail(valuation: InventoryValuation) {
     this.selectedValuation.set(valuation);
+    this.showDetailModal.set(true);
     this.activeView.set('detail');
+  }
+
+  closeDetailModal(): void {
+    this.showDetailModal.set(false);
+    this.selectedValuation.set(null);
+    this.activeView.set('list');
   }
 
   goToList() {

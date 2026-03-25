@@ -36,6 +36,11 @@ export class Forecasting implements OnInit {
   showSettingsModal = signal(false);
   showGenerateModal = signal(false);
   showExportModal = signal(false);
+  showDetailModal = signal(false);
+  showHistoryModal = signal(false);
+  historyForecast = signal<DemandForecast | null>(null);
+  activeActionMenu = signal<string | null>(null);
+  readonly PLACEHOLDER_IMAGE = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHZpZXdCb3g9IjAgMCA0OCA0OCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIGZpbGw9IiNGM0Y0RjYiLz48cGF0aCBkPSJNMjQgMTZDMjcuMzEzNyAxNiAzMCAxOC42ODYzIDMwIDIyQzMwIDI1LjMxMzcgMjcuMzEzNyAyOCAyNCAyOEMyMC42ODYzIDI4IDE4IDI1LjMxMzcgMTggMjJDMTggMTguNjg2MyAyMC42ODYzIDE2IDI0IDE2WiIgZmlsbD0iI0QxRDVEQiIvPjxwYXRoIGQ9Ik0xMiAzNkMxMiAzMiAxNy4zNzMgMjkgMjQgMjlDMzAuNjI3IDI5IDM2IDMyIDM2IDM2VjM4SDEyVjM2WiIgZmlsbD0iI0QxRDVEQiIvPjwvc3ZnPg==';
 
   filterForm!: FormGroup;
   settingsForm!: FormGroup;
@@ -89,6 +94,18 @@ export class Forecasting implements OnInit {
 
   stats = computed(() => {
     const forecasts = this.forecasts();
+    // Compute average accuracy dynamically from forecastData confidence values
+    const avgAccuracy = forecasts.length > 0
+      ? Math.round(
+          forecasts.reduce((sum, f) => {
+            const data = f.forecastData?.length ? f.forecastData : (f.forecasts ?? []);
+            const avg = data.length > 0
+              ? data.reduce((s, d) => s + (d.confidence ?? 0), 0) / data.length
+              : 0;
+            return sum + avg * 100;
+          }, 0) / forecasts.length * 10
+        ) / 10
+      : 0;
     return {
       totalProducts: forecasts.length,
       highDemand: forecasts.filter(f => f.trend === 'up').length,
@@ -96,7 +113,7 @@ export class Forecasting implements OnInit {
       stableDemand: forecasts.filter(f => f.trend === 'stable').length,
       criticalAlerts: forecasts.filter(f => f.alertLevel === 'high').length,
       warningAlerts: forecasts.filter(f => f.alertLevel === 'medium').length,
-      avgAccuracy: 92.5
+      avgAccuracy
     };
   });
 
@@ -157,7 +174,38 @@ export class Forecasting implements OnInit {
 
   viewForecastDetail(forecast: DemandForecast) {
     this.selectedForecast.set(forecast);
-    this.activeView.set('detail');
+    this.showDetailModal.set(true);
+    this.activeActionMenu.set(null);
+  }
+
+  closeDetailModal() {
+    this.showDetailModal.set(false);
+  }
+
+  viewHistory(forecast: DemandForecast, event?: Event) {
+    if (event) event.stopPropagation();
+    this.historyForecast.set(forecast);
+    this.showHistoryModal.set(true);
+    this.activeActionMenu.set(null);
+  }
+
+  closeHistoryModal() {
+    this.showHistoryModal.set(false);
+    this.historyForecast.set(null);
+  }
+
+  toggleActionMenu(forecastId: string, event: Event) {
+    event.stopPropagation();
+    this.activeActionMenu.set(this.activeActionMenu() === forecastId ? null : forecastId);
+  }
+
+  closeActionMenu() {
+    this.activeActionMenu.set(null);
+  }
+
+  onImgError(event: Event) {
+    const img = event.target as HTMLImageElement;
+    img.src = this.PLACEHOLDER_IMAGE;
   }
 
   goToList() {
@@ -283,7 +331,37 @@ export class Forecasting implements OnInit {
   }
 
   getForeCastCount(forecast: DemandForecast) {
-    return (forecast.forecasts?.slice(0, 30).reduce((a, b) => a + (b.predictedDemand || 0), 0) || 0);
+    // Use forecastData (primary) falling back to forecasts (legacy field)
+    const data = forecast.forecastData?.length ? forecast.forecastData : (forecast.forecasts ?? []);
+    return data.slice(0, 30).reduce((a, b) => a + (b.predictedDemand || 0), 0);
+  }
+
+  getForecastConfidenceRange(forecast: DemandForecast): number {
+    // Use forecastData (primary) falling back to forecasts (legacy field)
+    const data = forecast.forecastData?.length ? forecast.forecastData : (forecast.forecasts ?? []);
+    if (!data.length) return 0;
+    const first = data[0];
+    const upper = first.confidenceUpper ?? first.upperBound ?? 0;
+    const lower = first.confidenceLower ?? first.lowerBound ?? 0;
+    const predicted = first.predictedDemand ?? 0;
+    if (!predicted) return 0;
+    return Math.round(((upper - lower) / predicted) * 50);
+  }
+
+  hasForecastData(forecast: DemandForecast): boolean {
+    const data = forecast.forecastData?.length ? forecast.forecastData : (forecast.forecasts ?? []);
+    return data.length > 0;
+  }
+
+  computeTrendPercentage(forecast: DemandForecast): number | null {
+    if (forecast.trendPercentage != null) return forecast.trendPercentage;
+    // Derive from forecastData: compare first vs last predicted demand
+    const data = forecast.forecastData?.length ? forecast.forecastData : (forecast.forecasts ?? []);
+    if (data.length < 2) return null;
+    const first = data[0].predictedDemand ?? 0;
+    const last = data[data.length - 1].predictedDemand ?? 0;
+    if (!first) return null;
+    return Math.round(((last - first) / first) * 100);
   }
 
   // Products computed from forecasts for the generate modal
@@ -301,6 +379,10 @@ export class Forecasting implements OnInit {
         sku: f.sku,
         image: f.product?.image || ''
       }));
+  });
+
+  alertForecasts = computed(() => {
+    return this.forecasts().filter(f => f.alertLevel === 'high' || f.alertLevel === 'medium');
   });
 
   protected readonly Math = Math;

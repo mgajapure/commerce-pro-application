@@ -4,28 +4,64 @@ import { FormsModule } from '@angular/forms';
 import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
 import { PaymentService } from '../../../core/services/payment/payment.service';
 import { PaymentMethodDTO } from '../../../core/models/payment/payment.model';
+import { CustomerApiService } from '../../../core/services/customers/customers.service';
+import { CustomerSummary } from '../../../core/models/customers/customers.model';
 
 @Component({ selector: 'app-methods', standalone: true, imports: [CommonModule, FormsModule], templateUrl: './methods.html', styleUrl: './methods.scss' })
 export class Methods implements OnInit {
   private svc = inject(PaymentService);
+  private customerSvc = inject(CustomerApiService);
   private destroy$ = new Subject<void>();
   private searchSubject = new Subject<string>();
 
-  methods       = signal<PaymentMethodDTO[]>([]);
-  isLoading     = signal(false);
-  actionLoading = signal<string | null>(null);
-  searchQuery   = signal('');
-  customerId    = signal('');
-  error         = signal<string | null>(null);
-  removeTarget  = signal<string | null>(null);
+  methods           = signal<PaymentMethodDTO[]>([]);
+  isLoading         = signal(false);
+  customersLoading  = signal(false);
+  actionLoading     = signal<string | null>(null);
+  searchQuery       = signal('');
+  customerId        = signal('');
+  error             = signal<string | null>(null);
+  removeTarget      = signal<string | null>(null);
   showRemoveConfirm = signal(false);
 
+  // Customer list state
+  customers            = signal<CustomerSummary[]>([]);
+  totalCustomers       = signal(0);
+  totalCustomerPages   = signal(0);
+  customerPage         = signal(1);
+  showingMethods       = signal(false);
+  selectedCustomerName = signal('');
+
   ngOnInit(): void {
-    this.searchSubject.pipe(debounceTime(400), distinctUntilChanged(), takeUntil(this.destroy$))
-      .subscribe(v => { if (v.trim().length >= 3) this.loadByCustomer(v.trim()); });
+    this.loadCustomers(1);
   }
 
   ngOnDestroy(): void { this.destroy$.next(); this.destroy$.complete(); }
+
+  loadCustomers(page: number): void {
+    this.customersLoading.set(true);
+    this.customerPage.set(page);
+    this.customerSvc.getCustomers({}, { page: page - 1, size: 20 }).subscribe(res => {
+      this.customers.set(res.content);
+      this.totalCustomers.set(res.totalElements);
+      this.totalCustomerPages.set(res.totalPages);
+      this.customersLoading.set(false);
+    });
+  }
+
+  selectCustomer(id: string, name: string): void {
+    this.customerId.set(id);
+    this.selectedCustomerName.set(name);
+    this.showingMethods.set(true);
+    this.loadByCustomer(id);
+  }
+
+  backToList(): void {
+    this.showingMethods.set(false);
+    this.customerId.set('');
+    this.selectedCustomerName.set('');
+    this.methods.set([]);
+  }
 
   onSearchInput(v: string): void { this.customerId.set(v); this.searchSubject.next(v); if (!v) this.methods.set([]); }
 
@@ -76,4 +112,14 @@ export class Methods implements OnInit {
   }
 
   fmtDate(iso?: string): string { if (!iso) return '—'; return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(iso)); }
+
+  customerPageRange(): number[] {
+    const total = this.totalCustomerPages();
+    const current = this.customerPage();
+    const pages: number[] = [];
+    const start = Math.max(1, current - 2);
+    const end = Math.min(total, current + 2);
+    for (let i = start; i <= end; i++) pages.push(i);
+    return pages;
+  }
 }

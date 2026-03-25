@@ -15,6 +15,10 @@ export class Gateways implements OnInit {
   showTestResult  = signal<{ id: string; success: boolean; message: string } | null>(null);
   newGateway    = signal<Partial<CreateGatewayConfigRequest>>({ isTestMode: true });
 
+  showEditModal = signal(false);
+  editTarget    = signal<PaymentGatewayConfigDTO | null>(null);
+  editForm      = signal<Partial<CreateGatewayConfigRequest>>({});
+
   providers: GatewayProvider[] = ['STRIPE', 'PAYPAL', 'SQUARE', 'BRAINTREE', 'RAZORPAY', 'MANUAL'];
 
   providerInfo: Record<GatewayProvider, { color: string; bg: string; description: string }> = {
@@ -53,6 +57,28 @@ export class Gateways implements OnInit {
   }
 
   patchNew(patch: any): void { this.newGateway.update(v => ({ ...v, ...patch })); }
+
+  openEdit(gw: PaymentGatewayConfigDTO): void {
+    this.editTarget.set(gw);
+    this.editForm.set({ displayName: gw.displayName, webhookUrl: gw.webhookUrl, supportedCurrencies: gw.supportedCurrencies, isTestMode: gw.isTestMode });
+    this.showEditModal.set(true);
+  }
+
+  patchEdit(patch: any): void { this.editForm.update(v => ({ ...v, ...patch })); }
+
+  saveEdit(): void {
+    const target = this.editTarget();
+    if (!target) return;
+    this.actionLoading.set('edit');
+    const form = this.editForm();
+    const payload: any = { displayName: form.displayName, webhookUrl: form.webhookUrl, supportedCurrencies: form.supportedCurrencies, isTestMode: form.isTestMode };
+    if (form.apiKey) payload.apiKey = form.apiKey;
+    if (form.apiSecret) payload.apiSecret = form.apiSecret;
+    this.svc.updateGatewayConfig(target.id, payload).subscribe({
+      next: () => { this.actionLoading.set(null); this.showEditModal.set(false); this.load(); },
+      error: () => { this.actionLoading.set(null); }
+    });
+  }
 
   fmtDate(iso?: string): string { if (!iso) return '—'; return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(iso)); }
 }

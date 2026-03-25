@@ -109,6 +109,10 @@ export class InventoryOverview implements OnInit {
   transferQuantity = signal<number | null>(null);
   transferNotes = signal('');
 
+  // History modal
+  showHistoryModal = signal(false);
+  historyItem = signal<InventoryItem | null>(null);
+
   // Categories (derived from inventory items)
   categories = computed(() => {
     const cats = new Set<string>();
@@ -599,8 +603,16 @@ export class InventoryOverview implements OnInit {
   }
 
   viewHistory(item: InventoryItem): void {
+    this.historyItem.set(item);
+    this.stockMovements.set([]);
+    this.showHistoryModal.set(true);
     this.loadStockMovements(item.id);
-    console.log('View history for:', item);
+  }
+
+  closeHistoryModal(): void {
+    this.showHistoryModal.set(false);
+    this.historyItem.set(null);
+    this.stockMovements.set([]);
   }
 
   setReorderPoint(item: InventoryItem): void {

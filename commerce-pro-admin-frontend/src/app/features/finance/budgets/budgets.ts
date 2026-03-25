@@ -13,8 +13,11 @@ export class Budgets implements OnInit, OnDestroy {
   private aiSvc  = inject(AiService);
   private destroy$ = new Subject<void>();
   budgets = signal<BudgetDTO[]>([]); detail = signal<BudgetDTO | null>(null);
-  isLoading = signal(false); actionLoading = signal<string | null>(null);
-  showDetail = signal(false); totalElements = signal(0);
+  isLoading = signal(false); detailLoading = signal(false); actionLoading = signal<string | null>(null);
+  totalElements = signal(0);
+
+  // Accordion state
+  expandedId = signal<string | null>(null);
 
   // AI Anomaly
   anomalyResults = signal<Record<string, AiBudgetAnomalyResult>>({});
@@ -23,17 +26,31 @@ export class Budgets implements OnInit, OnDestroy {
   anomalyModalResult = signal<AiBudgetAnomalyResult | null>(null);
   currentYear = new Date().getFullYear();
   filterYear = signal(this.currentYear);
-  // expose global Math for template
   readonly Math: typeof Math = Math;
+
   ngOnInit(): void { this.load(); }
+
   load(): void {
     this.isLoading.set(true);
     this.svc.getBudgets(this.filterYear()).subscribe(p => { this.budgets.set(p.content); this.totalElements.set(p.totalElements); this.isLoading.set(false); });
   }
-  openDetail(id: string): void { this.svc.getBudgetVariance(id).subscribe(d => { this.detail.set(d); this.showDetail.set(true); }); }
-  approve(id: string): void {
-    this.actionLoading.set(id); this.svc.approveBudget(id).subscribe(() => { this.actionLoading.set(null); this.load(); this.showDetail.set(false); });
+
+  toggleAccordion(id: string): void {
+    if (this.expandedId() === id) {
+      this.expandedId.set(null);
+      this.detail.set(null);
+    } else {
+      this.expandedId.set(id);
+      this.detail.set(null);
+      this.detailLoading.set(true);
+      this.svc.getBudgetVariance(id).subscribe(d => { this.detail.set(d); this.detailLoading.set(false); });
+    }
   }
+
+  approve(id: string): void {
+    this.actionLoading.set(id); this.svc.approveBudget(id).subscribe(() => { this.actionLoading.set(null); this.load(); });
+  }
+
   getStatusCfg(s: string) {
     const m: Record<string, any> = {
       DRAFT: { badge: 'bg-gray-100 text-gray-700', label: 'Draft' },
@@ -44,6 +61,7 @@ export class Budgets implements OnInit, OnDestroy {
     };
     return m[s] ?? { badge: 'bg-gray-100 text-gray-700', label: s };
   }
+
   varianceClass(v: number): string { return v > 0 ? 'text-red-600' : v < 0 ? 'text-green-600' : 'text-gray-400'; }
   fmt(n: number | null | undefined): string { return '$' + (n ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
   ngOnDestroy(): void { this.destroy$.next(); this.destroy$.complete(); }

@@ -30,7 +30,7 @@ import { CollectionService } from '../../../core/services/catalog/collection.ser
 import { AttributeService } from '../../../core/services/catalog/attribute.service';
 import { AlertService } from '../../../shared/services/alert.service';
 import { AiService } from '../../../core/services/ai/ai.service';
-import { AiDescriptionResult, AiDemandForecastResult, AiPricingResult, AiReturnPatternResult } from '../../../core/models/ai/ai.model';
+import { AiDescriptionResult, AiDemandForecastResult, AiPricingResult, AiReturnPatternResult, AiSeoResult } from '../../../core/models/ai/ai.model';
 
 @Component({
   selector: 'app-product-form',
@@ -55,15 +55,23 @@ export class ProductForm implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
 
   // AI Signals
-  aiDescResult    = signal<AiDescriptionResult | null>(null);
-  aiForecastResult= signal<AiDemandForecastResult | null>(null);
-  aiPricingResult = signal<AiPricingResult | null>(null);
-  aiReturnResult  = signal<AiReturnPatternResult | null>(null);
-  aiDescLoading   = signal(false);
+  aiDescResult      = signal<AiDescriptionResult | null>(null);
+  aiForecastResult  = signal<AiDemandForecastResult | null>(null);
+  aiPricingResult   = signal<AiPricingResult | null>(null);
+  aiReturnResult    = signal<AiReturnPatternResult | null>(null);
+  aiSeoResult       = signal<AiSeoResult | null>(null);
+  aiDescLoading     = signal(false);
   aiForecastLoading = signal(false);
   aiPricingLoading  = signal(false);
   aiReturnLoading   = signal(false);
-  showAiPanel     = signal(false);
+  aiSeoLoading      = signal(false);
+  showAiPanel       = signal(false);
+
+  // Modal / UI state signals
+  showDescModal     = signal(false);
+  showPricingModal  = signal(false);
+  showPreviewModal  = signal(false);
+  returnCardDismissed = signal(false);
   private skuCheckSubject = new Subject<string>();
 
   productId = signal<string | null>(null);
@@ -764,9 +772,35 @@ export class ProductForm implements OnInit, OnDestroy {
     const id = this.productId()!;
     this.aiDescLoading.set(true);
     this.aiSvc.previewDescription(id).pipe(takeUntil(this.destroy$)).subscribe({
-      next: r => { this.aiDescResult.set(r); this.aiDescLoading.set(false); },
+      next: r => {
+        this.aiDescResult.set(r);
+        this.aiDescLoading.set(false);
+        this.showDescModal.set(true);
+      },
       error: () => { this.alertSvc.error('Failed to preview description'); this.aiDescLoading.set(false); }
     });
+  }
+
+  /** Apply: puts AI text into description field, keeps existing shortDescription */
+  applyDescFromModal(): void {
+    const r = this.aiDescResult();
+    if (!r) return;
+    this.productForm.patchValue({ description: r.description });
+    this.showDescModal.set(false);
+    this.alertSvc.success('AI description applied');
+  }
+
+  /** Override: replaces both description and shortDescription */
+  overrideDescFromModal(): void {
+    const r = this.aiDescResult();
+    if (!r) return;
+    this.productForm.patchValue({ description: r.description, shortDescription: r.shortDescription });
+    this.showDescModal.set(false);
+    this.alertSvc.success('AI description applied (with short description)');
+  }
+
+  closeDescModal(): void {
+    this.showDescModal.set(false);
   }
 
   applyAiDescription(): void {
@@ -776,9 +810,8 @@ export class ProductForm implements OnInit, OnDestroy {
     this.aiSvc.generateDescription(id).pipe(takeUntil(this.destroy$)).subscribe({
       next: r => {
         this.aiDescResult.set(r);
-        this.productForm.patchValue({ description: r.description, shortDescription: r.shortDescription });
         this.aiDescLoading.set(false);
-        this.alertSvc.success('AI description applied');
+        this.showDescModal.set(true);
       },
       error: () => { this.alertSvc.error('Failed to generate description'); this.aiDescLoading.set(false); }
     });
@@ -799,9 +832,25 @@ export class ProductForm implements OnInit, OnDestroy {
     const id = this.productId()!;
     this.aiPricingLoading.set(true);
     this.aiSvc.recommendPricing(id).pipe(takeUntil(this.destroy$)).subscribe({
-      next: r => { this.aiPricingResult.set(r); this.aiPricingLoading.set(false); },
+      next: r => {
+        this.aiPricingResult.set(r);
+        this.aiPricingLoading.set(false);
+        this.showPricingModal.set(true);
+      },
       error: () => { this.alertSvc.error('Pricing recommendation failed'); this.aiPricingLoading.set(false); }
     });
+  }
+
+  confirmAiPrice(): void {
+    const r = this.aiPricingResult();
+    if (!r) return;
+    this.productForm.patchValue({ price: r.recommendedPrice });
+    this.showPricingModal.set(false);
+    this.alertSvc.success('Price updated to AI recommendation');
+  }
+
+  closePricingModal(): void {
+    this.showPricingModal.set(false);
   }
 
   runAiReturns(): void {
@@ -812,6 +861,60 @@ export class ProductForm implements OnInit, OnDestroy {
       next: r => { this.aiReturnResult.set(r); this.aiReturnLoading.set(false); },
       error: () => { this.alertSvc.error('Return analysis failed'); this.aiReturnLoading.set(false); }
     });
+  }
+
+  runAiSeo(): void {
+    if (!this.canRunAi(['name', 'category'])) return;
+    const id = this.productId()!;
+    this.aiSeoLoading.set(true);
+    this.aiSvc.previewSeo(id).pipe(takeUntil(this.destroy$)).subscribe({
+      next: r => {
+        this.aiSeoResult.set(r);
+        this.productForm.patchValue({ seoTitle: r.seoTitle, seoDescription: r.seoDescription });
+        this.aiSeoLoading.set(false);
+        this.alertSvc.success('SEO fields updated by AI');
+      },
+      error: () => { this.alertSvc.error('SEO optimisation failed'); this.aiSeoLoading.set(false); }
+    });
+  }
+
+  duplicateProduct(): void {
+    if (!this.isEditMode()) return;
+    this.alertSvc.confirm({
+      title: 'Duplicate Product',
+      message: 'This will create a copy of the product as a draft. Continue?',
+      confirmLabel: 'Duplicate',
+      danger: false
+    }).then(ok => {
+      if (!ok) return;
+      const formValue = this.productForm.value;
+      const copyName = `${formValue.name} (Copy)`;
+      const copyHandle = this.generateUrlHandle(copyName);
+      // Navigate to add-new, pre-filling won't happen automatically but
+      // for now navigate to new product and show a success-like message
+      this.alertSvc.success('Duplicate created as draft — redirecting to new product form');
+      // Build a minimal duplicate and save it
+      this.productForm.patchValue({ name: copyName, urlHandle: copyHandle, status: 'draft' });
+      const req = this.buildProductRequest();
+      // Reset to original name so user isn't confused
+      this.productForm.patchValue({ name: formValue.name, urlHandle: formValue.urlHandle, status: formValue.status });
+      this.productService.createProduct(req).pipe(takeUntil(this.destroy$)).subscribe({
+        next: () => { this.alertSvc.success('Product duplicated successfully'); },
+        error: (err) => { this.alertSvc.error('Failed to duplicate product', err?.message); }
+      });
+    });
+  }
+
+  showProductPreview(): void {
+    this.showPreviewModal.set(true);
+  }
+
+  closePreviewModal(): void {
+    this.showPreviewModal.set(false);
+  }
+
+  dismissReturnCard(): void {
+    this.returnCardDismissed.set(true);
   }
 
   fmtUsd(n: number): string {

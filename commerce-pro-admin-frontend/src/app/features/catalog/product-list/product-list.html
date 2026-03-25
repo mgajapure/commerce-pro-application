@@ -313,11 +313,12 @@
                             </td>
                             <td class="px-6 py-4">
                                 <div class="flex items-center gap-3">
-                                    <img [src]="product.image" [alt]="product.name"
+                                    <img [src]="product.image || ''" [alt]="product.name"
+                                        (error)="$any($event.target).src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0OCIgaGVpZ2h0PSI0OCIgdmlld0JveD0iMCAwIDQ4IDQ4Ij48cmVjdCB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIGZpbGw9IiNmM2Y0ZjYiIHJ4PSI4Ii8+PHRleHQgeD0iMjQiIHk9IjI4IiBmb250LXNpemU9IjExIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjOWNhM2FmIj5ObyBJbWc8L3RleHQ+PC9zdmc+'"
                                         class="w-12 h-12 rounded-xl object-cover bg-gray-100">
                                     <div>
-                                        <a [routerLink]="['/products', product.id]"
-                                            class="font-semibold text-gray-900 hover:text-indigo-600 transition-colors">
+                                        <a [routerLink]="['/catalog/products', product.id, 'edit']"
+                                            class="font-semibold text-gray-900 hover:text-indigo-600 transition-colors hover:underline underline-offset-2">
                                             {{ product.name }}
                                         </a>
                                         <div class="flex items-center gap-2 mt-1">
@@ -460,14 +461,15 @@
 
                 <!-- Product Image -->
                 <div class="relative aspect-square bg-gray-50 overflow-hidden">
-                    <img [src]="product.image" [alt]="product.name"
+                    <img [src]="product.image || ''" [alt]="product.name"
+                        (error)="$any($event.target).src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiB2aWV3Qm94PSIwIDAgMjAwIDIwMCI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiNmM2Y0ZjYiLz48dGV4dCB4PSIxMDAiIHk9IjEwOCIgZm9udC1zaXplPSIxNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzljYTNhZiI+Tm8gSW1hZ2U8L3RleHQ+PC9zdmc+'"
                         class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
                 </div>
 
                 <!-- Content -->
                 <div class="p-4">
-                    <a [routerLink]="['/products', product.id]"
-                        class="font-semibold text-gray-900 hover:text-indigo-600 transition-colors line-clamp-2">
+                    <a [routerLink]="['/catalog/products', product.id, 'edit']"
+                        class="font-semibold text-gray-900 hover:text-indigo-600 transition-colors line-clamp-2 hover:underline underline-offset-2">
                         {{ product.name }}
                     </a>
 

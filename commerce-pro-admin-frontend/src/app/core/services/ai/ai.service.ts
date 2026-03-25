@@ -150,6 +150,12 @@ export class AiService {
     return this.http.post<Api<AiChatResponse>>(`${BASE}/ai/chatbot/chat`, req).pipe(map(r => r.data));
   }
 
+  getChatbotSessions(page = 0, size = 20, search?: string): Observable<{ content: AiChatSession[]; totalElements: number; totalPages: number }> {
+    let params = new HttpParams().set('page', page).set('size', size);
+    if (search) params = params.set('search', search);
+    return this.http.get<Api<{ content: AiChatSession[]; totalElements: number; totalPages: number }>>(`${BASE}/ai/chatbot/sessions`, { params }).pipe(map(r => r.data));
+  }
+
   getChatbotSession(sessionId: string): Observable<AiChatSession> {
     return this.http.get<Api<AiChatSession>>(`${BASE}/ai/chatbot/sessions/${sessionId}`).pipe(map(r => r.data));
   }
@@ -166,6 +172,16 @@ export class AiService {
 
   getNlReportSession(sessionId: string): Observable<AiNlSessionDetail> {
     return this.http.get<Api<AiNlSessionDetail>>(`${BASE}/ai/nl-report/sessions/${sessionId}`).pipe(map(r => r.data));
+  }
+
+  // ─── Collection AI ────────────────────────────────────────────────────────
+
+  generateCollectionDescription(collectionId: string): Observable<{ description: string }> {
+    return this.http.post<Api<{ description: string }>>(`${BASE}/ai/collections/${collectionId}/description/generate`, {}).pipe(map(r => r.data));
+  }
+
+  optimiseCollectionSeo(collectionId: string): Observable<{ seoTitle: string; seoDescription: string }> {
+    return this.http.post<Api<{ seoTitle: string; seoDescription: string }>>(`${BASE}/ai/seo/collections/${collectionId}/optimise`, {}).pipe(map(r => r.data));
   }
 
   // ─── AI Insights ──────────────────────────────────────────────────────────

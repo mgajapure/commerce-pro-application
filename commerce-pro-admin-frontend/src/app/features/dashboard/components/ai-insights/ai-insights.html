@@ -1,0 +1,48 @@
+<div class="bg-gradient-to-br from-violet-600 via-purple-600 to-indigo-700 rounded-2xl p-6 text-white shadow-lg">
+    <div class="flex items-center justify-between mb-5">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                <i class="bi bi-robot text-white text-lg"></i>
+            </div>
+            <div>
+                <h3 class="font-semibold text-white">AI Intelligence Hub</h3>
+                <p class="text-white/70 text-xs">Powered by machine learning</p>
+            </div>
+        </div>
+        <a routerLink="/ai/dashboard" class="px-3 py-1.5 bg-white/20 hover:bg-white/30 rounded-lg text-xs font-medium text-white transition-colors">
+            View Dashboard
+        </a>
+    </div>
+
+    @if (isLoading()) {
+        <div class="grid grid-cols-3 gap-4 mb-5 animate-pulse">
+            @for (i of [1,2,3]; track i) {
+                <div class="bg-white/10 rounded-xl p-3 h-16"></div>
+            }
+        </div>
+    } @else {
+        <div class="grid grid-cols-3 gap-4 mb-5">
+            <div class="bg-white/15 backdrop-blur-sm rounded-xl p-3 text-center">
+                <p class="text-2xl font-bold text-white">{{ callsToday() | number }}</p>
+                <p class="text-white/70 text-xs mt-0.5">AI Calls Today</p>
+            </div>
+            <div class="bg-white/15 backdrop-blur-sm rounded-xl p-3 text-center">
+                <p class="text-2xl font-bold text-white">${{ spendToday().toFixed(2) }}</p>
+                <p class="text-white/70 text-xs mt-0.5">Spend Today</p>
+            </div>
+            <div class="bg-white/15 backdrop-blur-sm rounded-xl p-3 text-center">
+                <p class="text-2xl font-bold text-white">{{ successRate() }}%</p>
+                <p class="text-white/70 text-xs mt-0.5">Success Rate</p>
+            </div>
+        </div>
+    }
+
+    <div class="grid grid-cols-3 sm:grid-cols-6 gap-3">
+        @for (feature of aiFeatures; track feature.label) {
+            <a [routerLink]="feature.route" class="flex flex-col items-center gap-1.5 p-3 bg-white/10 hover:bg-white/20 rounded-xl transition-colors cursor-pointer text-center">
+                <i class="bi bi-{{ feature.icon }} text-white text-lg"></i>
+                <span class="text-white/90 text-xs font-medium leading-tight">{{ feature.label }}</span>
+            </a>
+        }
+    </div>
+</div>
