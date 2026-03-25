@@ -47,7 +47,7 @@ services:
       - key: DB_NAME
         fromDatabase:
           name: commerce-pro-db
-          property: databaseName
+          property: database
 
       - key: DB_USER
         fromDatabase:
