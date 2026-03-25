@@ -44,6 +44,34 @@ services:
           name: commerce-pro-db
           property: connectionString
 
+      - key: DB_NAME
+        fromDatabase:
+          name: commerce-pro-db
+          property: databaseName
+
+      - key: DB_USER
+        fromDatabase:
+          name: commerce-pro-db
+          property: user
+
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: commerce-pro-db
+          property: password
+
+     - key: DB_HOST
+        fromDatabase:
+          name: commerce-pro-db
+          property: host
+
+     - key: DB_PORT
+        fromDatabase:
+          name: commerce-pro-db
+          property: port
+          
+      - key: JDBC_DATABASE_URL
+        value: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+
       # ── Spring ──
       - key: SPRING_PROFILES_ACTIVE
         value: prod
