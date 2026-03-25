@@ -23,7 +23,7 @@ USER appuser
 COPY --from=builder /app/build/libs/*.jar app.jar
 
 # Render injects $PORT — Spring reads it via server.port=${PORT:8080}
-EXPOSE 8080
+EXPOSE 10000
 
 ENTRYPOINT ["java", \
   "-Djava.security.egd=file:/dev/./urandom", \
