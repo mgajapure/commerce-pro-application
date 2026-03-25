@@ -79,11 +79,11 @@ services:
       # ── CORS & URLs ──
       # After frontend is deployed, update these with the actual Render URLs.
       - key: CORS_ALLOWED_ORIGINS
-        value: https://commerce-pro-admin.onrender.com
+        value: https://commerce-pro-admin-frontend.onrender.com
       - key: FRONTEND_URL
-        value: https://commerce-pro-admin.onrender.com
+        value: https://commerce-pro-admin-frontend.onrender.com
       - key: PAYMENT_LINK_BASE_URL
-        value: https://commerce-pro-admin.onrender.com/pay
+        value: https://commerce-pro-admin-frontend.onrender.com/pay
 
   # ──────────────────────────────────────────────────────────
   # 2. Angular Admin Frontend  (Static Site — always free)
