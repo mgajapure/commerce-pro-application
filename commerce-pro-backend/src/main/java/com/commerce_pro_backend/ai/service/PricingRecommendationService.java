@@ -160,14 +160,22 @@ public class PricingRecommendationService {
                 .featureType(FEATURE)
                 .entityId(productId)
                 .entityType("PRODUCT")
-                .score((int) result.expectedMarginPct())  // score = expected margin %
+                .score((int) result.expectedMarginPercent())
                 .recommendation("REPRICE")
                 .reasoning(result.rationale())
                 .rawOutput(result.toString())
                 .status("PROCESSED")
                 .build());
 
-        return result;
+        return new PricingResult(
+                result.recommendedPrice(),
+                result.minAcceptablePrice(),
+                result.maxAcceptablePrice(),
+                result.expectedMarginPercent(),
+                result.rationale(),
+                result.signals(),
+                productId
+        );
     }
 
     /**
@@ -197,12 +205,14 @@ public class PricingRecommendationService {
         /** Lowest price that still makes business sense. */
         BigDecimal minAcceptablePrice,
         /** Highest price the market will likely accept. */
-        BigDecimal maxRecommendedPrice,
+        BigDecimal maxAcceptablePrice,
         /** Margin % at the recommended price (e.g. 57.9). */
-        double expectedMarginPct,
+        double expectedMarginPercent,
         /** Plain-English explanation for the merchandising team. */
         String rationale,
         /** Signals that drove the recommendation, e.g. ["strong_reviews", "high_stock"]. */
-        List<String> signals
+        List<String> signals,
+        /** Product ID for traceability. */
+        String productId
     ) {}
 }

@@ -126,6 +126,7 @@ export interface AiDemandForecastResult {
   safetyStock: number;
   confidenceLevel: 'LOW' | 'MEDIUM' | 'HIGH';
   reasoning: string;
+  signals?: string[];
 }
 
 // ─── Pricing Recommendation ──────────────────────────────────────────────────
@@ -137,6 +138,7 @@ export interface AiPricingResult {
   maxAcceptablePrice: number;
   expectedMarginPercent: number;
   rationale: string;
+  signals?: string[];
 }
 
 // ─── Inventory Optimisation ──────────────────────────────────────────────────
@@ -168,6 +170,7 @@ export interface AiSeoResult {
   seoTitle: string;
   seoDescription: string;
   keywords: string[];
+  reasoning: string;
   saved: boolean;
 }
 
@@ -180,6 +183,8 @@ export interface AiReturnPatternResult {
   suspectedCauses: string[];
   recommendations: string[];
   reasoning: string;
+  returnScore?: number;
+  riskLevel?: string;
 }
 
 // ─── Vendor Analysis ─────────────────────────────────────────────────────────
