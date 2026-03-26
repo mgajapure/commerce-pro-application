@@ -1,0 +1,110 @@
+<div class="min-h-screen bg-gray-50/50 p-4 sm:p-6 lg:p-8">
+    <div class="max-w-[1600px] mx-auto space-y-6">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+            <div>
+                <div class="flex items-center gap-3"><h1 class="text-2xl font-bold text-gray-900">Procurement</h1>
+                    <span class="px-3 py-1 bg-gray-100 text-gray-600 text-sm font-medium rounded-full">{{ filteredRequests().length }} requests</span></div>
+                <p class="text-gray-500 mt-1 text-sm">Manage procurement requests and approvals</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-3">
+                <div class="relative"><i class="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                    <input type="text" [(ngModel)]="searchQuery" placeholder="Search requests..." class="pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 w-56"></div>
+                <select [(ngModel)]="filterStatus" class="px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
+                    <option value="">All Status</option>@for (s of statusOptions; track s) { <option [value]="s">{{ s }}</option> }</select>
+                <select [(ngModel)]="filterPriority" class="px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
+                    <option value="">All Priority</option>@for (p of priorityOptions; track p) { <option [value]="p">{{ p }}</option> }</select>
+                <button (click)="aiProcurementOptimization()" class="px-4 py-2.5 bg-purple-600 text-white rounded-xl text-sm font-medium hover:bg-purple-700 flex items-center gap-2 shadow-lg shadow-purple-200"><i class="bi bi-stars"></i><span class="hidden sm:inline">AI Optimize</span></button>
+                <button (click)="openModal()" class="px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 flex items-center gap-2 shadow-lg shadow-indigo-200 hover:-translate-y-0.5"><i class="bi bi-plus-lg"></i><span class="hidden sm:inline">New Request</span></button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            @for (stat of displayStats(); track stat.label) {
+            <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all cursor-pointer" (click)="stat.filter ? filterStatus.set(stat.filter) : null">
+                <div class="flex items-start justify-between"><div><p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">{{ stat.label }}</p><p class="text-2xl font-bold text-gray-900">{{ stat.value }}</p></div>
+                    <div class="w-10 h-10 rounded-xl flex items-center justify-center {{ stat.bgColor }}"><i class="bi bi-{{ stat.icon }} {{ stat.iconColor }} text-lg"></i></div></div>
+            </div>}
+        </div>
+
+        @if (isLoading()) { <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-12"><div class="flex flex-col items-center"><i class="bi bi-arrow-repeat animate-spin text-3xl text-indigo-600 mb-4"></i><p class="text-gray-500">Loading...</p></div></div> }
+
+        @if (!isLoading()) {
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div class="overflow-x-auto"><table class="w-full"><thead class="bg-gray-50/50 border-b border-gray-100"><tr>
+                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Request #</th>
+                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Title</th>
+                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Priority</th>
+                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Status</th>
+                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Supplier</th>
+                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Est. Cost</th>
+                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Required By</th>
+                <th class="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase">Actions</th>
+            </tr></thead>
+            <tbody class="divide-y divide-gray-100">
+                @for (req of filteredRequests(); track req.id) {
+                <tr class="group hover:bg-gray-50/50 transition-colors">
+                    <td class="px-6 py-4"><span class="text-sm font-mono font-semibold text-indigo-600">{{ req.requestNumber }}</span></td>
+                    <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ req.title }}</td>
+                    <td class="px-6 py-4"><span class="px-2.5 py-1 rounded-full text-xs font-medium {{ getPriorityBadge(req.priority) }}">{{ req.priority }}</span></td>
+                    <td class="px-6 py-4"><span class="px-2.5 py-1 rounded-full text-xs font-medium {{ getStatusBadge(req.status) }}">{{ req.status }}</span></td>
+                    <td class="px-6 py-4 text-sm text-gray-700">{{ req.supplierName || '-' }}</td>
+                    <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ req.estimatedCost ? formatCurrency(req.estimatedCost, req.currency) : '-' }}</td>
+                    <td class="px-6 py-4 text-sm text-gray-700">{{ formatDate(req.requiredByDate) }}</td>
+                    <td class="px-6 py-4 text-right">
+                        <div class="flex items-center justify-end gap-1">
+                            @if (req.status === 'PENDING_APPROVAL') {
+                            <button (click)="approveRequest(req)" class="p-2 text-green-500 hover:text-green-700 hover:bg-green-50 rounded-lg" title="Approve"><i class="bi bi-check-circle"></i></button>
+                            <button (click)="rejectRequest(req)" class="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg" title="Reject"><i class="bi bi-x-circle"></i></button>
+                            }
+                            <app-dropdown icon="three-dots-vertical" [items]="getMenuItems(req)" triggerClass="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg border-0" menuClass="w-40" [showChevron]="false" (itemSelected)="onAction($event, req)"></app-dropdown>
+                        </div>
+                    </td>
+                </tr>
+                } @empty {
+                <tr><td colspan="8" class="px-6 py-12 text-center"><div class="flex flex-col items-center"><div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mb-4"><i class="bi bi-clipboard2 text-gray-400 text-2xl"></i></div><h3 class="text-lg font-medium text-gray-900 mb-1">No procurement requests</h3><p class="text-gray-500 mb-4">Create your first procurement request</p></div></td></tr>
+                }
+            </tbody></table></div>
+        </div>}
+    </div>
+</div>
+
+@if (showModal()) {
+<div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden animate-slide-up">
+        <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+            <h2 class="text-lg font-semibold text-gray-900">{{ editingRequest() ? 'Edit Request' : 'New Procurement Request' }}</h2>
+            <button (click)="closeModal()" class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg"><i class="bi bi-x-lg text-xl"></i></button>
+        </div>
+        <div class="p-6 overflow-y-auto max-h-[60vh]">
+            <form [formGroup]="requestForm" class="space-y-4">
+                <div><label class="block text-sm font-medium text-gray-700 mb-2">Title <span class="text-red-500">*</span></label>
+                    <input type="text" formControlName="title" placeholder="Request title" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"></div>
+                <div><label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                    <textarea formControlName="description" rows="3" placeholder="Describe what you need..." class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-none"></textarea></div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div><label class="block text-sm font-medium text-gray-700 mb-2">Priority</label>
+                        <select formControlName="priority" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
+                            @for (p of priorityOptions; track p) { <option [value]="p">{{ p }}</option> }</select></div>
+                    <div><label class="block text-sm font-medium text-gray-700 mb-2">Supplier</label>
+                        <select formControlName="supplierId" (change)="onSupplierChange()" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
+                            <option value="">Select supplier (optional)</option>@for (s of suppliers(); track s.id) { <option [value]="s.id">{{ s.name }}</option> }</select></div>
+                    <div><label class="block text-sm font-medium text-gray-700 mb-2">Estimated Cost</label>
+                        <input type="number" formControlName="estimatedCost" min="0" step="0.01" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"></div>
+                    <div><label class="block text-sm font-medium text-gray-700 mb-2">Required By</label>
+                        <input type="date" formControlName="requiredByDate" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"></div>
+                </div>
+                <div><label class="block text-sm font-medium text-gray-700 mb-2">Notes</label>
+                    <textarea formControlName="notes" rows="2" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-none"></textarea></div>
+            </form>
+        </div>
+        <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-between bg-gray-50/50">
+            @if (editingRequest() && editingRequest()!.status === 'DRAFT') { <button (click)="deleteRequest(editingRequest()!)" class="px-4 py-2.5 text-red-600 font-medium hover:bg-red-50 rounded-xl flex items-center gap-2"><i class="bi bi-trash3"></i> Delete</button> } @else { <div></div> }
+            <div class="flex items-center gap-3">
+                <button (click)="closeModal()" class="px-4 py-2.5 text-gray-700 font-medium hover:bg-gray-100 rounded-xl">Cancel</button>
+                <button (click)="saveRequest()" [disabled]="requestForm.invalid || isSaving()" class="px-6 py-2.5 bg-indigo-600 text-white font-medium rounded-xl hover:bg-indigo-700 flex items-center gap-2 disabled:opacity-50 shadow-lg shadow-indigo-200">
+                    @if (isSaving()) { <i class="bi bi-arrow-repeat animate-spin"></i> Saving... } @else { <i class="bi bi-check-lg"></i> {{ editingRequest() ? 'Update' : 'Create' }} Request }
+                </button>
+            </div>
+        </div>
+    </div>
+</div>}
