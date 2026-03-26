@@ -66,7 +66,7 @@ public class SupplierDataSeeder {
                         .paymentTermsDays(s.path("paymentTermsDays").asInt(30))
                         .leadTimeDays(s.path("leadTimeDays").asInt(14))
                         .minOrderValue(s.has("minOrderValue")
-                                ? new BigDecimal(s.get("minOrderValue").asText())
+                                ? BigDecimal.valueOf(s.get("minOrderValue").asDouble())
                                 : null)
                         .preferredCurrency(s.path("preferredCurrency").asText("USD"))
                         .certifications(s.path("certifications").asText(null))

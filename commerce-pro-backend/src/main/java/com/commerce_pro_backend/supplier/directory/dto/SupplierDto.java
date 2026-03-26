@@ -23,7 +23,7 @@ public class SupplierDto {
         private String name;
 
         @NotBlank
-        @Size(max = 20)
+        @Size(max = 50)
         private String code;
 
         @Size(max = 100)

@@ -27,4 +27,7 @@ public interface SupplierContractRepository extends JpaRepository<SupplierContra
     List<SupplierContract> findByEndDateBeforeAndStatusNot(Instant endDate, String status);
 
     long countByStatus(String status);
+
+    @org.springframework.data.jpa.repository.Query("SELECT COALESCE(SUM(c.totalValue), 0) FROM SupplierContract c WHERE c.status IN ('ACTIVE', 'EXPIRED')")
+    java.math.BigDecimal sumTotalValue();
 }

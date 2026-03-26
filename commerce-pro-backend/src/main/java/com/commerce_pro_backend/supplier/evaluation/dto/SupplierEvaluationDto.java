@@ -94,6 +94,9 @@ public class SupplierEvaluationDto {
         private Double overallScore;
         private Double qualityScore;
         private Double deliveryScore;
+        private Double pricingScore;
+        private Double communicationScore;
+        private Double complianceScore;
         private String period;
         private String status;
     }

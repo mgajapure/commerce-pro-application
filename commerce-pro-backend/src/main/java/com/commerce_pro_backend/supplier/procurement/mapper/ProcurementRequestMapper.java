@@ -68,8 +68,10 @@ public class ProcurementRequestMapper {
                 .priority(entity.getPriority())
                 .status(entity.getStatus())
                 .requestedBy(entity.getRequestedBy())
+                .supplierName(entity.getSupplierName())
                 .estimatedCost(entity.getEstimatedCost())
                 .actualCost(entity.getActualCost())
+                .currency(entity.getCurrency())
                 .requiredByDate(entity.getRequiredByDate())
                 .createdAt(entity.getCreatedAt())
                 .build();

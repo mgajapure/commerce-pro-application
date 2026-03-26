@@ -72,6 +72,9 @@ public class SupplierEvaluationMapper {
                 .overallScore(entity.getOverallScore())
                 .qualityScore(entity.getQualityScore())
                 .deliveryScore(entity.getDeliveryScore())
+                .pricingScore(entity.getPricingScore())
+                .communicationScore(entity.getCommunicationScore())
+                .complianceScore(entity.getComplianceScore())
                 .period(entity.getPeriod())
                 .status(entity.getStatus())
                 .build();

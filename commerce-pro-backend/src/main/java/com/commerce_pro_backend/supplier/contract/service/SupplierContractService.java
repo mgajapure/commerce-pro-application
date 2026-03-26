@@ -1,9 +1,10 @@
 package com.commerce_pro_backend.supplier.contract.service;
 
 import com.commerce_pro_backend.common.exception.ApiException;
+import com.commerce_pro_backend.supplier.contract.dto.SupplierContractDto;
 import com.commerce_pro_backend.supplier.contract.entity.SupplierContract;
+import com.commerce_pro_backend.supplier.contract.mapper.SupplierContractMapper;
 import com.commerce_pro_backend.supplier.contract.repository.SupplierContractRepository;
-import com.commerce_pro_backend.user_identity.service.CurrentUserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -30,64 +31,56 @@ import java.util.stream.Collectors;
 public class SupplierContractService {
 
     private final SupplierContractRepository supplierContractRepository;
-    private final CurrentUserService currentUserService;
+    private final SupplierContractMapper supplierContractMapper;
 
-    public Page<SupplierContract> getAllContracts(Pageable pageable) {
-        return supplierContractRepository.findAll(pageable);
+    public Page<SupplierContractDto.ListResponse> getAllContracts(Pageable pageable) {
+        return supplierContractRepository.findAll(pageable)
+                .map(supplierContractMapper::toListResponse);
     }
 
-    public List<SupplierContract> getBySupplier(String supplierId) {
-        return supplierContractRepository.findBySupplierIdOrderByStartDateDesc(supplierId);
+    public List<SupplierContractDto.ListResponse> getBySupplier(String supplierId) {
+        return supplierContractMapper.toListResponseList(
+                supplierContractRepository.findBySupplierIdOrderByStartDateDesc(supplierId));
     }
 
-    public Page<SupplierContract> getByStatus(String status, Pageable pageable) {
-        return supplierContractRepository.findByStatusOrderByStartDateDesc(status, pageable);
+    public Page<SupplierContractDto.ListResponse> getByStatus(String status, Pageable pageable) {
+        return supplierContractRepository.findByStatusOrderByStartDateDesc(status, pageable)
+                .map(supplierContractMapper::toListResponse);
     }
 
-    public SupplierContract getContract(String id) {
-        return supplierContractRepository.findById(id)
+    public SupplierContractDto.Response getContract(String id) {
+        SupplierContract contract = supplierContractRepository.findById(id)
                 .orElseThrow(() -> ApiException.notFound("SupplierContract", id));
+        return supplierContractMapper.toResponse(contract);
     }
 
     @Transactional
     @CacheEvict(value = "supplier-contracts", allEntries = true)
-    public SupplierContract createContract(SupplierContract request) {
+    public SupplierContractDto.Response createContract(SupplierContractDto.Request request) {
         log.info("Creating supplier contract for supplier: {}", request.getSupplierId());
 
-        request.setId(UUID.randomUUID().toString());
-        request.setContractNumber(generateContractNumber());
+        SupplierContract entity = supplierContractMapper.toEntity(request);
+        entity.setId(UUID.randomUUID().toString());
+        entity.setContractNumber(generateContractNumber());
 
-        SupplierContract saved = supplierContractRepository.save(request);
+        SupplierContract saved = supplierContractRepository.save(entity);
         log.info("Created supplier contract with id: {}, contractNumber: {}", saved.getId(), saved.getContractNumber());
-        return saved;
+        return supplierContractMapper.toResponse(saved);
     }
 
     @Transactional
     @CacheEvict(value = "supplier-contracts", allEntries = true)
-    public SupplierContract updateContract(String id, SupplierContract request) {
+    public SupplierContractDto.Response updateContract(String id, SupplierContractDto.Request request) {
         log.info("Updating supplier contract: {}", id);
 
         SupplierContract existing = supplierContractRepository.findById(id)
                 .orElseThrow(() -> ApiException.notFound("SupplierContract", id));
 
-        existing.setSupplierId(request.getSupplierId());
-        existing.setSupplierName(request.getSupplierName());
-        existing.setTitle(request.getTitle());
-        existing.setDescription(request.getDescription());
-        existing.setContractType(request.getContractType());
-        existing.setStartDate(request.getStartDate());
-        existing.setEndDate(request.getEndDate());
-        existing.setTotalValue(request.getTotalValue());
-        existing.setCurrency(request.getCurrency());
-        existing.setPaymentTerms(request.getPaymentTerms());
-        existing.setAutoRenew(request.getAutoRenew());
-        existing.setRenewalNoticeDays(request.getRenewalNoticeDays());
-        existing.setDocumentUrl(request.getDocumentUrl());
-        existing.setTerms(request.getTerms());
+        supplierContractMapper.updateEntityFromDto(request, existing);
 
         SupplierContract updated = supplierContractRepository.save(existing);
         log.info("Updated supplier contract with id: {}", updated.getId());
-        return updated;
+        return supplierContractMapper.toResponse(updated);
     }
 
     @Transactional
@@ -107,7 +100,7 @@ public class SupplierContractService {
 
     @Transactional
     @CacheEvict(value = "supplier-contracts", allEntries = true)
-    public SupplierContract activateContract(String id) {
+    public SupplierContractDto.Response activateContract(String id) {
         log.info("Activating supplier contract: {}", id);
 
         SupplierContract contract = supplierContractRepository.findById(id)
@@ -117,12 +110,12 @@ public class SupplierContractService {
 
         SupplierContract updated = supplierContractRepository.save(contract);
         log.info("Activated supplier contract with id: {}", id);
-        return updated;
+        return supplierContractMapper.toResponse(updated);
     }
 
     @Transactional
     @CacheEvict(value = "supplier-contracts", allEntries = true)
-    public SupplierContract terminateContract(String id) {
+    public SupplierContractDto.Response terminateContract(String id) {
         log.info("Terminating supplier contract: {}", id);
 
         SupplierContract contract = supplierContractRepository.findById(id)
@@ -132,16 +125,17 @@ public class SupplierContractService {
 
         SupplierContract updated = supplierContractRepository.save(contract);
         log.info("Terminated supplier contract with id: {}", id);
-        return updated;
+        return supplierContractMapper.toResponse(updated);
     }
 
-    public List<SupplierContract> getExpiringContracts(int days) {
+    public List<SupplierContractDto.ListResponse> getExpiringContracts(int days) {
         Instant now = Instant.now();
         Instant deadline = now.plus(Duration.ofDays(days));
 
         return supplierContractRepository.findByEndDateBeforeAndStatusNot(deadline, "TERMINATED")
                 .stream()
                 .filter(c -> c.getEndDate() != null && c.getEndDate().isAfter(now))
+                .map(supplierContractMapper::toListResponse)
                 .collect(Collectors.toList());
     }
 
@@ -154,11 +148,7 @@ public class SupplierContractService {
         stats.put("terminated", supplierContractRepository.countByStatus("TERMINATED"));
         stats.put("total", supplierContractRepository.count());
 
-        List<SupplierContract> allContracts = supplierContractRepository.findAll();
-        BigDecimal totalValue = allContracts.stream()
-                .filter(c -> c.getTotalValue() != null)
-                .map(SupplierContract::getTotalValue)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalValue = supplierContractRepository.sumTotalValue();
         stats.put("totalValue", totalValue);
 
         return stats;

@@ -35,33 +35,31 @@ export interface Supplier {
 export interface SupplierRequest {
   name: string;
   code: string;
-  contactPerson: string;
-  email: string;
-  phone: string;
-  address: string;
-  city: string;
-  state: string;
-  country: string;
-  postalCode: string;
-  website: string;
-  description: string;
-  paymentTerms: string;
-  paymentTermsDays: number;
-  leadTimeDays: number;
-  rating: number;
-  minOrderValue: number;
-  preferredCurrency: string;
-  certifications: string;
-  notes: string;
-  isActive: boolean;
-  isPreferred: boolean;
+  contactPerson?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  postalCode?: string;
+  website?: string;
+  description?: string;
+  paymentTerms?: string;
+  paymentTermsDays?: number;
+  leadTimeDays?: number;
+  minOrderValue?: number;
+  preferredCurrency?: string;
+  certifications?: string;
+  notes?: string;
+  isActive?: boolean;
+  isPreferred?: boolean;
 }
 
 export interface SupplierStats {
   total: number;
   active: number;
   preferred: number;
-  avgRating: number;
 }
 
 // ─── Supplier Product ───────────────────────────────────────────────────────
@@ -135,7 +133,6 @@ export interface PurchaseOrderItem {
   quantityReceived: number;
   unitCost: number;
   totalCost: number;
-  notes: string;
 }
 
 export interface PurchaseOrderRequest {
@@ -168,8 +165,6 @@ export interface ProcurementRequest {
   priority: string;
   status: string;
   requestedBy: string;
-  approvedBy: string;
-  approvedAt: string;
   supplierId: string;
   supplierName: string;
   estimatedCost: number;
@@ -252,30 +247,26 @@ export interface SupplierContract {
   renewalNoticeDays: number;
   documentUrl: string;
   terms: string;
-  createdBy: string;
-  approvedBy: string;
-  approvedAt: string;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface SupplierContractRequest {
   supplierId: string;
-  supplierName: string;
+  supplierName?: string;
   title: string;
-  description: string;
-  contractType: string;
-  status: string;
-  startDate: string;
-  endDate: string;
-  totalValue: number;
-  currency: string;
-  paymentTerms: string;
-  autoRenew: boolean;
-  renewalNoticeDays: number;
+  description?: string;
+  contractType?: string;
+  status?: string;
+  startDate?: string;
+  endDate?: string;
+  totalValue?: number;
+  currency?: string;
+  paymentTerms?: string;
+  autoRenew?: boolean;
+  renewalNoticeDays?: number;
   documentUrl?: string;
-  terms: string;
-  createdBy: string;
+  terms?: string;
 }
 
 // ─── Filter ─────────────────────────────────────────────────────────────────

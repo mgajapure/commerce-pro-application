@@ -37,7 +37,7 @@
         </div>
 
         <!-- Stats -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="grid grid-cols-3 gap-4">
             @for (stat of displayStats(); track stat.label) {
             <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all cursor-pointer group"
                 (click)="applyQuickFilter(stat.filter)">

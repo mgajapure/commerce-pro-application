@@ -1,7 +1,9 @@
 package com.commerce_pro_backend.supplier.procurement.service;
 
 import com.commerce_pro_backend.common.exception.ApiException;
+import com.commerce_pro_backend.supplier.procurement.dto.ProcurementRequestDto;
 import com.commerce_pro_backend.supplier.procurement.entity.ProcurementRequest;
+import com.commerce_pro_backend.supplier.procurement.mapper.ProcurementRequestMapper;
 import com.commerce_pro_backend.supplier.procurement.repository.ProcurementRequestRepository;
 import com.commerce_pro_backend.user_identity.service.CurrentUserService;
 import lombok.RequiredArgsConstructor;
@@ -12,7 +14,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
@@ -26,57 +27,53 @@ import java.util.UUID;
 public class ProcurementRequestService {
 
     private final ProcurementRequestRepository procurementRequestRepository;
+    private final ProcurementRequestMapper procurementRequestMapper;
     private final CurrentUserService currentUserService;
 
-    public Page<ProcurementRequest> getAllProcurementRequests(Pageable pageable) {
-        return procurementRequestRepository.findAll(pageable);
+    public Page<ProcurementRequestDto.ListResponse> getAllProcurementRequests(Pageable pageable) {
+        return procurementRequestRepository.findAll(pageable)
+                .map(procurementRequestMapper::toListResponse);
     }
 
-    public Page<ProcurementRequest> getByStatus(String status, Pageable pageable) {
-        return procurementRequestRepository.findByStatusOrderByCreatedAtDesc(status, pageable);
+    public Page<ProcurementRequestDto.ListResponse> getByStatus(String status, Pageable pageable) {
+        return procurementRequestRepository.findByStatusOrderByCreatedAtDesc(status, pageable)
+                .map(procurementRequestMapper::toListResponse);
     }
 
-    public ProcurementRequest getProcurementRequest(String id) {
-        return procurementRequestRepository.findById(id)
+    public ProcurementRequestDto.Response getProcurementRequest(String id) {
+        ProcurementRequest entity = procurementRequestRepository.findById(id)
                 .orElseThrow(() -> ApiException.notFound("ProcurementRequest", id));
+        return procurementRequestMapper.toResponse(entity);
     }
 
     @Transactional
     @CacheEvict(value = "procurement-requests", allEntries = true)
-    public ProcurementRequest createProcurementRequest(ProcurementRequest request) {
+    public ProcurementRequestDto.Response createProcurementRequest(ProcurementRequestDto.Request request) {
         log.info("Creating procurement request: {}", request.getTitle());
 
-        request.setId(UUID.randomUUID().toString());
-        request.setRequestNumber(generateRequestNumber());
-        request.setRequestedBy(currentUserService.getCurrentUserId());
+        ProcurementRequest entity = procurementRequestMapper.toEntity(request);
+        entity.setId(UUID.randomUUID().toString());
+        entity.setRequestNumber(generateRequestNumber());
+        entity.setRequestedBy(currentUserService.getCurrentUserId());
 
-        ProcurementRequest saved = procurementRequestRepository.save(request);
+        ProcurementRequest saved = procurementRequestRepository.save(entity);
         log.info("Created procurement request with id: {}, requestNumber: {}", saved.getId(), saved.getRequestNumber());
-        return saved;
+        return procurementRequestMapper.toResponse(saved);
     }
 
     @Transactional
     @CacheEvict(value = "procurement-requests", allEntries = true)
-    public ProcurementRequest updateProcurementRequest(String id, ProcurementRequest request) {
+    public ProcurementRequestDto.Response updateProcurementRequest(String id, ProcurementRequestDto.Request request) {
         log.info("Updating procurement request: {}", id);
 
         ProcurementRequest existing = procurementRequestRepository.findById(id)
                 .orElseThrow(() -> ApiException.notFound("ProcurementRequest", id));
 
-        existing.setTitle(request.getTitle());
-        existing.setDescription(request.getDescription());
-        existing.setPriority(request.getPriority());
-        existing.setSupplierId(request.getSupplierId());
-        existing.setSupplierName(request.getSupplierName());
-        existing.setEstimatedCost(request.getEstimatedCost());
-        existing.setActualCost(request.getActualCost());
-        existing.setCurrency(request.getCurrency());
-        existing.setRequiredByDate(request.getRequiredByDate());
-        existing.setNotes(request.getNotes());
+        procurementRequestMapper.updateEntityFromDto(request, existing);
 
         ProcurementRequest updated = procurementRequestRepository.save(existing);
         log.info("Updated procurement request with id: {}", updated.getId());
-        return updated;
+        return procurementRequestMapper.toResponse(updated);
     }
 
     @Transactional
@@ -96,7 +93,7 @@ public class ProcurementRequestService {
 
     @Transactional
     @CacheEvict(value = "procurement-requests", allEntries = true)
-    public ProcurementRequest approveProcurementRequest(String id) {
+    public ProcurementRequestDto.Response approveProcurementRequest(String id) {
         log.info("Approving procurement request: {}", id);
 
         ProcurementRequest procurementRequest = procurementRequestRepository.findById(id)
@@ -106,23 +103,24 @@ public class ProcurementRequestService {
 
         ProcurementRequest updated = procurementRequestRepository.save(procurementRequest);
         log.info("Approved procurement request with id: {}", id);
-        return updated;
+        return procurementRequestMapper.toResponse(updated);
     }
 
     @Transactional
     @CacheEvict(value = "procurement-requests", allEntries = true)
-    public ProcurementRequest rejectProcurementRequest(String id, String reason) {
+    public ProcurementRequestDto.Response rejectProcurementRequest(String id, String reason) {
         log.info("Rejecting procurement request: {}, reason: {}", id, reason);
 
         ProcurementRequest procurementRequest = procurementRequestRepository.findById(id)
                 .orElseThrow(() -> ApiException.notFound("ProcurementRequest", id));
 
         procurementRequest.setStatus("REJECTED");
-        procurementRequest.setNotes(reason);
+        String existingNotes = procurementRequest.getNotes();
+        procurementRequest.setNotes(existingNotes != null ? existingNotes + " | Rejection reason: " + reason : "Rejection reason: " + reason);
 
         ProcurementRequest updated = procurementRequestRepository.save(procurementRequest);
         log.info("Rejected procurement request with id: {}", id);
-        return updated;
+        return procurementRequestMapper.toResponse(updated);
     }
 
     public Map<String, Object> getProcurementStats() {

@@ -1,9 +1,10 @@
 package com.commerce_pro_backend.supplier.purchase_order.service;
 
 import com.commerce_pro_backend.common.exception.ApiException;
+import com.commerce_pro_backend.supplier.purchase_order.dto.PurchaseOrderDto;
 import com.commerce_pro_backend.supplier.purchase_order.entity.PurchaseOrder;
 import com.commerce_pro_backend.supplier.purchase_order.entity.PurchaseOrderItem;
-import com.commerce_pro_backend.supplier.purchase_order.repository.PurchaseOrderItemRepository;
+import com.commerce_pro_backend.supplier.purchase_order.mapper.PurchaseOrderMapper;
 import com.commerce_pro_backend.supplier.purchase_order.repository.PurchaseOrderRepository;
 import com.commerce_pro_backend.user_identity.service.CurrentUserService;
 import lombok.RequiredArgsConstructor;
@@ -30,46 +31,51 @@ import java.util.UUID;
 public class PurchaseOrderService {
 
     private final PurchaseOrderRepository purchaseOrderRepository;
-    private final PurchaseOrderItemRepository purchaseOrderItemRepository;
+    private final PurchaseOrderMapper purchaseOrderMapper;
     private final CurrentUserService currentUserService;
 
-    public Page<PurchaseOrder> getAllPurchaseOrders(Pageable pageable) {
-        return purchaseOrderRepository.findAll(pageable);
+    public Page<PurchaseOrderDto.ListResponse> getAllPurchaseOrders(Pageable pageable) {
+        return purchaseOrderRepository.findAll(pageable)
+                .map(purchaseOrderMapper::toListResponse);
     }
 
-    public List<PurchaseOrder> getBySupplier(String supplierId) {
-        return purchaseOrderRepository.findBySupplierIdOrderByOrderDateDesc(supplierId);
+    public List<PurchaseOrderDto.ListResponse> getBySupplier(String supplierId) {
+        return purchaseOrderMapper.toListResponseList(
+                purchaseOrderRepository.findBySupplierIdOrderByOrderDateDesc(supplierId));
     }
 
-    public List<PurchaseOrder> getByStatus(String status) {
-        return purchaseOrderRepository.findByStatus(status);
+    public List<PurchaseOrderDto.ListResponse> getByStatus(String status) {
+        return purchaseOrderMapper.toListResponseList(
+                purchaseOrderRepository.findByStatus(status));
     }
 
-    public PurchaseOrder getPurchaseOrder(String id) {
-        return purchaseOrderRepository.findById(id)
+    public PurchaseOrderDto.Response getPurchaseOrder(String id) {
+        PurchaseOrder purchaseOrder = purchaseOrderRepository.findById(id)
                 .orElseThrow(() -> ApiException.notFound("PurchaseOrder", id));
+        return purchaseOrderMapper.toResponse(purchaseOrder);
     }
 
     @Transactional
     @CacheEvict(value = "purchase-orders", allEntries = true)
-    public PurchaseOrder createPurchaseOrder(PurchaseOrder request) {
+    public PurchaseOrderDto.Response createPurchaseOrder(PurchaseOrderDto.Request request) {
         log.info("Creating purchase order for supplier: {}", request.getSupplierId());
 
-        request.setId(UUID.randomUUID().toString());
-        request.setPoNumber(generatePoNumber());
-        request.setCreatedBy(currentUserService.getCurrentUserId());
-        request.setOrderDate(Instant.now());
+        PurchaseOrder purchaseOrder = purchaseOrderMapper.toEntity(request);
+        purchaseOrder.setId(UUID.randomUUID().toString());
+        purchaseOrder.setPoNumber(generatePoNumber());
+        purchaseOrder.setCreatedBy(currentUserService.getCurrentUserId());
+        purchaseOrder.setOrderDate(Instant.now());
 
-        calculateTotals(request);
+        calculateTotals(purchaseOrder);
 
-        PurchaseOrder saved = purchaseOrderRepository.save(request);
+        PurchaseOrder saved = purchaseOrderRepository.save(purchaseOrder);
         log.info("Created purchase order with id: {}, poNumber: {}", saved.getId(), saved.getPoNumber());
-        return saved;
+        return purchaseOrderMapper.toResponse(saved);
     }
 
     @Transactional
     @CacheEvict(value = "purchase-orders", allEntries = true)
-    public PurchaseOrder updatePurchaseOrder(String id, PurchaseOrder request) {
+    public PurchaseOrderDto.Response updatePurchaseOrder(String id, PurchaseOrderDto.Request request) {
         log.info("Updating purchase order: {}", id);
 
         PurchaseOrder existing = purchaseOrderRepository.findById(id)
@@ -80,15 +86,16 @@ public class PurchaseOrderService {
         existing.setExpectedDeliveryDate(request.getExpectedDeliveryDate());
         existing.setCurrency(request.getCurrency());
         existing.setNotes(request.getNotes());
-        existing.setTaxAmount(request.getTaxAmount());
-        existing.setShippingCost(request.getShippingCost());
 
         // Update items
         existing.getItems().clear();
         if (request.getItems() != null) {
-            for (PurchaseOrderItem item : request.getItems()) {
-                item.setId(UUID.randomUUID().toString());
-                existing.addItem(item);
+            for (PurchaseOrderDto.ItemRequest itemDto : request.getItems()) {
+                PurchaseOrderItem item = purchaseOrderMapper.toItemEntity(itemDto);
+                if (item != null) {
+                    item.setId(UUID.randomUUID().toString());
+                    existing.addItem(item);
+                }
             }
         }
 
@@ -96,7 +103,7 @@ public class PurchaseOrderService {
 
         PurchaseOrder updated = purchaseOrderRepository.save(existing);
         log.info("Updated purchase order with id: {}", updated.getId());
-        return updated;
+        return purchaseOrderMapper.toResponse(updated);
     }
 
     @Transactional
@@ -116,7 +123,7 @@ public class PurchaseOrderService {
 
     @Transactional
     @CacheEvict(value = "purchase-orders", allEntries = true)
-    public PurchaseOrder updateStatus(String id, String status) {
+    public PurchaseOrderDto.Response updateStatus(String id, String status) {
         log.info("Updating purchase order status: id={}, status={}", id, status);
 
         PurchaseOrder purchaseOrder = purchaseOrderRepository.findById(id)
@@ -131,12 +138,12 @@ public class PurchaseOrderService {
 
         PurchaseOrder updated = purchaseOrderRepository.save(purchaseOrder);
         log.info("Updated purchase order status: id={}, newStatus={}", id, status);
-        return updated;
+        return purchaseOrderMapper.toResponse(updated);
     }
 
     @Transactional
     @CacheEvict(value = "purchase-orders", allEntries = true)
-    public PurchaseOrder receivePurchaseOrder(String id) {
+    public PurchaseOrderDto.Response receivePurchaseOrder(String id) {
         log.info("Receiving purchase order: {}", id);
 
         PurchaseOrder purchaseOrder = purchaseOrderRepository.findById(id)
@@ -151,7 +158,7 @@ public class PurchaseOrderService {
 
         PurchaseOrder updated = purchaseOrderRepository.save(purchaseOrder);
         log.info("Received purchase order with id: {}", id);
-        return updated;
+        return purchaseOrderMapper.toResponse(updated);
     }
 
     public Map<String, Object> getPurchaseOrderStats() {
