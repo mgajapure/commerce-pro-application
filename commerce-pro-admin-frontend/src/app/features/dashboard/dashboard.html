@@ -3,27 +3,26 @@
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
             <h1 class="text-2xl font-bold text-gray-900">Dashboard Overview</h1>
-            <p class="text-gray-500 mt-1">Welcome back! Here's what's happening with your store today.</p>
+            <p class="text-gray-500 mt-1">Welcome back! Here's what's happening with your store.</p>
         </div>
-        <div class="flex gap-3">
-            <button
-                class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2">
-                <i class="bi bi-calendar-event w-4 h-4"></i>
-                <span>Last 30 Days</span>
-            </button>
-            <button
-                class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors flex items-center gap-2 shadow-lg shadow-indigo-200">
-                <i class="bi bi-plus w-4 h-4"></i>
-                <span>Add Product</span>
-            </button>
+        <div class="flex items-center gap-3">
+            <select
+                [ngModel]="selectedRange()"
+                (ngModelChange)="onRangeChange($event)"
+                class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 cursor-pointer">
+                <option value="today">Today</option>
+                <option value="7d">Last 7 Days</option>
+                <option value="30d">Last 30 Days</option>
+                <option value="90d">Last 90 Days</option>
+                <option value="365d">Last 1 Year</option>
+            </select>
         </div>
     </div>
 
     <!-- KPI Cards -->
-     <div class="grid grid-cols-1">
+    <div class="grid grid-cols-1">
         <app-kpi-cards></app-kpi-cards>
-     </div>
-    
+    </div>
 
     <!-- Analytics Charts -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
@@ -37,9 +36,17 @@
         <app-inventory-status class="h-full"></app-inventory-status>
     </div>
 
-    <!-- Orders & Customers -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
-        <app-recent-orders class="h-full"></app-recent-orders>
-        <app-customer-insights class="h-full"></app-customer-insights>
+    <!-- Orders, Customers & AI Insights -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+        <app-recent-orders class="lg:col-span-2 h-full"></app-recent-orders>
+        <div class="flex flex-col gap-6">
+            <app-customer-insights class="h-full flex-1"></app-customer-insights>
+            <app-new-customers class="h-full flex-1"></app-new-customers>
+        </div>
+    </div>
+
+    <!-- AI Insights Widget -->
+    <div class="grid grid-cols-1">
+        <app-ai-insights></app-ai-insights>
     </div>
 </div>

@@ -328,6 +328,11 @@ export class PaymentService {
       .pipe(map(r => r.data), catchError(this.handleError<PaymentGatewayConfigDTO>('setDefaultGateway')));
   }
 
+  updateGatewayConfig(id: string, req: Partial<CreateGatewayConfigRequest>): Observable<PaymentGatewayConfigDTO> {
+    return this.http.put<ApiResponse<PaymentGatewayConfigDTO>>(`${BASE}/gateways/${id}`, req)
+      .pipe(map(r => r.data), catchError(this.handleError<PaymentGatewayConfigDTO>('updateGateway')));
+  }
+
   // ── Error handler ─────────────────────────────────────────────────────────
 
   private handleError<T>(operation = 'operation', result?: T) {

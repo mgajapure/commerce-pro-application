@@ -40,6 +40,12 @@ export class Seo implements OnInit {
   showSeoModal  = signal(false);
   seoModalResult = signal<AiSeoResult | null>(null);
 
+  // AI for edit form
+  seoEditAiLoading = signal(false);
+  seoEditAiField   = signal<'titlePattern' | 'descriptionPattern' | null>(null);
+  seoEditAiResult  = signal<string | null>(null);
+  showSeoEditAiModal = signal(false);
+
   // View State
   showModal = signal(false);
   isSaving = signal(false);
@@ -428,4 +434,36 @@ export class Seo implements OnInit {
   getAiSeo(templateId: string): AiSeoResult | null { return this.aiSeoResults()[templateId] ?? null; }
 
   closeSeoModal(): void { this.showSeoModal.set(false); this.seoModalResult.set(null); }
+
+  // AI for edit form fields
+  runSeoEditAi(field: 'titlePattern' | 'descriptionPattern'): void {
+    const template = this.editingTemplate();
+    if (!template?.id) return;
+    this.seoEditAiField.set(field);
+    this.seoEditAiLoading.set(true);
+    this.seoEditAiResult.set(null);
+    this.showSeoEditAiModal.set(true);
+    this.aiSvc.previewSeo(template.id).pipe(takeUntil(this.destroy$)).subscribe({
+      next: r => {
+        this.seoEditAiResult.set(field === 'titlePattern' ? r.seoTitle : r.seoDescription);
+        this.seoEditAiLoading.set(false);
+      },
+      error: () => { this.seoEditAiLoading.set(false); this.showSeoEditAiModal.set(false); }
+    });
+  }
+
+  applySeoEditAi(): void {
+    const field = this.seoEditAiField();
+    const value = this.seoEditAiResult();
+    if (!field || value == null) return;
+    this.templateForm.patchValue({ [field]: value });
+    this.closeSeoEditAiModal();
+  }
+
+  closeSeoEditAiModal(): void {
+    this.showSeoEditAiModal.set(false);
+    this.seoEditAiField.set(null);
+    this.seoEditAiResult.set(null);
+    this.seoEditAiLoading.set(false);
+  }
 }

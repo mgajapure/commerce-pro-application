@@ -15,6 +15,7 @@ import {
 } from '../../../core/models/catalog/collection.model';
 import { CollectionService } from '../../../core/services/catalog/collection.service';
 import { AlertService } from '../../../shared/services/alert.service';
+import { AiService } from '../../../core/services/ai/ai.service';
 
 @Component({
   selector: 'app-collections',
@@ -27,6 +28,7 @@ export class Collections implements OnInit {
   private fb                = inject(FormBuilder);
   private collectionService = inject(CollectionService);
   private alertSvc          = inject(AlertService);
+  private aiSvc             = inject(AiService);
 
   // View State
   showModal = signal(false);
@@ -37,7 +39,7 @@ export class Collections implements OnInit {
   searchQuery = signal('');
   filterType = signal<string>('');
   filterStatus = signal<string>('');
-  viewMode = signal<'grid' | 'list'>('grid');
+  viewMode = signal<'grid' | 'list'>('list');
 
   // Data from service
   collections = this.collectionService.allCollections;
@@ -45,6 +47,12 @@ export class Collections implements OnInit {
   error = this.collectionService.currentError;
 
   editingCollection = signal<Collection | null>(null);
+
+  // AI state
+  aiLoading  = signal(false);
+  aiField    = signal<'description' | 'seoTitle' | 'seoDescription' | null>(null);
+  aiResult   = signal<string | null>(null);
+  showAiModal = signal(false);
 
   collectionForm!: FormGroup;
 
@@ -396,6 +404,46 @@ export class Collections implements OnInit {
       name: collection.name + ' (Copy)',
       slug: collection.slug + '-copy'
     }).subscribe();
+  }
+
+  // AI generation
+  runCollectionAi(field: 'description' | 'seoTitle' | 'seoDescription'): void {
+    const col = this.editingCollection();
+    if (!col?.id) return;
+    this.aiField.set(field);
+    this.aiLoading.set(true);
+    this.showAiModal.set(true);
+    this.aiResult.set(null);
+
+    if (field === 'description') {
+      this.aiSvc.generateCollectionDescription(col.id).subscribe({
+        next: r => { this.aiResult.set(r.description); this.aiLoading.set(false); },
+        error: () => { this.aiLoading.set(false); this.showAiModal.set(false); }
+      });
+    } else {
+      this.aiSvc.optimiseCollectionSeo(col.id).subscribe({
+        next: r => {
+          this.aiResult.set(field === 'seoTitle' ? r.seoTitle : r.seoDescription);
+          this.aiLoading.set(false);
+        },
+        error: () => { this.aiLoading.set(false); this.showAiModal.set(false); }
+      });
+    }
+  }
+
+  applyAiResult(): void {
+    const field = this.aiField();
+    const value = this.aiResult();
+    if (!field || value == null) return;
+    this.collectionForm.patchValue({ [field]: value });
+    this.closeAiModal();
+  }
+
+  closeAiModal(): void {
+    this.showAiModal.set(false);
+    this.aiField.set(null);
+    this.aiResult.set(null);
+    this.aiLoading.set(false);
   }
 
   // Bulk actions
