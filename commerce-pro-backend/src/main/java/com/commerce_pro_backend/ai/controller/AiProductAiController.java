@@ -1,5 +1,6 @@
 package com.commerce_pro_backend.ai.controller;
 
+import com.commerce_pro_backend.ai.dto.response.AiDescriptionResponse;
 import com.commerce_pro_backend.ai.service.ProductDescriptionService;
 import com.commerce_pro_backend.common.dto.ApiResponse;
 import lombok.RequiredArgsConstructor;
@@ -59,11 +60,11 @@ public class AiProductAiController {
      */
     @PostMapping("/{productId}/description/generate")
     @PreAuthorize("hasAuthority('ai:product:generate')")
-    public ResponseEntity<ApiResponse<String>> generateAndSave(
+    public ResponseEntity<ApiResponse<AiDescriptionResponse>> generateAndSave(
             @PathVariable String productId) {
 
-        String description = productDescService.generateAndSave(productId);
-        return ResponseEntity.ok(ApiResponse.success("Description generated and saved", description));
+        AiDescriptionResponse response = productDescService.generateAndSave(productId);
+        return ResponseEntity.ok(ApiResponse.success("Description generated and saved", response));
     }
 
     /**
@@ -92,10 +93,10 @@ public class AiProductAiController {
      */
     @PostMapping("/{productId}/description/preview")
     @PreAuthorize("hasAuthority('ai:product:generate')")
-    public ResponseEntity<ApiResponse<String>> preview(
+    public ResponseEntity<ApiResponse<AiDescriptionResponse>> preview(
             @PathVariable String productId) {
 
-        String preview = productDescService.generatePreview(productId);
-        return ResponseEntity.ok(ApiResponse.success("Description preview generated (not saved)", preview));
+        AiDescriptionResponse response = productDescService.generatePreview(productId);
+        return ResponseEntity.ok(ApiResponse.success("Description preview generated (not saved)", response));
     }
 }

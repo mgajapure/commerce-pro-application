@@ -190,13 +190,26 @@ public class ReturnPatternAnalysisService {
                 .score(result.returnScore())
                 .riskLevel(result.riskLevel())
                 .recommendation(result.recommendation())
-                .signals(result.suspectedCauses() != null ? String.join(",", result.suspectedCauses()) : "")
                 .reasoning(result.reasoning())
                 .rawOutput(result.toString())
                 .status("PROCESSED")
                 .build());
 
-        return result;
+        List<String> recommendationsList = result.recommendation() != null 
+                ? List.of(result.recommendation()) 
+                : List.of();
+        
+        return new ReturnAnalysisResult(
+                result.returnScore(),
+                result.riskLevel(),
+                result.suspectedCauses(),
+                result.recommendation(),
+                result.reasoning(),
+                productId,
+                lookbackDays,
+                returnRatePct,
+                recommendationsList
+        );
     }
 
     private int    nvlInt(Integer i)              { return i != null ? i : 0; }
@@ -216,6 +229,14 @@ public class ReturnPatternAnalysisService {
         /** MONITOR | CONTACT_SUPPLIER | UPDATE_LISTING | SUSPEND_PRODUCT | REVIEW_FULFILLMENT */
         String recommendation,
         /** Plain-English explanation for the operations and merchandising teams. */
-        String reasoning
+        String reasoning,
+        /** Product ID for traceability. */
+        String productId,
+        /** Number of days analyzed. */
+        int lookbackDays,
+        /** Return rate as percentage. */
+        double returnRate,
+        /** Recommendations as list. */
+        List<String> recommendations
     ) {}
 }

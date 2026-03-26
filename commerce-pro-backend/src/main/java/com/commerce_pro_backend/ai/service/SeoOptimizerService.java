@@ -107,7 +107,6 @@ public class SeoOptimizerService {
 
         String tagsLine = product.getTags() != null ? String.join(", ", product.getTags()) : "(none)";
 
-        // Build a compact brief so the model can write metadata grounded in real product data
         String userMessage = """
                 Product name:       %s
                 Brand:              %s
@@ -128,12 +127,11 @@ public class SeoOptimizerService {
         String rawResponse = orchestrator.complete(FEATURE, SYSTEM_PROMPT, userMessage);
         SeoResult result = PromptJsonExtractor.parse(rawResponse, SeoResult.class, FEATURE.name());
 
-        // Persist the new SEO metadata directly onto the product record
         product.setSeoTitle(result.seoTitle());
         product.setSeoDescription(result.seoDescription());
         productRepo.save(product);
 
-        return result;
+        return new SeoResult(result.seoTitle(), result.seoDescription(), result.keywords(), result.reasoning(), productId, true);
     }
 
     /**
@@ -153,7 +151,8 @@ public class SeoOptimizerService {
                 nvl(product.getCategory()), tagsLine);
 
         String rawResponse = orchestrator.complete(FEATURE, SYSTEM_PROMPT, userMessage);
-        return PromptJsonExtractor.parse(rawResponse, SeoResult.class, FEATURE.name());
+        SeoResult result = PromptJsonExtractor.parse(rawResponse, SeoResult.class, FEATURE.name());
+        return new SeoResult(result.seoTitle(), result.seoDescription(), result.keywords(), result.reasoning(), productId, false);
     }
 
     private String nvl(Object o) { return o != null ? o.toString() : ""; }
@@ -168,6 +167,10 @@ public class SeoOptimizerService {
         /** 5–8 target keywords. */
         List<String> keywords,
         /** Brief explanation of the keyword strategy. */
-        String reasoning
+        String reasoning,
+        /** Product ID for traceability. */
+        String productId,
+        /** Whether the result was saved to the database. */
+        boolean saved
     ) {}
 }

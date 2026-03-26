@@ -209,7 +209,17 @@ public class AiDemandForecastService {
 
         log.info("Forecast complete for product {}: predictedDemand={}, orderQty={}",
                 productId, result.predictedDemand(), result.recommendedOrderQty());
-        return result;
+        return new ForecastResult(
+                result.predictedDemand(),
+                result.reorderPoint(),
+                result.safetyStock(),
+                result.recommendedOrderQty(),
+                result.confidence(),
+                result.signals(),
+                result.reasoning(),
+                productId,
+                forecastDays
+        );
     }
 
     private int nvlInt(Integer i) { return i != null ? i : 0; }
@@ -241,6 +251,10 @@ public class AiDemandForecastService {
         /** Trend signals, e.g. ["upward_trend", "seasonal_spike_detected"]. */
         List<String> signals,
         /** Plain-English reasoning for the procurement team. */
-        String reasoning
+        String reasoning,
+        /** Product ID for traceability. */
+        String productId,
+        /** Number of days forecasted. */
+        int forecastDays
     ) {}
 }

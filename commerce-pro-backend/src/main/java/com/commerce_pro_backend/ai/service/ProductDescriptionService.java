@@ -1,6 +1,7 @@
 package com.commerce_pro_backend.ai.service;
 
 import com.commerce_pro_backend.ai.dto.request.AiConfigUpdateRequest;
+import com.commerce_pro_backend.ai.dto.response.AiDescriptionResponse;
 import com.commerce_pro_backend.ai.enums.AiFeatureType;
 import com.commerce_pro_backend.catalog.product.entity.Product;
 import com.commerce_pro_backend.catalog.product.repository.ProductRepository;
@@ -127,33 +128,32 @@ public class ProductDescriptionService {
      * </pre>
      */
     @Transactional
-    public String generateAndSave(String productId) {
+    public AiDescriptionResponse generateAndSave(String productId) {
         log.info("Generating AI description for product: {}", productId);
 
-        // 1. Load the product
         Product product = productRepo.findById(productId)
                 .orElseThrow(() -> new EntityNotFoundException("Product not found: " + productId));
 
-        // 2. Build the prompt payload from the product's metadata
         String userMessage = buildDescriptionPayload(product);
 
-        // 3. Call the AI model (single-shot — no conversation, no insight row)
         String description = orchestrator.complete(FEATURE, SYSTEM_PROMPT, userMessage);
 
-        // 4. Clean up any leading/trailing whitespace from the model output
         description = description.strip();
 
-        // 5. Save the generated description back to the product
         product.setDescription(description);
 
-        // 6. Also set shortDescription to the first sentence (truncated to 200 chars)
-        //    The short description is used on category listing pages and search results.
-        product.setShortDescription(extractFirstSentence(description, 200));
+        String shortDescription = extractFirstSentence(description, 200);
+        product.setShortDescription(shortDescription);
 
         productRepo.save(product);
 
         log.info("Description generated and saved for product: {}", productId);
-        return description;
+        return AiDescriptionResponse.builder()
+                .productId(productId)
+                .description(description)
+                .shortDescription(shortDescription)
+                .saved(true)
+                .build();
     }
 
     /**
@@ -172,13 +172,21 @@ public class ProductDescriptionService {
      *   String preview2 = productDescService.generatePreview("prod-uuid"); // different each call
      * </pre>
      */
-    public String generatePreview(String productId) {
+    public AiDescriptionResponse generatePreview(String productId) {
         log.info("Generating AI description preview for product: {}", productId);
 
         Product product = productRepo.findById(productId)
                 .orElseThrow(() -> new EntityNotFoundException("Product not found: " + productId));
 
-        return orchestrator.complete(FEATURE, SYSTEM_PROMPT, buildDescriptionPayload(product)).strip();
+        String description = orchestrator.complete(FEATURE, SYSTEM_PROMPT, buildDescriptionPayload(product)).strip();
+        String shortDescription = extractFirstSentence(description, 200);
+
+        return AiDescriptionResponse.builder()
+                .productId(productId)
+                .description(description)
+                .shortDescription(shortDescription)
+                .saved(false)
+                .build();
     }
 
     // ── Private helpers ───────────────────────────────────────────────────────
