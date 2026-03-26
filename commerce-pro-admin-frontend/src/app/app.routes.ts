@@ -68,6 +68,11 @@ export const routes: Routes = [
       loadChildren: () => import('./features/finance/finance.route').then(m => m.FINANCE_ROUTES)
     },
   {
+    path: 'suppliers',
+    canActivate: [authGuard],
+    loadChildren: () => import('./features/suppliers/suppliers.route').then(m => m.SUPPLIERS_ROUTES)
+  },
+  {
     path: 'ai',
     canActivate: [authGuard],
     loadChildren: () => import('./features/ai/ai.route').then(m => m.AI_ROUTES)
