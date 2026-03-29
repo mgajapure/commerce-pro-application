@@ -3,8 +3,7 @@ import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
-import { ApiResponse } from '../../models/common';
-import { StockTransferRequest } from '../../models/inventory';
+import { ApiResponse } from '../../models';
 
 const BASE = `${API_HOST}/api/v1/inventory`;
 
@@ -113,16 +112,39 @@ export class StockTransferService {
     return this.updateTransfer(id, updates);
   }
 
-  executeTransfer(fromWarehouseId: string, toWarehouseId: string, productId: string, quantity: number, reason?: string): Observable<void> {
-    return this.http.post<ApiResponse<void>>(`${BASE}/transfer`, {
-      fromWarehouseId,
-      toWarehouseId,
-      productId,
-      quantity,
-      reason
-    }).pipe(
+  /**
+   * POST /api/v1/inventory/transfer — single product transfer
+   * Matches backend StockTransferRequestDTO exactly.
+   */
+  executeTransfer(
+    fromWarehouseId: string,
+    toWarehouseId: string,
+    productId: string,
+    quantity: number,
+    notes?: string,
+    reference?: string
+  ): Observable<void> {
+    const body = { fromWarehouseId, toWarehouseId, productId, quantity, notes, reference };
+    return this.http.post<ApiResponse<void>>(`${BASE}/transfer`, body).pipe(
       map(() => void 0),
       catchError(this.handleError<void>('executeTransfer'))
+    );
+  }
+
+  /**
+   * POST /api/v1/inventory/transfer/batch — multi-product transfer (same warehouses)
+   * Matches backend BatchStockTransferRequestDTO.
+   */
+  executeBatchTransfer(req: {
+    fromWarehouseId: string;
+    toWarehouseId: string;
+    lines: Array<{ productId: string; quantity: number; notes?: string }>;
+    notes?: string;
+    reference?: string;
+  }): Observable<void> {
+    return this.http.post<ApiResponse<void>>(`${BASE}/transfer/batch`, req).pipe(
+      map(() => void 0),
+      catchError(this.handleError<void>('executeBatchTransfer'))
     );
   }
 

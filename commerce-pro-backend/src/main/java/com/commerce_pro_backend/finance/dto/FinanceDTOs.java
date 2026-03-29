@@ -30,11 +30,12 @@ public class FinanceDTOs {
     }
 
     @Data public static class CreateVendorRequest {
-        @NotBlank               private String name;
-        private String          companyName;
-        @NotBlank @Email        private String email;
-        private String          phone;
-        private String          taxId;
+        @NotBlank @Size(max=200)                          private String name;
+        @Size(max=200)                                    private String companyName;
+        @NotBlank @Email @Size(max=255)                   private String email;
+        @Pattern(regexp="^[+]?[0-9 \\-().]{7,20}$",
+                 message="Phone number format is invalid") private String phone;
+        @Size(max=50)                                     private String taxId;
         @NotBlank               private String paymentTerms;
         private Integer         paymentTermsDays;
         private String          preferredCurrency;
@@ -132,7 +133,10 @@ public class FinanceDTOs {
         @NotBlank  private String         name;
         private String                    description;
         @NotNull   private TaxType        taxType;
-        @NotNull @DecimalMin("0") @DecimalMax("1") private BigDecimal rate;
+        @NotNull
+        @DecimalMin(value = "0", message = "Tax rate must be between 0 and 1 (e.g. 0.08 for 8%)")
+        @DecimalMax(value = "1", message = "Tax rate must be between 0 and 1 (e.g. 0.08 for 8%)")
+        private BigDecimal rate;  // decimal fraction: 0.08 = 8%, not 8
         private String                    jurisdictionId;
         private String                    country;
         private String                    stateProvince;

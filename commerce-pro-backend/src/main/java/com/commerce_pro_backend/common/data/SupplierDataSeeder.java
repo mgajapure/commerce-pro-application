@@ -49,7 +49,8 @@ public class SupplierDataSeeder {
         for (int i = 0; i < suppliersJson.size(); i++) {
             JsonNode s = suppliersJson.get(i);
             try {
-                supplierService.createSupplier(SupplierDto.Request.builder()
+                supplierService.createSupplier(
+                        SupplierDto.Request.builder()
                         .name(s.get("name").asText())
                         .code(s.get("code").asText())
                         .contactPerson(s.path("contactPerson").asText(null))

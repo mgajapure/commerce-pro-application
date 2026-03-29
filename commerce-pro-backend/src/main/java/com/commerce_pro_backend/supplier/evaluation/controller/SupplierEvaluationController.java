@@ -2,6 +2,7 @@ package com.commerce_pro_backend.supplier.evaluation.controller;
 
 import com.commerce_pro_backend.common.dto.ApiResponse;
 import com.commerce_pro_backend.supplier.evaluation.dto.SupplierEvaluationDto;
+import com.commerce_pro_backend.supplier.evaluation.mapper.SupplierEvaluationMapper;
 import com.commerce_pro_backend.supplier.evaluation.service.SupplierEvaluationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,21 +20,25 @@ import java.util.Map;
 public class SupplierEvaluationController {
 
     private final SupplierEvaluationService supplierEvaluationService;
+    private final SupplierEvaluationMapper supplierEvaluationMapper;
 
     @GetMapping
     public ResponseEntity<ApiResponse<Page<SupplierEvaluationDto.ListResponse>>> getAll(Pageable pageable) {
-        return ResponseEntity.ok(ApiResponse.success("Supplier evaluations retrieved successfully", supplierEvaluationService.getAllEvaluations(pageable)));
+        return ResponseEntity.ok(ApiResponse.success("Supplier evaluations retrieved successfully",
+                supplierEvaluationService.getAllEvaluations(pageable).map(supplierEvaluationMapper::toListResponse)));
     }
 
     @GetMapping("/supplier/{supplierId}")
     public ResponseEntity<ApiResponse<Page<SupplierEvaluationDto.ListResponse>>> getBySupplier(
             @PathVariable String supplierId, Pageable pageable) {
-        return ResponseEntity.ok(ApiResponse.success("Supplier evaluations retrieved successfully", supplierEvaluationService.getBySupplier(supplierId, pageable)));
+        return ResponseEntity.ok(ApiResponse.success("Supplier evaluations retrieved successfully",
+                supplierEvaluationService.getBySupplier(supplierId, pageable).map(supplierEvaluationMapper::toListResponse)));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<SupplierEvaluationDto.Response>> getById(@PathVariable String id) {
-        return ResponseEntity.ok(ApiResponse.success("Supplier evaluation retrieved successfully", supplierEvaluationService.getEvaluation(id)));
+        return ResponseEntity.ok(ApiResponse.success("Supplier evaluation retrieved successfully",
+                supplierEvaluationMapper.toResponse(supplierEvaluationService.getEvaluation(id))));
     }
 
     @GetMapping("/supplier/{supplierId}/scores")
@@ -46,14 +51,16 @@ public class SupplierEvaluationController {
     public ResponseEntity<ApiResponse<SupplierEvaluationDto.Response>> create(
             @Valid @RequestBody SupplierEvaluationDto.Request request) {
         return ResponseEntity.status(HttpStatus.CREATED)
-            .body(ApiResponse.success("Supplier evaluation created successfully", supplierEvaluationService.createEvaluation(request)));
+            .body(ApiResponse.success("Supplier evaluation created successfully",
+                    supplierEvaluationMapper.toResponse(supplierEvaluationService.createEvaluation(supplierEvaluationMapper.toEntity(request)))));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<SupplierEvaluationDto.Response>> update(
             @PathVariable String id,
             @Valid @RequestBody SupplierEvaluationDto.Request request) {
-        return ResponseEntity.ok(ApiResponse.success("Supplier evaluation updated successfully", supplierEvaluationService.updateEvaluation(id, request)));
+        return ResponseEntity.ok(ApiResponse.success("Supplier evaluation updated successfully",
+                supplierEvaluationMapper.toResponse(supplierEvaluationService.updateEvaluation(id, supplierEvaluationMapper.toEntity(request)))));
     }
 
     @DeleteMapping("/{id}")
@@ -64,6 +71,7 @@ public class SupplierEvaluationController {
 
     @PostMapping("/{id}/submit")
     public ResponseEntity<ApiResponse<SupplierEvaluationDto.Response>> submit(@PathVariable String id) {
-        return ResponseEntity.ok(ApiResponse.success("Supplier evaluation submitted successfully", supplierEvaluationService.submitEvaluation(id)));
+        return ResponseEntity.ok(ApiResponse.success("Supplier evaluation submitted successfully",
+                supplierEvaluationMapper.toResponse(supplierEvaluationService.submitEvaluation(id))));
     }
 }

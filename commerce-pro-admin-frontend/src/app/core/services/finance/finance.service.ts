@@ -13,7 +13,7 @@ import {
   TaxRateDTO, TaxJurisdictionDTO, TaxReportDTO, CreateTaxRateRequest,
   ExpenseCategoryDTO, ExpenseDTO, ExpenseSummaryDTO, ExpenseStatsDTO, CreateExpenseRequest,
   JournalEntryDTO, JournalEntrySummaryDTO, CreateJournalEntryRequest,
-  BudgetDTO, CreateBudgetRequest,
+  BudgetDTO, CreateBudgetRequest, BudgetVarianceDTO,
   RevenueOverviewDTO, ProfitLossDTO,
   CashFlowForecastDTO,
   ExchangeRateDTO, ConversionResultDTO, AddExchangeRateRequest,

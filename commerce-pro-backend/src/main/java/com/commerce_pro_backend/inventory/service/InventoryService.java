@@ -463,4 +463,24 @@ public class InventoryService {
         product.updateStockStatus();
         productRepository.save(product);
     }
+
+    /**
+     * Execute a batch stock transfer — multiple product lines between the same two warehouses.
+     * Each line calls the existing single-product transferStock logic transactionally.
+     */
+    @Transactional
+    public void batchTransferStock(BatchStockTransferRequestDTO request) {
+        for (BatchStockTransferRequestDTO.TransferLineDTO line : request.getLines()) {
+            StockTransferRequestDTO single = StockTransferRequestDTO.builder()
+                    .fromWarehouseId(request.getFromWarehouseId())
+                    .toWarehouseId(request.getToWarehouseId())
+                    .productId(line.getProductId())
+                    .quantity(line.getQuantity())
+                    .notes(line.getNotes() != null ? line.getNotes() : request.getNotes())
+                    .reference(request.getReference())
+                    .build();
+            transferStock(single);
+        }
+    }
+
 }

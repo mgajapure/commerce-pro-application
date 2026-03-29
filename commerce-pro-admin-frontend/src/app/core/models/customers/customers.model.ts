@@ -1,3 +1,14 @@
+
+/**
+ * Utility: format a plain date string to ISO datetime for API filter params.
+ * Backend @DateTimeFormat(ISO.DATE_TIME) requires "2024-01-01T00:00:00".
+ * Import from order.model.ts or use this local copy.
+ */
+export function formatFilterDateTime(date: string, endOfDay = false): string {
+  if (!date) return '';
+  if (date.includes('T')) return date;
+  return endOfDay ? `${date}T23:59:59` : `${date}T00:00:00`;
+}
 // src/app/core/models/customer/customer.model.ts
 // Mirrors the Commerce Pro backend customer module DTOs exactly
 

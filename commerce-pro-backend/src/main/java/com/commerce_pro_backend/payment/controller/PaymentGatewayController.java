@@ -1,7 +1,6 @@
 package com.commerce_pro_backend.payment.controller;
 
 import com.commerce_pro_backend.common.dto.ApiResponse;
-import com.commerce_pro_backend.payment.config.PaymentCredentialEncryptor;
 import com.commerce_pro_backend.payment.dto.request.CreateGatewayConfigRequest;
 import com.commerce_pro_backend.payment.dto.response.PaymentGatewayConfigDTO;
 import com.commerce_pro_backend.payment.entity.PaymentGatewayConfig;
@@ -74,6 +73,29 @@ public class PaymentGatewayController {
                 saved.getId(), saved.getGatewayProvider().name(), null, null, "CREATED", true);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Gateway configuration created", mapper.toGatewayConfigDTO(saved)));
+    }
+
+    @PutMapping("/{id}")
+    @Operation(summary = "Update an existing gateway configuration",
+               description = "Updates display name, test mode flag, supported currencies, and webhook URL. Credential fields (apiKey, apiSecret, webhookSecret) are re-encrypted on every update.")
+    public ResponseEntity<ApiResponse<PaymentGatewayConfigDTO>> update(
+            @PathVariable String id,
+            @Valid @RequestBody CreateGatewayConfigRequest req) {
+        String actorId = currentUserService.getCurrentUserId();
+        PaymentGatewayConfig existing = gatewayService.getById(id);
+        existing.setDisplayName(req.getDisplayName());
+        if (req.getApiKey() != null)       existing.setApiKey(req.getApiKey());
+        if (req.getApiSecret() != null)    existing.setApiSecret(req.getApiSecret());
+        if (req.getWebhookSecret() != null) existing.setWebhookSecret(req.getWebhookSecret());
+        if (req.getIsTestMode() != null)   existing.setIsTestMode(req.getIsTestMode());
+        if (req.getSupportedCurrencies() != null) existing.setSupportedCurrencies(req.getSupportedCurrencies());
+        if (req.getWebhookUrl() != null)   existing.setWebhookUrl(req.getWebhookUrl());
+        if (req.getConfigMetadata() != null) existing.setConfigMetadata(req.getConfigMetadata());
+        existing.setUpdatedBy(actorId);
+        PaymentGatewayConfig saved = gatewayService.save(existing);
+        auditService.log(actorId, AuditAction.GATEWAY_CONFIG_UPDATED, "PaymentGatewayConfig",
+                saved.getId(), saved.getGatewayProvider().name(), null, null, "UPDATED", true);
+        return ResponseEntity.ok(ApiResponse.success("Gateway configuration updated", mapper.toGatewayConfigDTO(saved)));
     }
 
     @PostMapping("/{id}/activate")

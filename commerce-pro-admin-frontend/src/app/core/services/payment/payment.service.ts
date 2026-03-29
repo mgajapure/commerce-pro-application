@@ -104,9 +104,9 @@ export class PaymentService {
 
   // ── Pending Payments ──────────────────────────────────────────────────────
 
-  getPendingPayments(pageParams?: PageParams): Observable<PaymentTransactionSummaryDTO[]> {
-    const params = new HttpParams({ fromObject: buildPageParams(pageParams ?? {}) });
-    return this.http.get<ApiResponse<PaymentTransactionSummaryDTO[]>>(`${BASE}/pending`, { params })
+  getPendingPayments(): Observable<PaymentTransactionSummaryDTO[]> {
+    // Backend PendingPaymentController returns List<>, not PageResponse — no pagination params
+    return this.http.get<ApiResponse<PaymentTransactionSummaryDTO[]>>(`${BASE}/pending`)
       .pipe(map(r => r.data ?? []), catchError(this.handleError('getPending', [])));
   }
 

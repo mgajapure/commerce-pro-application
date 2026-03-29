@@ -297,6 +297,8 @@ export interface CreatePaymentRequest {
   currency: string;
   gatewayProvider: GatewayProvider;
   paymentMethodType?: PaymentMethodType;
+  /** ID of a stored PaymentMethod — takes priority over paymentMethodType when provided */
+  paymentMethodId?: string;
   internalNotes?: string;
 }
 

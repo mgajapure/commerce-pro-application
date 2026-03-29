@@ -291,3 +291,20 @@ export interface ShippingRuleRequest {
   priority?: number;
   isActive?: boolean;
 }
+
+// ── Update Shipment Request — matches backend UpdateShipmentRequest ───────────
+
+export interface UpdateShipmentRequest {
+  carrierId?: string;
+  trackingNumber?: string;
+  shippingMethod?: string;
+  serviceLevel?: string;
+  estimatedDeliveryDate?: string;  // ISO date: YYYY-MM-DD
+  weightGrams?: number;
+  lengthCm?: number;
+  widthCm?: number;
+  heightCm?: number;
+  shippingCost?: number;
+  notes?: string;
+  exceptionReason?: string;
+}

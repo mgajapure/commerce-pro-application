@@ -19,6 +19,7 @@ import {
   TrackingUpdateRequest,
   BulkOrderActionRequest,
   OrderStatus
+  formatFilterDateTime,
 } from '../../models/order/order.model';
 
 import { ApiResponse, PageResponse, PageParams, buildPageParams } from '../../models/common';
@@ -76,8 +77,8 @@ export class OrderService {
       if (filter.source)        params = params.set('source',        filter.source);
       if (filter.isFlagged !== undefined)
                                 params = params.set('isFlagged',     String(filter.isFlagged));
-      if (filter.createdFrom)   params = params.set('createdFrom',   filter.createdFrom);
-      if (filter.createdTo)     params = params.set('createdTo',     filter.createdTo);
+      if (filter.createdFrom)   params = params.set('createdFrom',   formatFilterDateTime(filter.createdFrom));
+      if (filter.createdTo)     params = params.set('createdTo',     formatFilterDateTime(filter.createdTo, true));
     }
 
     return this.http
