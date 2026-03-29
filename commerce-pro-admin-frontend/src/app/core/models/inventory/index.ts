@@ -29,4 +29,4 @@ export * from './stock-adjustment.model';
 export * from './stock-transfer.model';
 
 // Note: StockTransferRequest is defined in stock-movement.model.ts
-export type { StockTransferRequest } from './stock/stock-movement.model';
+export type { StockTransferRequest, BatchStockTransferRequest, BatchStockTransferLine } from './stock/stock-movement.model';

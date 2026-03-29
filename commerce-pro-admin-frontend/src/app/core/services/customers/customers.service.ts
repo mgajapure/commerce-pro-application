@@ -18,6 +18,7 @@ import {
   CustomerRequest, CustomerFilter,
   BlacklistRequest, FraudFlagRequest, FraudResolveRequest,
   LoyaltyAdjustRequest, TagsUpdateRequest
+  formatFilterDateTime,
 } from '../../models/customers/customers.model';
 
 import { ApiResponse, PageResponse, PageParams, buildPageParams } from '../../models/common';
@@ -65,10 +66,10 @@ export class CustomerApiService {
                                   params = params.set('maxLifetimeSpend', String(filter.maxLifetimeSpend));
       if (filter.minTotalOrders !== undefined)
                                   params = params.set('minTotalOrders',   String(filter.minTotalOrders));
-      if (filter.createdFrom)     params = params.set('createdFrom',      filter.createdFrom);
-      if (filter.createdTo)       params = params.set('createdTo',        filter.createdTo);
-      if (filter.lastOrderFrom)   params = params.set('lastOrderFrom',    filter.lastOrderFrom);
-      if (filter.lastOrderTo)     params = params.set('lastOrderTo',      filter.lastOrderTo);
+      if (filter.createdFrom)     params = params.set('createdFrom',      formatFilterDateTime(filter.createdFrom));
+      if (filter.createdTo)       params = params.set('createdTo',        formatFilterDateTime(filter.createdTo, true));
+      if (filter.lastOrderFrom)   params = params.set('lastOrderFrom',    formatFilterDateTime(filter.lastOrderFrom));
+      if (filter.lastOrderTo)     params = params.set('lastOrderTo',      formatFilterDateTime(filter.lastOrderTo, true));
     }
 
     return this.http

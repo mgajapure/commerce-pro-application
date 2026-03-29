@@ -2,11 +2,13 @@ package com.commerce_pro_backend.customer.dto;
 
 import lombok.Data;
 import org.springframework.format.annotation.DateTimeFormat;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
 public class CustomerFilterDTO {
+
     private String search;
     private String status;
     private String tier;
@@ -19,8 +21,17 @@ public class CustomerFilterDTO {
     private BigDecimal minLifetimeSpend;
     private BigDecimal maxLifetimeSpend;
     private Integer minTotalOrders;
-    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) private LocalDateTime createdFrom;
-    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) private LocalDateTime createdTo;
-    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) private LocalDateTime lastOrderFrom;
-    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) private LocalDateTime lastOrderTo;
+
+    /** Frontend must send ISO datetime: 2024-01-01T00:00:00 */
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+    private LocalDateTime createdFrom;
+
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+    private LocalDateTime createdTo;
+
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+    private LocalDateTime lastOrderFrom;
+
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+    private LocalDateTime lastOrderTo;
 }

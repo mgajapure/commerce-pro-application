@@ -17,7 +17,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 
 @RestController @RequestMapping("/v1/finance/invoices/customer")
 @RequiredArgsConstructor @Tag(name = "Finance - Customer Invoices", description = "AR invoice lifecycle")
@@ -108,8 +107,7 @@ public class CustomerInvoiceController {
     @PreAuthorize("hasAuthority('finance:invoice:void')")
     @Operation(summary = "Write off invoice as bad debt")
     public ResponseEntity<ApiResponse<CustomerInvoiceDTO>> writeOff(
-            @PathVariable String id, @RequestBody(required = false) Map<String, String> body) {
-        String reason = body != null ? body.get("reason") : "Bad debt write-off";
-        return ResponseEntity.ok(ApiResponse.success("Invoice written off", invoiceService.writeOff(id, reason)));
+            @PathVariable String id, @Valid @RequestBody VoidInvoiceRequest req) {
+        return ResponseEntity.ok(ApiResponse.success("Invoice written off", invoiceService.writeOff(id, req.getReason())));
     }
 }

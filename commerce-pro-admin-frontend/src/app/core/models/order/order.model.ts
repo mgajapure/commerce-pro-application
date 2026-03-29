@@ -160,6 +160,17 @@ export interface OrderItemRequest {
   taxRate?: number;
 }
 
+/**
+ * Utility: format a plain date string to ISO datetime for API filter params.
+ * Backend @DateTimeFormat(ISO.DATE_TIME) requires: "2024-01-01T00:00:00"
+ * Usage: formatFilterDateTime('2024-01-01') → '2024-01-01T00:00:00'
+ */
+export function formatFilterDateTime(date: string, endOfDay = false): string {
+  if (!date) return '';
+  if (date.includes('T')) return date;
+  return endOfDay ? `${date}T23:59:59` : `${date}T00:00:00`;
+}
+
 export interface CreateOrderRequest {
   customerId?: string;
   customerName: string;

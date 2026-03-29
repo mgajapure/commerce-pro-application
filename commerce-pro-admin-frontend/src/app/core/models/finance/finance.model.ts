@@ -655,3 +655,27 @@ export interface AddExchangeRateRequest {
   rateDate: string;
   source?: string;
 }
+
+// ── Budget Variance ───────────────────────────────────────────────────────────
+
+export interface BudgetVarianceLineDTO {
+  lineId: string;
+  category: string;
+  budgetedAmount: number;
+  actualAmount: number;
+  varianceAmount: number;
+  variancePct: number;
+  overBudget: boolean;
+}
+
+export interface BudgetVarianceDTO {
+  budgetId: string;
+  budgetName: string;
+  periodStart: string;
+  periodEnd: string;
+  totalBudgeted: number;
+  totalActual: number;
+  totalVariance: number;
+  overallVariancePct: number;
+  lines: BudgetVarianceLineDTO[];
+}

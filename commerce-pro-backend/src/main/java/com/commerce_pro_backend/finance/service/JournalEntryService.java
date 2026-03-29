@@ -81,6 +81,21 @@ public class JournalEntryService {
 
     @Transactional
     public JournalEntryDTO postManualEntry(CreateJournalEntryRequest req) {
+        // Validate debit/credit balance — double-entry bookkeeping requirement
+        java.math.BigDecimal totalDebits  = req.getLines().stream()
+                .filter(l -> l.getAccountType() == com.commerce_pro_backend.finance.enums.AccountType.DEBIT)
+                .map(l -> l.getAmount())
+                .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
+        java.math.BigDecimal totalCredits = req.getLines().stream()
+                .filter(l -> l.getAccountType() == com.commerce_pro_backend.finance.enums.AccountType.CREDIT)
+                .map(l -> l.getAmount())
+                .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
+        if (totalDebits.compareTo(totalCredits) != 0) {
+            throw com.commerce_pro_backend.common.exception.ApiException.badRequest(
+                    "Journal entry is unbalanced: total debits (" + totalDebits +
+                    ") must equal total credits (" + totalCredits + ")");
+        }
+
         String actor = currentUserService.getCurrentUserId();
 
         // Validate balance

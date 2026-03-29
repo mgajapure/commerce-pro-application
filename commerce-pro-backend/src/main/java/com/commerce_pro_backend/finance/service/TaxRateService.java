@@ -38,6 +38,13 @@ public class TaxRateService {
 
     @Transactional
     public TaxRateDTO createRate(CreateTaxRateRequest req) {
+        // Validate date range: effectiveTo must be after effectiveFrom when both are set
+        if (req.getEffectiveFrom() != null && req.getEffectiveTo() != null
+                && !req.getEffectiveTo().isAfter(req.getEffectiveFrom())) {
+            throw com.commerce_pro_backend.common.exception.ApiException.badRequest(
+                    "effectiveTo must be after effectiveFrom");
+        }
+
         if (taxRateRepository.findByRateCode(req.getRateCode()).isPresent()) {
             throw ApiException.conflict("Tax rate code '" + req.getRateCode() + "' already exists");
         }

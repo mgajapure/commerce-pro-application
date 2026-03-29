@@ -188,6 +188,15 @@ public class InventoryController {
         return ResponseEntity.ok(ApiResponse.success("Stock transferred successfully", null));
     }
 
+    @PostMapping("/transfer/batch")
+    @Operation(summary = "Batch transfer stock between warehouses",
+               description = "Transfer multiple products between the same source and destination warehouse in one atomic operation")
+    public ResponseEntity<ApiResponse<Void>> batchTransferStock(
+            @Valid @RequestBody BatchStockTransferRequestDTO requestDTO) {
+        inventoryService.batchTransferStock(requestDTO);
+        return ResponseEntity.ok(ApiResponse.success("Batch stock transfer completed successfully", null));
+    }
+
     // ==================== STOCK MOVEMENTS ====================
 
     @GetMapping("/{id}/movements")
