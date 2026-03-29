@@ -2,6 +2,7 @@ package com.commerce_pro_backend.supplier.directory.controller;
 
 import com.commerce_pro_backend.common.dto.ApiResponse;
 import com.commerce_pro_backend.supplier.directory.dto.SupplierDto;
+import com.commerce_pro_backend.supplier.directory.mapper.SupplierMapper;
 import com.commerce_pro_backend.supplier.directory.service.SupplierService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -20,25 +21,30 @@ import java.util.Map;
 public class SupplierController {
 
     private final SupplierService supplierService;
+    private final SupplierMapper supplierMapper;
 
     @GetMapping
     public ResponseEntity<ApiResponse<Page<SupplierDto.ListResponse>>> getAll(Pageable pageable) {
-        return ResponseEntity.ok(ApiResponse.success("Suppliers retrieved successfully", supplierService.getAllSuppliers(pageable)));
+        return ResponseEntity.ok(ApiResponse.success("Suppliers retrieved successfully",
+                supplierService.getAllSuppliers(pageable).map(supplierMapper::toListResponse)));
     }
 
     @GetMapping("/all")
     public ResponseEntity<ApiResponse<List<SupplierDto.ListResponse>>> getAllActive() {
-        return ResponseEntity.ok(ApiResponse.success("Active suppliers retrieved successfully", supplierService.getAllActiveSuppliers()));
+        return ResponseEntity.ok(ApiResponse.success("Active suppliers retrieved successfully",
+                supplierMapper.toListResponseList(supplierService.getAllActiveSuppliers())));
     }
 
     @GetMapping("/preferred")
     public ResponseEntity<ApiResponse<List<SupplierDto.ListResponse>>> getPreferred() {
-        return ResponseEntity.ok(ApiResponse.success("Preferred suppliers retrieved successfully", supplierService.getPreferredSuppliers()));
+        return ResponseEntity.ok(ApiResponse.success("Preferred suppliers retrieved successfully",
+                supplierMapper.toListResponseList(supplierService.getPreferredSuppliers())));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<SupplierDto.Response>> getById(@PathVariable String id) {
-        return ResponseEntity.ok(ApiResponse.success("Supplier retrieved successfully", supplierService.getSupplier(id)));
+        return ResponseEntity.ok(ApiResponse.success("Supplier retrieved successfully",
+                supplierMapper.toResponse(supplierService.getSupplier(id))));
     }
 
     @GetMapping("/stats")
@@ -50,14 +56,16 @@ public class SupplierController {
     public ResponseEntity<ApiResponse<SupplierDto.Response>> create(
             @Valid @RequestBody SupplierDto.Request request) {
         return ResponseEntity.status(HttpStatus.CREATED)
-            .body(ApiResponse.success("Supplier created successfully", supplierService.createSupplier(request)));
+            .body(ApiResponse.success("Supplier created successfully",
+                    supplierMapper.toResponse(supplierService.createSupplier(request))));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<SupplierDto.Response>> update(
             @PathVariable String id,
             @Valid @RequestBody SupplierDto.Request request) {
-        return ResponseEntity.ok(ApiResponse.success("Supplier updated successfully", supplierService.updateSupplier(id, request)));
+        return ResponseEntity.ok(ApiResponse.success("Supplier updated successfully",
+                supplierMapper.toResponse(supplierService.updateSupplier(id, supplierMapper.toEntity(request)))));
     }
 
     @DeleteMapping("/{id}")
