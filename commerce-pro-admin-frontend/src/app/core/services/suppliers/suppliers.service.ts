@@ -60,7 +60,7 @@ export class SupplierApiService {
 
   getActiveSuppliers(): Observable<Supplier[]> {
     return this.http
-      .get<ApiResponse<Supplier[]>>(`${BASE}/v1/suppliers/active`)
+      .get<ApiResponse<Supplier[]>>(`${BASE}/v1/suppliers/all`)
       .pipe(map(r => r.data ?? []), catchError(this.handleError<Supplier[]>('getActiveSuppliers', [])));
   }
 
@@ -80,7 +80,7 @@ export class SupplierApiService {
     return this.http
       .get<ApiResponse<SupplierStats>>(`${BASE}/v1/suppliers/stats`)
       .pipe(map(r => r.data), catchError(this.handleError<SupplierStats>('getSupplierStats', {
-        total: 0, active: 0, preferred: 0, avgRating: 0
+        total: 0, active: 0, preferred: 0
       })));
   }
 
@@ -104,7 +104,7 @@ export class SupplierApiService {
 
   toggleActive(id: string, active: boolean): Observable<void> {
     return this.http
-      .post<ApiResponse<void>>(`${BASE}/v1/suppliers/${id}/toggle-active`, null, {
+      .patch<ApiResponse<void>>(`${BASE}/v1/suppliers/${id}/active`, null, {
         params: new HttpParams().set('active', String(active))
       })
       .pipe(map(() => undefined), catchError(this.handleError<void>('toggleActive')));
@@ -112,7 +112,7 @@ export class SupplierApiService {
 
   togglePreferred(id: string, preferred: boolean): Observable<void> {
     return this.http
-      .post<ApiResponse<void>>(`${BASE}/v1/suppliers/${id}/toggle-preferred`, null, {
+      .patch<ApiResponse<void>>(`${BASE}/v1/suppliers/${id}/preferred`, null, {
         params: new HttpParams().set('preferred', String(preferred))
       })
       .pipe(map(() => undefined), catchError(this.handleError<void>('togglePreferred')));
@@ -132,13 +132,13 @@ export class SupplierApiService {
 
   getProductsBySupplier(supplierId: string): Observable<SupplierProduct[]> {
     return this.http
-      .get<ApiResponse<SupplierProduct[]>>(`${BASE}/v1/supplier-products/by-supplier/${supplierId}`)
+      .get<ApiResponse<SupplierProduct[]>>(`${BASE}/v1/supplier-products/supplier/${supplierId}`)
       .pipe(map(r => r.data ?? []), catchError(this.handleError<SupplierProduct[]>('getProductsBySupplier', [])));
   }
 
   getProductsByProduct(productId: string): Observable<SupplierProduct[]> {
     return this.http
-      .get<ApiResponse<SupplierProduct[]>>(`${BASE}/v1/supplier-products/by-product/${productId}`)
+      .get<ApiResponse<SupplierProduct[]>>(`${BASE}/v1/supplier-products/product/${productId}`)
       .pipe(map(r => r.data ?? []), catchError(this.handleError<SupplierProduct[]>('getProductsByProduct', [])));
   }
 
@@ -180,7 +180,7 @@ export class SupplierApiService {
 
   getPurchaseOrdersBySupplier(supplierId: string): Observable<PurchaseOrder[]> {
     return this.http
-      .get<ApiResponse<PurchaseOrder[]>>(`${BASE}/v1/purchase-orders/by-supplier/${supplierId}`)
+      .get<ApiResponse<PurchaseOrder[]>>(`${BASE}/v1/purchase-orders/supplier/${supplierId}`)
       .pipe(map(r => r.data ?? []), catchError(this.handleError<PurchaseOrder[]>('getPurchaseOrdersBySupplier', [])));
   }
 
@@ -216,7 +216,7 @@ export class SupplierApiService {
 
   updatePurchaseOrderStatus(id: string, status: string): Observable<PurchaseOrder> {
     return this.http
-      .post<ApiResponse<PurchaseOrder>>(`${BASE}/v1/purchase-orders/${id}/status`, null, {
+      .patch<ApiResponse<PurchaseOrder>>(`${BASE}/v1/purchase-orders/${id}/status`, null, {
         params: new HttpParams().set('status', status)
       })
       .pipe(map(r => r.data), catchError(this.handleError<PurchaseOrder>('updatePurchaseOrderStatus')));
@@ -302,7 +302,7 @@ export class SupplierApiService {
   ): Observable<PageResponse<SupplierEvaluation>> {
     const params = new HttpParams({ fromObject: buildPageParams(pageParams ?? {}) });
     return this.http
-      .get<ApiResponse<PageResponse<SupplierEvaluation>>>(`${BASE}/v1/supplier-evaluations/by-supplier/${supplierId}`, { params })
+      .get<ApiResponse<PageResponse<SupplierEvaluation>>>(`${BASE}/v1/supplier-evaluations/supplier/${supplierId}`, { params })
       .pipe(map(r => r.data), catchError(this.handleError<PageResponse<SupplierEvaluation>>('getEvaluationsBySupplier', {
         content: [], page: 0, size: 20, totalElements: 0, totalPages: 0,
         first: true, last: true, empty: true
@@ -317,7 +317,7 @@ export class SupplierApiService {
 
   getSupplierAverageScores(supplierId: string): Observable<any> {
     return this.http
-      .get<ApiResponse<any>>(`${BASE}/v1/supplier-evaluations/by-supplier/${supplierId}/average-scores`)
+      .get<ApiResponse<any>>(`${BASE}/v1/supplier-evaluations/supplier/${supplierId}/scores`)
       .pipe(map(r => r.data), catchError(this.handleError<any>('getSupplierAverageScores', {})));
   }
 
@@ -359,7 +359,7 @@ export class SupplierApiService {
 
   getContractsBySupplier(supplierId: string): Observable<SupplierContract[]> {
     return this.http
-      .get<ApiResponse<SupplierContract[]>>(`${BASE}/v1/supplier-contracts/by-supplier/${supplierId}`)
+      .get<ApiResponse<SupplierContract[]>>(`${BASE}/v1/supplier-contracts/supplier/${supplierId}`)
       .pipe(map(r => r.data ?? []), catchError(this.handleError<SupplierContract[]>('getContractsBySupplier', [])));
   }
 

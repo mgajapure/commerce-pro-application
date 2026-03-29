@@ -33,8 +33,8 @@ export class SupplierDirectory implements OnInit, OnDestroy {
 
   // Data
   suppliers = signal<Supplier[]>([]);
-  stats = signal<{ total: number; active: number; preferred: number; avgRating: number }>({
-    total: 0, active: 0, preferred: 0, avgRating: 0
+  stats = signal<{ total: number; active: number; preferred: number }>({
+    total: 0, active: 0, preferred: 0
   });
 
   editingSupplier = signal<Supplier | null>(null);
@@ -50,8 +50,7 @@ export class SupplierDirectory implements OnInit, OnDestroy {
     return [
       { label: 'Total Suppliers', value: s.total.toString(), icon: 'building', bgColor: 'bg-blue-100', iconColor: 'text-blue-600', filter: 'all' },
       { label: 'Active', value: s.active.toString(), icon: 'check-circle', bgColor: 'bg-green-100', iconColor: 'text-green-600', filter: 'active' },
-      { label: 'Preferred', value: s.preferred.toString(), icon: 'star-fill', bgColor: 'bg-amber-100', iconColor: 'text-amber-600', filter: 'preferred' },
-      { label: 'Avg Rating', value: s.avgRating.toFixed(1), icon: 'graph-up', bgColor: 'bg-purple-100', iconColor: 'text-purple-600', filter: '' }
+      { label: 'Preferred', value: s.preferred.toString(), icon: 'star-fill', bgColor: 'bg-amber-100', iconColor: 'text-amber-600', filter: 'preferred' }
     ];
   });
 
@@ -84,8 +83,8 @@ export class SupplierDirectory implements OnInit, OnDestroy {
 
   private loadData() {
     this.isLoading.set(true);
-    this.supplierSvc.getActiveSuppliers().pipe(takeUntil(this.destroy$)).subscribe(data => {
-      this.suppliers.set(data || []);
+    this.supplierSvc.getSuppliers(undefined, { page: 0, size: 500 }).pipe(takeUntil(this.destroy$)).subscribe(res => {
+      this.suppliers.set(res?.content || []);
       this.isLoading.set(false);
     });
     this.supplierSvc.getSupplierStats().pipe(takeUntil(this.destroy$)).subscribe(s => {

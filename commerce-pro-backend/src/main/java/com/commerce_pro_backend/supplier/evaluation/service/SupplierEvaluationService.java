@@ -1,7 +1,9 @@
 package com.commerce_pro_backend.supplier.evaluation.service;
 
 import com.commerce_pro_backend.common.exception.ApiException;
+import com.commerce_pro_backend.supplier.evaluation.dto.SupplierEvaluationDto;
 import com.commerce_pro_backend.supplier.evaluation.entity.SupplierEvaluation;
+import com.commerce_pro_backend.supplier.evaluation.mapper.SupplierEvaluationMapper;
 import com.commerce_pro_backend.supplier.evaluation.repository.SupplierEvaluationRepository;
 import com.commerce_pro_backend.user_identity.service.CurrentUserService;
 import lombok.RequiredArgsConstructor;
@@ -25,67 +27,61 @@ import java.util.UUID;
 public class SupplierEvaluationService {
 
     private final SupplierEvaluationRepository supplierEvaluationRepository;
+    private final SupplierEvaluationMapper supplierEvaluationMapper;
     private final CurrentUserService currentUserService;
 
-    public Page<SupplierEvaluation> getAllEvaluations(Pageable pageable) {
-        return supplierEvaluationRepository.findAll(pageable);
+    public Page<SupplierEvaluationDto.ListResponse> getAllEvaluations(Pageable pageable) {
+        return supplierEvaluationRepository.findAll(pageable)
+                .map(supplierEvaluationMapper::toListResponse);
     }
 
-    public Page<SupplierEvaluation> getBySupplier(String supplierId, Pageable pageable) {
-        return supplierEvaluationRepository.findBySupplierIdOrderByEvaluationDateDesc(supplierId, pageable);
+    public Page<SupplierEvaluationDto.ListResponse> getBySupplier(String supplierId, Pageable pageable) {
+        return supplierEvaluationRepository.findBySupplierIdOrderByEvaluationDateDesc(supplierId, pageable)
+                .map(supplierEvaluationMapper::toListResponse);
     }
 
-    public SupplierEvaluation getEvaluation(String id) {
-        return supplierEvaluationRepository.findById(id)
+    public SupplierEvaluationDto.Response getEvaluation(String id) {
+        SupplierEvaluation evaluation = supplierEvaluationRepository.findById(id)
                 .orElseThrow(() -> ApiException.notFound("SupplierEvaluation", id));
+        return supplierEvaluationMapper.toResponse(evaluation);
     }
 
     @Transactional
     @CacheEvict(value = "supplier-evaluations", allEntries = true)
-    public SupplierEvaluation createEvaluation(SupplierEvaluation request) {
+    public SupplierEvaluationDto.Response createEvaluation(SupplierEvaluationDto.Request request) {
         log.info("Creating supplier evaluation for supplier: {}", request.getSupplierId());
 
-        request.setId(UUID.randomUUID().toString());
-        request.setEvaluatedBy(currentUserService.getCurrentUserId());
-        request.setEvaluationDate(Instant.now());
+        SupplierEvaluation entity = supplierEvaluationMapper.toEntity(request);
+        entity.setId(UUID.randomUUID().toString());
+        entity.setEvaluatedBy(currentUserService.getCurrentUserId());
+        entity.setEvaluationDate(Instant.now());
 
-        if (request.getOverallScore() == null) {
-            request.setOverallScore(calculateOverallScore(request));
+        if (entity.getOverallScore() == null) {
+            entity.setOverallScore(calculateOverallScore(entity));
         }
 
-        SupplierEvaluation saved = supplierEvaluationRepository.save(request);
+        SupplierEvaluation saved = supplierEvaluationRepository.save(entity);
         log.info("Created supplier evaluation with id: {}", saved.getId());
-        return saved;
+        return supplierEvaluationMapper.toResponse(saved);
     }
 
     @Transactional
     @CacheEvict(value = "supplier-evaluations", allEntries = true)
-    public SupplierEvaluation updateEvaluation(String id, SupplierEvaluation request) {
+    public SupplierEvaluationDto.Response updateEvaluation(String id, SupplierEvaluationDto.Request request) {
         log.info("Updating supplier evaluation: {}", id);
 
         SupplierEvaluation existing = supplierEvaluationRepository.findById(id)
                 .orElseThrow(() -> ApiException.notFound("SupplierEvaluation", id));
 
-        existing.setSupplierId(request.getSupplierId());
-        existing.setSupplierName(request.getSupplierName());
-        existing.setQualityScore(request.getQualityScore());
-        existing.setDeliveryScore(request.getDeliveryScore());
-        existing.setPricingScore(request.getPricingScore());
-        existing.setCommunicationScore(request.getCommunicationScore());
-        existing.setComplianceScore(request.getComplianceScore());
-        existing.setPeriod(request.getPeriod());
-        existing.setComments(request.getComments());
-        existing.setRecommendations(request.getRecommendations());
+        supplierEvaluationMapper.updateEntityFromDto(request, existing);
 
-        if (request.getOverallScore() != null) {
-            existing.setOverallScore(request.getOverallScore());
-        } else {
+        if (request.getOverallScore() == null) {
             existing.setOverallScore(calculateOverallScore(existing));
         }
 
         SupplierEvaluation updated = supplierEvaluationRepository.save(existing);
         log.info("Updated supplier evaluation with id: {}", updated.getId());
-        return updated;
+        return supplierEvaluationMapper.toResponse(updated);
     }
 
     @Transactional
@@ -100,7 +96,7 @@ public class SupplierEvaluationService {
 
     @Transactional
     @CacheEvict(value = "supplier-evaluations", allEntries = true)
-    public SupplierEvaluation submitEvaluation(String id) {
+    public SupplierEvaluationDto.Response submitEvaluation(String id) {
         log.info("Submitting supplier evaluation: {}", id);
 
         SupplierEvaluation evaluation = supplierEvaluationRepository.findById(id)
@@ -110,7 +106,7 @@ public class SupplierEvaluationService {
 
         SupplierEvaluation updated = supplierEvaluationRepository.save(evaluation);
         log.info("Submitted supplier evaluation with id: {}", id);
-        return updated;
+        return supplierEvaluationMapper.toResponse(updated);
     }
 
     public Map<String, Object> getSupplierAverageScores(String supplierId) {

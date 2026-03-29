@@ -1,7 +1,9 @@
 package com.commerce_pro_backend.supplier.product.service;
 
 import com.commerce_pro_backend.common.exception.ApiException;
+import com.commerce_pro_backend.supplier.product.dto.SupplierProductDto;
 import com.commerce_pro_backend.supplier.product.entity.SupplierProduct;
+import com.commerce_pro_backend.supplier.product.mapper.SupplierProductMapper;
 import com.commerce_pro_backend.supplier.product.repository.SupplierProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,29 +24,34 @@ import java.util.UUID;
 public class SupplierProductService {
 
     private final SupplierProductRepository supplierProductRepository;
+    private final SupplierProductMapper supplierProductMapper;
 
-    public Page<SupplierProduct> getAllSupplierProducts(Pageable pageable) {
-        return supplierProductRepository.findAll(pageable);
+    public Page<SupplierProductDto.ListResponse> getAllSupplierProducts(Pageable pageable) {
+        return supplierProductRepository.findAll(pageable)
+                .map(supplierProductMapper::toListResponse);
     }
 
     @Cacheable(value = "supplier-products", key = "'by-supplier-' + #supplierId")
-    public List<SupplierProduct> getBySupplier(String supplierId) {
-        return supplierProductRepository.findBySupplierId(supplierId);
+    public List<SupplierProductDto.ListResponse> getBySupplier(String supplierId) {
+        return supplierProductMapper.toListResponseList(
+                supplierProductRepository.findBySupplierId(supplierId));
     }
 
     @Cacheable(value = "supplier-products", key = "'by-product-' + #productId")
-    public List<SupplierProduct> getByProduct(String productId) {
-        return supplierProductRepository.findByProductId(productId);
+    public List<SupplierProductDto.ListResponse> getByProduct(String productId) {
+        return supplierProductMapper.toListResponseList(
+                supplierProductRepository.findByProductId(productId));
     }
 
-    public SupplierProduct getSupplierProduct(String id) {
-        return supplierProductRepository.findById(id)
+    public SupplierProductDto.Response getSupplierProduct(String id) {
+        SupplierProduct supplierProduct = supplierProductRepository.findById(id)
                 .orElseThrow(() -> ApiException.notFound("SupplierProduct", id));
+        return supplierProductMapper.toResponse(supplierProduct);
     }
 
     @Transactional
     @CacheEvict(value = "supplier-products", allEntries = true)
-    public SupplierProduct createSupplierProduct(SupplierProduct request) {
+    public SupplierProductDto.Response createSupplierProduct(SupplierProductDto.Request request) {
         log.info("Creating supplier product: supplierId={}, productId={}", request.getSupplierId(), request.getProductId());
 
         if (supplierProductRepository.existsBySupplierIdAndProductId(request.getSupplierId(), request.getProductId())) {
@@ -52,38 +59,27 @@ public class SupplierProductService {
                     + request.getSupplierId() + " and productId: " + request.getProductId());
         }
 
-        request.setId(UUID.randomUUID().toString());
+        SupplierProduct entity = supplierProductMapper.toEntity(request);
+        entity.setId(UUID.randomUUID().toString());
 
-        SupplierProduct saved = supplierProductRepository.save(request);
+        SupplierProduct saved = supplierProductRepository.save(entity);
         log.info("Created supplier product with id: {}", saved.getId());
-        return saved;
+        return supplierProductMapper.toResponse(saved);
     }
 
     @Transactional
     @CacheEvict(value = "supplier-products", allEntries = true)
-    public SupplierProduct updateSupplierProduct(String id, SupplierProduct request) {
+    public SupplierProductDto.Response updateSupplierProduct(String id, SupplierProductDto.Request request) {
         log.info("Updating supplier product: {}", id);
 
         SupplierProduct existing = supplierProductRepository.findById(id)
                 .orElseThrow(() -> ApiException.notFound("SupplierProduct", id));
 
-        existing.setSupplierId(request.getSupplierId());
-        existing.setSupplierName(request.getSupplierName());
-        existing.setProductId(request.getProductId());
-        existing.setProductName(request.getProductName());
-        existing.setSku(request.getSku());
-        existing.setSupplierSku(request.getSupplierSku());
-        existing.setUnitCost(request.getUnitCost());
-        existing.setCurrency(request.getCurrency());
-        existing.setMinOrderQuantity(request.getMinOrderQuantity());
-        existing.setLeadTimeDays(request.getLeadTimeDays());
-        existing.setIsActive(request.getIsActive());
-        existing.setIsPrimary(request.getIsPrimary());
-        existing.setNotes(request.getNotes());
+        supplierProductMapper.updateEntityFromDto(request, existing);
 
         SupplierProduct updated = supplierProductRepository.save(existing);
         log.info("Updated supplier product with id: {}", updated.getId());
-        return updated;
+        return supplierProductMapper.toResponse(updated);
     }
 
     @Transactional

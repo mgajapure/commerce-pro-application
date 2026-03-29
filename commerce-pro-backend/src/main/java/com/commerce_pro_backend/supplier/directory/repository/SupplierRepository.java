@@ -26,6 +26,10 @@ public interface SupplierRepository extends JpaRepository<Supplier, String>, Jpa
 
     List<Supplier> findByIsPreferredTrueAndIsActiveTrueOrderByNameAsc();
 
+    long countByIsActiveTrue();
+
+    long countByIsPreferredTrueAndIsActiveTrue();
+
     @Modifying
     @Query("UPDATE Supplier s SET s.isActive = :active WHERE s.id = :id")
     int updateActiveStatus(@Param("id") String id, @Param("active") boolean active);

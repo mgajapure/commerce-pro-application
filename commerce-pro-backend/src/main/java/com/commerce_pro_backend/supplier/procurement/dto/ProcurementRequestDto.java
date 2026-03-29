@@ -74,8 +74,10 @@ public class ProcurementRequestDto {
         private String priority;
         private String status;
         private String requestedBy;
+        private String supplierName;
         private BigDecimal estimatedCost;
         private BigDecimal actualCost;
+        private String currency;
         private Instant requiredByDate;
         private Instant createdAt;
     }

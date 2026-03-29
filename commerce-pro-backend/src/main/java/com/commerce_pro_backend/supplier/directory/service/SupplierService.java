@@ -1,9 +1,10 @@
 package com.commerce_pro_backend.supplier.directory.service;
 
 import com.commerce_pro_backend.common.exception.ApiException;
+import com.commerce_pro_backend.supplier.directory.dto.SupplierDto;
 import com.commerce_pro_backend.supplier.directory.entity.Supplier;
+import com.commerce_pro_backend.supplier.directory.mapper.SupplierMapper;
 import com.commerce_pro_backend.supplier.directory.repository.SupplierRepository;
-import com.commerce_pro_backend.user_identity.service.CurrentUserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -25,44 +26,49 @@ import java.util.UUID;
 public class SupplierService {
 
     private final SupplierRepository supplierRepository;
-    private final CurrentUserService currentUserService;
+    private final SupplierMapper supplierMapper;
 
-    public Page<Supplier> getAllSuppliers(Pageable pageable) {
-        return supplierRepository.findAll(pageable);
+    public Page<SupplierDto.ListResponse> getAllSuppliers(Pageable pageable) {
+        return supplierRepository.findAll(pageable)
+                .map(supplierMapper::toListResponse);
     }
 
     @Cacheable(value = "suppliers", key = "'all-active'")
-    public List<Supplier> getAllActiveSuppliers() {
-        return supplierRepository.findByIsActiveTrueOrderByNameAsc();
+    public List<SupplierDto.ListResponse> getAllActiveSuppliers() {
+        return supplierMapper.toListResponseList(
+                supplierRepository.findByIsActiveTrueOrderByNameAsc());
     }
 
     @Cacheable(value = "suppliers", key = "'preferred'")
-    public List<Supplier> getPreferredSuppliers() {
-        return supplierRepository.findByIsPreferredTrueAndIsActiveTrueOrderByNameAsc();
+    public List<SupplierDto.ListResponse> getPreferredSuppliers() {
+        return supplierMapper.toListResponseList(
+                supplierRepository.findByIsPreferredTrueAndIsActiveTrueOrderByNameAsc());
     }
 
-    public Supplier getSupplier(String id) {
-        return supplierRepository.findById(id)
+    public SupplierDto.Response getSupplier(String id) {
+        Supplier supplier = supplierRepository.findById(id)
                 .orElseThrow(() -> ApiException.notFound("Supplier", id));
+        return supplierMapper.toResponse(supplier);
     }
 
     @Transactional
     @CacheEvict(value = "suppliers", allEntries = true)
-    public Supplier createSupplier(Supplier request) {
+    public SupplierDto.Response createSupplier(SupplierDto.Request request) {
         log.info("Creating supplier: {}", request.getName());
 
         validateCodeUniqueness(request.getCode(), null);
 
-        request.setId(UUID.randomUUID().toString());
+        Supplier supplier = supplierMapper.toEntity(request);
+        supplier.setId(UUID.randomUUID().toString());
 
-        Supplier saved = supplierRepository.save(request);
+        Supplier saved = supplierRepository.save(supplier);
         log.info("Created supplier with id: {}", saved.getId());
-        return saved;
+        return supplierMapper.toResponse(saved);
     }
 
     @Transactional
     @CacheEvict(value = "suppliers", allEntries = true)
-    public Supplier updateSupplier(String id, Supplier request) {
+    public SupplierDto.Response updateSupplier(String id, SupplierDto.Request request) {
         log.info("Updating supplier: {}", id);
 
         Supplier existing = supplierRepository.findById(id)
@@ -72,30 +78,11 @@ public class SupplierService {
             validateCodeUniqueness(request.getCode(), id);
         }
 
-        existing.setName(request.getName());
-        existing.setCode(request.getCode());
-        existing.setContactPerson(request.getContactPerson());
-        existing.setEmail(request.getEmail());
-        existing.setPhone(request.getPhone());
-        existing.setAddress(request.getAddress());
-        existing.setCity(request.getCity());
-        existing.setState(request.getState());
-        existing.setCountry(request.getCountry());
-        existing.setPostalCode(request.getPostalCode());
-        existing.setWebsite(request.getWebsite());
-        existing.setDescription(request.getDescription());
-        existing.setPaymentTerms(request.getPaymentTerms());
-        existing.setPaymentTermsDays(request.getPaymentTermsDays());
-        existing.setLeadTimeDays(request.getLeadTimeDays());
-        existing.setRating(request.getRating());
-        existing.setMinOrderValue(request.getMinOrderValue());
-        existing.setPreferredCurrency(request.getPreferredCurrency());
-        existing.setCertifications(request.getCertifications());
-        existing.setNotes(request.getNotes());
+        supplierMapper.updateEntityFromDto(request, existing);
 
         Supplier updated = supplierRepository.save(existing);
         log.info("Updated supplier with id: {}", updated.getId());
-        return updated;
+        return supplierMapper.toResponse(updated);
     }
 
     @Transactional
@@ -129,19 +116,12 @@ public class SupplierService {
     public Map<String, Object> getSupplierStats() {
         Map<String, Object> stats = new HashMap<>();
         long total = supplierRepository.count();
-        long active = supplierRepository.findByIsActiveTrueOrderByNameAsc().size();
-        long preferred = supplierRepository.findByIsPreferredTrueAndIsActiveTrueOrderByNameAsc().size();
-
-        List<Supplier> allSuppliers = supplierRepository.findAll();
-        double avgRating = allSuppliers.stream()
-                .mapToDouble(s -> s.getRating() != null ? s.getRating() : 0.0)
-                .average()
-                .orElse(0.0);
+        long active = supplierRepository.countByIsActiveTrue();
+        long preferred = supplierRepository.countByIsPreferredTrueAndIsActiveTrue();
 
         stats.put("total", total);
         stats.put("active", active);
         stats.put("preferred", preferred);
-        stats.put("avgRating", Math.round(avgRating * 100.0) / 100.0);
         return stats;
     }
 
