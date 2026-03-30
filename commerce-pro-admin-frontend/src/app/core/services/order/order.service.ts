@@ -18,7 +18,7 @@ import {
   CancelOrderRequest,
   TrackingUpdateRequest,
   BulkOrderActionRequest,
-  OrderStatus
+  OrderStatus,
   formatFilterDateTime,
 } from '../../models/order/order.model';
 

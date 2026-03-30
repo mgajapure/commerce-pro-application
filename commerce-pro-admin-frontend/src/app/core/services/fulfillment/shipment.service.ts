@@ -6,7 +6,7 @@ import { Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import {
   ShipmentDetail, ShipmentSummary, ShipmentStats,
-  CreateShipmentRequest, AddTrackingEventRequest
+  CreateShipmentRequest, AddTrackingEventRequest,
   UpdateShipmentRequest,
 } from '../../models/fulfillment/fulfillment.model';
 import { ApiResponse, PageResponse, PageParams, buildPageParams } from '../../models/common';
@@ -82,7 +82,7 @@ export class ShipmentService {
 
   /** PUT /api/v1/shipments/{id} — update carrier, tracking, dimensions, cost */
   updateShipment(id: string, req: UpdateShipmentRequest): Observable<ShipmentDetail> {
-    return this.http.put<ApiResponse<ShipmentDetail>>(, req)
+    return this.http.put<ApiResponse<ShipmentDetail>>(id, req)
       .pipe(map(r => r.data), catchError(this.handleError<ShipmentDetail>('updateShipment')));
   }
 

@@ -77,23 +77,23 @@ export class InventoryOverview implements OnInit {
   showFilters = signal(false);
   showAdjustmentModal = signal(false);
   showTransferModal = signal(false);
-  
+
   // Pagination
   currentPage = signal(1);
   itemsPerPage = signal(25);
   totalItems = signal(0);
   totalPages = signal(1);
-  
+
   // Filters
   searchQuery = signal('');
   filterWarehouse = signal('');
   filterStatus = signal('');
   filterCategory = signal('');
-  
+
   // Selection
   selectedItems = signal<string[]>([]);
   selectedItem = signal<InventoryItem | null>(null);
-  
+
   // Sort
   sortField = signal('createdAt');
   sortDirection = signal<'asc' | 'desc'>('desc');
@@ -126,7 +126,7 @@ export class InventoryOverview implements OnInit {
   alerts = computed<InventoryAlert[]>(() => {
     const stats = this.inventoryStats();
     const alerts: InventoryAlert[] = [];
-    
+
     if (stats && stats.outOfStockCount > 0) {
       alerts.push({
         id: '1',
@@ -135,7 +135,7 @@ export class InventoryOverview implements OnInit {
         message: 'These items need immediate restocking to avoid lost sales.'
       });
     }
-    
+
     if (stats && stats.lowStockCount > 0) {
       alerts.push({
         id: '2',
@@ -144,7 +144,7 @@ export class InventoryOverview implements OnInit {
         message: 'Consider placing purchase orders for these items soon.'
       });
     }
-    
+
     if (alerts.length === 0) {
       alerts.push({
         id: '3',
@@ -153,7 +153,7 @@ export class InventoryOverview implements OnInit {
         message: 'All items have adequate stock levels.'
       });
     }
-    
+
     return alerts;
   });
 
@@ -161,61 +161,61 @@ export class InventoryOverview implements OnInit {
   inventoryStatCards = computed((): InventoryStatCard[] => {
     const stats = this.inventoryStats();
     if (!stats) return [];
-    
+
     return [
-      { 
-        label: 'Total Items', 
-        value: stats.totalItems, 
-        icon: 'bi-box-seam', 
-        bgColor: 'bg-blue-100', 
-        iconColor: 'text-blue-600', 
-        subtext: 'Across all warehouses', 
-        filter: 'all' 
+      {
+        label: 'Total Items',
+        value: stats.totalItems,
+        icon: 'bi-box-seam',
+        bgColor: 'bg-blue-100',
+        iconColor: 'text-blue-600',
+        subtext: 'Across all warehouses',
+        filter: 'all'
       },
-      { 
-        label: 'In Stock', 
-        value: stats.inStockCount, 
-        icon: 'bi-check-circle', 
-        bgColor: 'bg-green-100', 
-        iconColor: 'text-green-600', 
-        subtext: 'Ready to ship', 
-        filter: 'IN_STOCK' 
+      {
+        label: 'In Stock',
+        value: stats.inStockCount,
+        icon: 'bi-check-circle',
+        bgColor: 'bg-green-100',
+        iconColor: 'text-green-600',
+        subtext: 'Ready to ship',
+        filter: 'IN_STOCK'
       },
-      { 
-        label: 'Low Stock', 
-        value: stats.lowStockCount, 
-        icon: 'bi-exclamation-triangle', 
-        bgColor: 'bg-yellow-100', 
-        iconColor: 'text-yellow-600', 
-        subtext: 'Needs reordering', 
-        filter: 'LOW_STOCK' 
+      {
+        label: 'Low Stock',
+        value: stats.lowStockCount,
+        icon: 'bi-exclamation-triangle',
+        bgColor: 'bg-yellow-100',
+        iconColor: 'text-yellow-600',
+        subtext: 'Needs reordering',
+        filter: 'LOW_STOCK'
       },
-      { 
-        label: 'Out of Stock', 
-        value: stats.outOfStockCount, 
-        icon: 'bi-x-circle', 
-        bgColor: 'bg-red-100', 
-        iconColor: 'text-red-600', 
-        subtext: 'No inventory available', 
-        filter: 'OUT_OF_STOCK' 
+      {
+        label: 'Out of Stock',
+        value: stats.outOfStockCount,
+        icon: 'bi-x-circle',
+        bgColor: 'bg-red-100',
+        iconColor: 'text-red-600',
+        subtext: 'No inventory available',
+        filter: 'OUT_OF_STOCK'
       },
-      { 
-        label: 'Overstock', 
-        value: stats.overstockCount, 
-        icon: 'bi-arrow-up-circle', 
-        bgColor: 'bg-purple-100', 
-        iconColor: 'text-purple-600', 
-        subtext: 'Excess inventory', 
-        filter: 'OVERSTOCK' 
+      {
+        label: 'Overstock',
+        value: stats.overstockCount,
+        icon: 'bi-arrow-up-circle',
+        bgColor: 'bg-purple-100',
+        iconColor: 'text-purple-600',
+        subtext: 'Excess inventory',
+        filter: 'OVERSTOCK'
       },
-      { 
-        label: 'Not Tracked', 
-        value: stats.notTrackedCount, 
-        icon: 'bi-eye-slash', 
-        bgColor: 'bg-gray-100', 
-        iconColor: 'text-gray-600', 
-        subtext: 'Manual tracking', 
-        filter: 'NOT_TRACKED' 
+      {
+        label: 'Not Tracked',
+        value: stats.notTrackedCount,
+        icon: 'bi-eye-slash',
+        bgColor: 'bg-gray-100',
+        iconColor: 'text-gray-600',
+        subtext: 'Manual tracking',
+        filter: 'NOT_TRACKED'
       }
     ];
   });
@@ -224,7 +224,7 @@ export class InventoryOverview implements OnInit {
   quickStats = computed(() => {
     const stats = this.inventoryStats();
     if (!stats) return { totalValue: 0, totalUnits: 0, totalAvailable: 0, needsReorder: 0 };
-    
+
     return {
       totalValue: stats.totalInventoryValue,
       totalUnits: stats.totalUnits,
@@ -236,17 +236,17 @@ export class InventoryOverview implements OnInit {
   // Filtered items (client-side filtering for now)
   filteredItems = computed(() => {
     let result = [...this.inventoryItems()];
-    
+
     // Search
     const query = this.searchQuery().toLowerCase();
     if (query) {
-      result = result.filter(item => 
+      result = result.filter(item =>
         item.product?.name?.toLowerCase().includes(query) ||
         item.product?.sku?.toLowerCase().includes(query) ||
         item.binLocation?.toLowerCase().includes(query)
       );
     }
-    
+
     // Filters
     if (this.filterWarehouse()) {
       result = result.filter(item => item.warehouseId === this.filterWarehouse());
@@ -257,27 +257,27 @@ export class InventoryOverview implements OnInit {
     if (this.filterCategory()) {
       result = result.filter(item => item.product?.category === this.filterCategory());
     }
-    
+
     // Sort
     result.sort((a, b) => {
       const field = this.sortField();
       const dir = this.sortDirection() === 'asc' ? 1 : -1;
       const aVal = (a as any)[field];
       const bVal = (b as any)[field];
-  
+
       if (aVal == null && bVal == null) return 0;
       if (aVal == null) return -1 * dir;
       if (bVal == null) return 1 * dir;
-  
+
       if (typeof aVal === 'number' && typeof bVal === 'number') {
         return (aVal - bVal) * dir;
       }
-  
+
       const aStr = String(aVal).toLowerCase();
       const bStr = String(bVal).toLowerCase();
       return aStr.localeCompare(bStr) * dir;
     });
-    
+
     return result;
   });
 
@@ -291,7 +291,7 @@ export class InventoryOverview implements OnInit {
     const total = this.totalPages();
     const current = this.currentPage();
     const pages: (number | string)[] = [];
-    
+
     if (total <= 7) {
       for (let i = 1; i <= total; i++) pages.push(i);
     } else {
@@ -540,7 +540,7 @@ export class InventoryOverview implements OnInit {
 
     const qty = this.adjustmentQuantity()!;
     const type = this.adjustmentType();
-    
+
     let newQuantity: number;
     if (type === 'add') {
       newQuantity = item.quantity + qty;
@@ -583,7 +583,7 @@ export class InventoryOverview implements OnInit {
     this.inventoryService.transferStock({
       fromWarehouseId: item.warehouseId,
       toWarehouseId: this.transferToWarehouse(),
-      itemId: item.productId,
+      productId: item.productId,
       quantity: this.transferQuantity()!,
       notes: this.transferNotes()
     }).subscribe({

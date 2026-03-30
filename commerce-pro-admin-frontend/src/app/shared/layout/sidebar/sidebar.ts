@@ -402,7 +402,7 @@ export class Sidebar implements OnInit {
       roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'STAFF', 'VIEWER'],
       description: 'Executive overview and real-time metrics'
     },
-    
+
     // ANALYTICS AND REPORTING MANAGEMENT SECTION
     {
       id: 'analytics',
@@ -469,17 +469,17 @@ export class Sidebar implements OnInit {
       id: 'orders',
       label: 'menu.orders',
       icon: 'cart-check',
-      badge: 12,
+      badge: 0,
       permissions: ['manage_orders'],
       description: 'Order processing and lifecycle management',
       children: [
         { id: 'orders-all', label: 'menu.orders.all', route: '/orders/all', permissions: ['manage_orders'] },
-        { id: 'orders-pending', label: 'menu.orders.pending', route: '/orders/pending', badge: 8, permissions: ['manage_orders'] },
-        { id: 'orders-processing', label: 'menu.orders.processing', route: '/orders/processing', badge: 3, permissions: ['manage_orders'] },
+        { id: 'orders-pending', label: 'menu.orders.pending', route: '/orders/pending', badge: 0, permissions: ['manage_orders'] },
+        { id: 'orders-processing', label: 'menu.orders.processing', route: '/orders/processing', badge: 0, permissions: ['manage_orders'] },
         { id: 'orders-shipped', label: 'menu.orders.shipped', route: '/orders/shipped', permissions: ['manage_orders'] },
         { id: 'orders-delivered', label: 'menu.orders.delivered', route: '/orders/delivered', permissions: ['manage_orders'] },
         { id: 'orders-cancelled', label: 'menu.orders.cancelled', route: '/orders/cancelled', permissions: ['manage_orders'] },
-        { id: 'orders-returns', label: 'menu.orders.returns', route: '/orders/returns', badge: 1, permissions: ['manage_returns'] },
+        { id: 'orders-returns', label: 'menu.orders.returns', route: '/orders/returns', badge: 0, permissions: ['manage_returns'] },
         { id: 'orders-refunds', label: 'menu.orders.refunds', route: '/orders/refunds', permissions: ['manage_refunds'] },
         { id: 'orders-drafts', label: 'menu.orders.drafts', route: '/orders/drafts', permissions: ['manage_orders'] },
         { id: 'orders-bulk', label: 'menu.orders.bulk_actions', route: '/orders/bulk', permissions: ['manage_orders'] }
