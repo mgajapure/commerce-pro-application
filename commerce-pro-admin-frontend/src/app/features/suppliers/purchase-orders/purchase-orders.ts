@@ -112,7 +112,13 @@ export class PurchaseOrders implements OnInit, OnDestroy {
     if (po) {
       this.poForm.patchValue({ supplierId: po.supplierId, supplierName: po.supplierName, expectedDeliveryDate: po.expectedDeliveryDate?.split('T')[0], currency: po.currency, notes: po.notes });
       po.items?.forEach(item => {
-        this.items.push(this.fb.group({ productName: [item.productName, Validators.required], sku: [item.sku], quantityOrdered: [item.quantityOrdered, [Validators.required, Validators.min(1)]], unitCost: [item.unitCost, [Validators.required, Validators.min(0)]], notes: [item.notes] }));
+        this.items.push(
+          this.fb.group({
+            productName: [item.productName, Validators.required],
+            sku: [item.sku],
+            quantityOrdered: [item.quantityOrdered, [Validators.required, Validators.min(1)]],
+            unitCost: [item.unitCost, [Validators.required, Validators.min(0)]],
+            notes: [''] }));
       });
     } else {
       this.poForm.reset({ currency: 'USD' });

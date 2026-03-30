@@ -17,7 +17,7 @@ import {
   CustomerOrderHistory,
   CustomerRequest, CustomerFilter,
   BlacklistRequest, FraudFlagRequest, FraudResolveRequest,
-  LoyaltyAdjustRequest, TagsUpdateRequest
+  LoyaltyAdjustRequest, TagsUpdateRequest,
   formatFilterDateTime,
 } from '../../models/customers/customers.model';
 
