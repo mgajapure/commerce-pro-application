@@ -25,27 +25,27 @@ public class SupplierProductController {
     @GetMapping
     public ResponseEntity<ApiResponse<Page<SupplierProductDto.ListResponse>>> getAll(Pageable pageable) {
         return ResponseEntity.ok(ApiResponse.success("Supplier products retrieved successfully",
-                supplierProductService.getAllSupplierProducts(pageable).map(supplierProductMapper::toListResponse)));
+                supplierProductService.getAllSupplierProducts(pageable)));
     }
 
     @GetMapping("/supplier/{supplierId}")
     public ResponseEntity<ApiResponse<List<SupplierProductDto.ListResponse>>> getBySupplier(
             @PathVariable String supplierId) {
         return ResponseEntity.ok(ApiResponse.success("Supplier products retrieved successfully",
-                supplierProductMapper.toListResponseList(supplierProductService.getBySupplier(supplierId))));
+                supplierProductService.getBySupplier(supplierId)));
     }
 
     @GetMapping("/product/{productId}")
     public ResponseEntity<ApiResponse<List<SupplierProductDto.ListResponse>>> getByProduct(
             @PathVariable String productId) {
         return ResponseEntity.ok(ApiResponse.success("Product suppliers retrieved successfully",
-                supplierProductMapper.toListResponseList(supplierProductService.getByProduct(productId))));
+                supplierProductService.getByProduct(productId)));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<SupplierProductDto.Response>> getById(@PathVariable String id) {
         return ResponseEntity.ok(ApiResponse.success("Supplier product retrieved successfully",
-                supplierProductMapper.toResponse(supplierProductService.getSupplierProduct(id))));
+                supplierProductService.getSupplierProduct(id)));
     }
 
     @PostMapping
@@ -53,7 +53,7 @@ public class SupplierProductController {
             @Valid @RequestBody SupplierProductDto.Request request) {
         return ResponseEntity.status(HttpStatus.CREATED)
             .body(ApiResponse.success("Supplier product created successfully",
-                    supplierProductMapper.toResponse(supplierProductService.createSupplierProduct(supplierProductMapper.toEntity(request)))));
+                    supplierProductService.createSupplierProduct(request)));
     }
 
     @PutMapping("/{id}")
@@ -61,7 +61,7 @@ public class SupplierProductController {
             @PathVariable String id,
             @Valid @RequestBody SupplierProductDto.Request request) {
         return ResponseEntity.ok(ApiResponse.success("Supplier product updated successfully",
-                supplierProductMapper.toResponse(supplierProductService.updateSupplierProduct(id, supplierProductMapper.toEntity(request)))));
+                supplierProductService.updateSupplierProduct(id, request)));
     }
 
     @DeleteMapping("/{id}")

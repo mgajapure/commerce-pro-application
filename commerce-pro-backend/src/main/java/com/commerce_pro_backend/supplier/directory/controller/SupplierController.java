@@ -26,25 +26,25 @@ public class SupplierController {
     @GetMapping
     public ResponseEntity<ApiResponse<Page<SupplierDto.ListResponse>>> getAll(Pageable pageable) {
         return ResponseEntity.ok(ApiResponse.success("Suppliers retrieved successfully",
-                supplierService.getAllSuppliers(pageable).map(supplierMapper::toListResponse)));
+                supplierService.getAllSuppliers(pageable)));
     }
 
     @GetMapping("/all")
     public ResponseEntity<ApiResponse<List<SupplierDto.ListResponse>>> getAllActive() {
         return ResponseEntity.ok(ApiResponse.success("Active suppliers retrieved successfully",
-                supplierMapper.toListResponseList(supplierService.getAllActiveSuppliers())));
+                supplierService.getAllActiveSuppliers()));
     }
 
     @GetMapping("/preferred")
     public ResponseEntity<ApiResponse<List<SupplierDto.ListResponse>>> getPreferred() {
         return ResponseEntity.ok(ApiResponse.success("Preferred suppliers retrieved successfully",
-                supplierMapper.toListResponseList(supplierService.getPreferredSuppliers())));
+                supplierService.getPreferredSuppliers()));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<SupplierDto.Response>> getById(@PathVariable String id) {
         return ResponseEntity.ok(ApiResponse.success("Supplier retrieved successfully",
-                supplierMapper.toResponse(supplierService.getSupplier(id))));
+                supplierService.getSupplier(id)));
     }
 
     @GetMapping("/stats")
@@ -57,7 +57,7 @@ public class SupplierController {
             @Valid @RequestBody SupplierDto.Request request) {
         return ResponseEntity.status(HttpStatus.CREATED)
             .body(ApiResponse.success("Supplier created successfully",
-                    supplierMapper.toResponse(supplierService.createSupplier(request))));
+                    supplierService.createSupplier(request)));
     }
 
     @PutMapping("/{id}")
@@ -65,7 +65,7 @@ public class SupplierController {
             @PathVariable String id,
             @Valid @RequestBody SupplierDto.Request request) {
         return ResponseEntity.ok(ApiResponse.success("Supplier updated successfully",
-                supplierMapper.toResponse(supplierService.updateSupplier(id, supplierMapper.toEntity(request)))));
+                supplierService.updateSupplier(id, request)));
     }
 
     @DeleteMapping("/{id}")

@@ -25,20 +25,20 @@ public class SupplierEvaluationController {
     @GetMapping
     public ResponseEntity<ApiResponse<Page<SupplierEvaluationDto.ListResponse>>> getAll(Pageable pageable) {
         return ResponseEntity.ok(ApiResponse.success("Supplier evaluations retrieved successfully",
-                supplierEvaluationService.getAllEvaluations(pageable).map(supplierEvaluationMapper::toListResponse)));
+                supplierEvaluationService.getAllEvaluations(pageable)));
     }
 
     @GetMapping("/supplier/{supplierId}")
     public ResponseEntity<ApiResponse<Page<SupplierEvaluationDto.ListResponse>>> getBySupplier(
             @PathVariable String supplierId, Pageable pageable) {
         return ResponseEntity.ok(ApiResponse.success("Supplier evaluations retrieved successfully",
-                supplierEvaluationService.getBySupplier(supplierId, pageable).map(supplierEvaluationMapper::toListResponse)));
+                supplierEvaluationService.getBySupplier(supplierId, pageable)));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<SupplierEvaluationDto.Response>> getById(@PathVariable String id) {
         return ResponseEntity.ok(ApiResponse.success("Supplier evaluation retrieved successfully",
-                supplierEvaluationMapper.toResponse(supplierEvaluationService.getEvaluation(id))));
+                supplierEvaluationService.getEvaluation(id)));
     }
 
     @GetMapping("/supplier/{supplierId}/scores")
@@ -52,7 +52,7 @@ public class SupplierEvaluationController {
             @Valid @RequestBody SupplierEvaluationDto.Request request) {
         return ResponseEntity.status(HttpStatus.CREATED)
             .body(ApiResponse.success("Supplier evaluation created successfully",
-                    supplierEvaluationMapper.toResponse(supplierEvaluationService.createEvaluation(supplierEvaluationMapper.toEntity(request)))));
+                    supplierEvaluationService.createEvaluation(request)));
     }
 
     @PutMapping("/{id}")
@@ -60,7 +60,7 @@ public class SupplierEvaluationController {
             @PathVariable String id,
             @Valid @RequestBody SupplierEvaluationDto.Request request) {
         return ResponseEntity.ok(ApiResponse.success("Supplier evaluation updated successfully",
-                supplierEvaluationMapper.toResponse(supplierEvaluationService.updateEvaluation(id, supplierEvaluationMapper.toEntity(request)))));
+                supplierEvaluationService.updateEvaluation(id, request)));
     }
 
     @DeleteMapping("/{id}")
@@ -72,6 +72,6 @@ public class SupplierEvaluationController {
     @PostMapping("/{id}/submit")
     public ResponseEntity<ApiResponse<SupplierEvaluationDto.Response>> submit(@PathVariable String id) {
         return ResponseEntity.ok(ApiResponse.success("Supplier evaluation submitted successfully",
-                supplierEvaluationMapper.toResponse(supplierEvaluationService.submitEvaluation(id))));
+                supplierEvaluationService.submitEvaluation(id)));
     }
 }

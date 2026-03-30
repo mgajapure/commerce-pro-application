@@ -26,27 +26,27 @@ public class PurchaseOrderController {
     @GetMapping
     public ResponseEntity<ApiResponse<Page<PurchaseOrderDto.ListResponse>>> getAll(Pageable pageable) {
         return ResponseEntity.ok(ApiResponse.success("Purchase orders retrieved successfully",
-                purchaseOrderService.getAllPurchaseOrders(pageable).map(purchaseOrderMapper::toListResponse)));
+                purchaseOrderService.getAllPurchaseOrders(pageable)));
     }
 
     @GetMapping("/supplier/{supplierId}")
     public ResponseEntity<ApiResponse<List<PurchaseOrderDto.ListResponse>>> getBySupplier(
             @PathVariable String supplierId) {
         return ResponseEntity.ok(ApiResponse.success("Supplier purchase orders retrieved successfully",
-                purchaseOrderMapper.toListResponseList(purchaseOrderService.getBySupplier(supplierId))));
+                purchaseOrderService.getBySupplier(supplierId)));
     }
 
     @GetMapping("/status/{status}")
     public ResponseEntity<ApiResponse<List<PurchaseOrderDto.ListResponse>>> getByStatus(
             @PathVariable String status) {
         return ResponseEntity.ok(ApiResponse.success("Purchase orders retrieved successfully",
-                purchaseOrderMapper.toListResponseList(purchaseOrderService.getByStatus(status))));
+                purchaseOrderService.getByStatus(status)));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<PurchaseOrderDto.Response>> getById(@PathVariable String id) {
         return ResponseEntity.ok(ApiResponse.success("Purchase order retrieved successfully",
-                purchaseOrderMapper.toResponse(purchaseOrderService.getPurchaseOrder(id))));
+                purchaseOrderService.getPurchaseOrder(id)));
     }
 
     @GetMapping("/stats")
@@ -59,7 +59,7 @@ public class PurchaseOrderController {
             @Valid @RequestBody PurchaseOrderDto.Request request) {
         return ResponseEntity.status(HttpStatus.CREATED)
             .body(ApiResponse.success("Purchase order created successfully",
-                    purchaseOrderMapper.toResponse(purchaseOrderService.createPurchaseOrder(purchaseOrderMapper.toEntity(request)))));
+                    purchaseOrderService.createPurchaseOrder(request)));
     }
 
     @PutMapping("/{id}")
@@ -67,7 +67,7 @@ public class PurchaseOrderController {
             @PathVariable String id,
             @Valid @RequestBody PurchaseOrderDto.Request request) {
         return ResponseEntity.ok(ApiResponse.success("Purchase order updated successfully",
-                purchaseOrderMapper.toResponse(purchaseOrderService.updatePurchaseOrder(id, purchaseOrderMapper.toEntity(request)))));
+                purchaseOrderService.updatePurchaseOrder(id, request)));
     }
 
     @DeleteMapping("/{id}")
@@ -81,13 +81,13 @@ public class PurchaseOrderController {
             @PathVariable String id,
             @RequestParam String status) {
         return ResponseEntity.ok(ApiResponse.success("Purchase order status updated successfully",
-                purchaseOrderMapper.toResponse(purchaseOrderService.updateStatus(id, status))));
+                purchaseOrderService.updateStatus(id, status)));
     }
 
     @PostMapping("/{id}/receive")
     public ResponseEntity<ApiResponse<PurchaseOrderDto.Response>> receivePurchaseOrder(
             @PathVariable String id) {
         return ResponseEntity.ok(ApiResponse.success("Purchase order received successfully",
-                purchaseOrderMapper.toResponse(purchaseOrderService.receivePurchaseOrder(id))));
+                purchaseOrderService.receivePurchaseOrder(id)));
     }
 }
