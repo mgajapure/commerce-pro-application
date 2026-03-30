@@ -26,27 +26,27 @@ public class SupplierContractController {
     @GetMapping
     public ResponseEntity<ApiResponse<Page<SupplierContractDto.ListResponse>>> getAll(Pageable pageable) {
         return ResponseEntity.ok(ApiResponse.success("Supplier contracts retrieved successfully",
-                supplierContractService.getAllContracts(pageable).map(supplierContractMapper::toListResponse)));
+                supplierContractService.getAllContracts(pageable)));
     }
 
     @GetMapping("/supplier/{supplierId}")
     public ResponseEntity<ApiResponse<List<SupplierContractDto.ListResponse>>> getBySupplier(
             @PathVariable String supplierId) {
         return ResponseEntity.ok(ApiResponse.success("Supplier contracts retrieved successfully",
-                supplierContractMapper.toListResponseList(supplierContractService.getBySupplier(supplierId))));
+                supplierContractService.getBySupplier(supplierId)));
     }
 
     @GetMapping("/status/{status}")
     public ResponseEntity<ApiResponse<Page<SupplierContractDto.ListResponse>>> getByStatus(
             @PathVariable String status, Pageable pageable) {
         return ResponseEntity.ok(ApiResponse.success("Supplier contracts retrieved successfully",
-                supplierContractService.getByStatus(status, pageable).map(supplierContractMapper::toListResponse)));
+                supplierContractService.getByStatus(status, pageable)));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<SupplierContractDto.Response>> getById(@PathVariable String id) {
         return ResponseEntity.ok(ApiResponse.success("Supplier contract retrieved successfully",
-                supplierContractMapper.toResponse(supplierContractService.getContract(id))));
+                supplierContractService.getContract(id)));
     }
 
     @GetMapping("/stats")
@@ -58,7 +58,7 @@ public class SupplierContractController {
     public ResponseEntity<ApiResponse<List<SupplierContractDto.ListResponse>>> getExpiring(
             @RequestParam(defaultValue = "30") int days) {
         return ResponseEntity.ok(ApiResponse.success("Expiring contracts retrieved successfully",
-                supplierContractMapper.toListResponseList(supplierContractService.getExpiringContracts(days))));
+                supplierContractService.getExpiringContracts(days)));
     }
 
     @PostMapping
@@ -66,7 +66,7 @@ public class SupplierContractController {
             @Valid @RequestBody SupplierContractDto.Request request) {
         return ResponseEntity.status(HttpStatus.CREATED)
             .body(ApiResponse.success("Supplier contract created successfully",
-                    supplierContractMapper.toResponse(supplierContractService.createContract(supplierContractMapper.toEntity(request)))));
+                    supplierContractService.createContract(request)));
     }
 
     @PutMapping("/{id}")
@@ -74,7 +74,7 @@ public class SupplierContractController {
             @PathVariable String id,
             @Valid @RequestBody SupplierContractDto.Request request) {
         return ResponseEntity.ok(ApiResponse.success("Supplier contract updated successfully",
-                supplierContractMapper.toResponse(supplierContractService.updateContract(id, supplierContractMapper.toEntity(request)))));
+                supplierContractService.updateContract(id, request)));
     }
 
     @DeleteMapping("/{id}")
@@ -86,12 +86,12 @@ public class SupplierContractController {
     @PostMapping("/{id}/activate")
     public ResponseEntity<ApiResponse<SupplierContractDto.Response>> activate(@PathVariable String id) {
         return ResponseEntity.ok(ApiResponse.success("Supplier contract activated successfully",
-                supplierContractMapper.toResponse(supplierContractService.activateContract(id))));
+                supplierContractService.activateContract(id)));
     }
 
     @PostMapping("/{id}/terminate")
     public ResponseEntity<ApiResponse<SupplierContractDto.Response>> terminate(@PathVariable String id) {
         return ResponseEntity.ok(ApiResponse.success("Supplier contract terminated successfully",
-                supplierContractMapper.toResponse(supplierContractService.terminateContract(id))));
+                supplierContractService.terminateContract(id)));
     }
 }

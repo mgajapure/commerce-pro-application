@@ -25,20 +25,20 @@ public class ProcurementRequestController {
     @GetMapping
     public ResponseEntity<ApiResponse<Page<ProcurementRequestDto.ListResponse>>> getAll(Pageable pageable) {
         return ResponseEntity.ok(ApiResponse.success("Procurement requests retrieved successfully",
-                procurementRequestService.getAllProcurementRequests(pageable).map(procurementRequestMapper::toListResponse)));
+                procurementRequestService.getAllProcurementRequests(pageable)));
     }
 
     @GetMapping("/status/{status}")
     public ResponseEntity<ApiResponse<Page<ProcurementRequestDto.ListResponse>>> getByStatus(
             @PathVariable String status, Pageable pageable) {
         return ResponseEntity.ok(ApiResponse.success("Procurement requests retrieved successfully",
-                procurementRequestService.getByStatus(status, pageable).map(procurementRequestMapper::toListResponse)));
+                procurementRequestService.getByStatus(status, pageable)));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<ProcurementRequestDto.Response>> getById(@PathVariable String id) {
         return ResponseEntity.ok(ApiResponse.success("Procurement request retrieved successfully",
-                procurementRequestMapper.toResponse(procurementRequestService.getProcurementRequest(id))));
+                procurementRequestService.getProcurementRequest(id)));
     }
 
     @GetMapping("/stats")
@@ -51,7 +51,7 @@ public class ProcurementRequestController {
             @Valid @RequestBody ProcurementRequestDto.Request request) {
         return ResponseEntity.status(HttpStatus.CREATED)
             .body(ApiResponse.success("Procurement request created successfully",
-                    procurementRequestMapper.toResponse(procurementRequestService.createProcurementRequest(procurementRequestMapper.toEntity(request)))));
+                    procurementRequestService.createProcurementRequest((request))));
     }
 
     @PutMapping("/{id}")
@@ -59,7 +59,7 @@ public class ProcurementRequestController {
             @PathVariable String id,
             @Valid @RequestBody ProcurementRequestDto.Request request) {
         return ResponseEntity.ok(ApiResponse.success("Procurement request updated successfully",
-                procurementRequestMapper.toResponse(procurementRequestService.updateProcurementRequest(id, procurementRequestMapper.toEntity(request)))));
+                procurementRequestService.updateProcurementRequest(id, request)));
     }
 
     @DeleteMapping("/{id}")
@@ -71,7 +71,7 @@ public class ProcurementRequestController {
     @PostMapping("/{id}/approve")
     public ResponseEntity<ApiResponse<ProcurementRequestDto.Response>> approve(@PathVariable String id) {
         return ResponseEntity.ok(ApiResponse.success("Procurement request approved successfully",
-                procurementRequestMapper.toResponse(procurementRequestService.approveProcurementRequest(id))));
+                procurementRequestService.approveProcurementRequest(id)));
     }
 
     @PostMapping("/{id}/reject")
@@ -79,6 +79,6 @@ public class ProcurementRequestController {
             @PathVariable String id,
             @RequestParam String reason) {
         return ResponseEntity.ok(ApiResponse.success("Procurement request rejected successfully",
-                procurementRequestMapper.toResponse(procurementRequestService.rejectProcurementRequest(id, reason))));
+                procurementRequestService.rejectProcurementRequest(id, reason)));
     }
 }
