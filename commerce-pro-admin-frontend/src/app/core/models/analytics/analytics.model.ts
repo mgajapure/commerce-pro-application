@@ -13,7 +13,7 @@ export type ReportType =
   | 'RETURN_RATE' | 'RETURN_REASON_ANALYSIS'
   | 'CUSTOM';
 
-export type ExportFormat = 'CSV' | 'EXCEL' | 'JSON';
+export type ExportFormat = 'CSV' | 'EXCEL' | 'JSON' | 'PDF';
 export type ReportStatus = 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
 export type ScheduleFrequency = 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'QUARTERLY';
 export type GroupBy = 'DAY' | 'WEEK' | 'MONTH' | 'QUARTER' | 'YEAR';

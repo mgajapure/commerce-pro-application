@@ -1,1 +1,261 @@
-<p>product works!</p>
+<app-alert></app-alert>
+
+<div class="min-h-screen bg-gray-50/50 p-4 sm:p-6 lg:p-8">
+  <div class="max-w-[1600px] mx-auto space-y-6">
+
+    <!-- Header -->
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center">
+          <i class="bi bi-box-seam text-white text-lg"></i>
+        </div>
+        <div>
+          <h1 class="text-2xl font-bold text-gray-900">Product Performance</h1>
+          <p class="text-gray-500 text-sm">Revenue, units sold and average order value by product</p>
+        </div>
+      </div>
+      <div class="flex flex-wrap items-center gap-3">
+        <select [ngModel]="datePreset()" (ngModelChange)="datePreset.set($event); loadData()"
+          class="px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-700 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 shadow-sm">
+          @for (p of datePresets; track p.value) { <option [value]="p.value">{{ p.label }}</option> }
+        </select>
+        <app-dropdown label="Export" [items]="exportItems" [showChevron]="true" (itemSelected)="onExport($event)"></app-dropdown>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="bg-white rounded-2xl p-2 shadow-sm border border-gray-100">
+      <div class="flex gap-1.5">
+        @for (tab of tabs; track tab.id) {
+          <button (click)="setTab(tab.id)"
+            class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all"
+            [class.bg-indigo-600]="activeTab() === tab.id" [class.text-white]="activeTab() === tab.id"
+            [class.shadow-md]="activeTab() === tab.id" [class.bg-gray-50]="activeTab() !== tab.id"
+            [class.text-gray-600]="activeTab() !== tab.id">
+            <i class="bi bi-{{ tab.icon }}"></i>{{ tab.label }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Error -->
+    @if (error()) {
+      <div class="bg-red-50 border border-red-200 rounded-2xl p-5 flex items-center gap-4">
+        <i class="bi bi-exclamation-circle-fill text-red-500 text-xl"></i>
+        <p class="text-red-800 font-medium">{{ error() }}</p>
+        <button (click)="loadData()" class="ml-auto text-sm text-red-700 font-medium underline">Retry</button>
+      </div>
+    }
+
+    <!-- Loading skeleton -->
+    @if (isLoading()) {
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        @for (i of [1,2,3,4]; track i) {
+          <div class="bg-white rounded-2xl p-5 border border-gray-100 animate-pulse">
+            <div class="h-3 bg-gray-200 rounded w-20 mb-3"></div>
+            <div class="h-8 bg-gray-200 rounded w-28 mb-2"></div>
+            <div class="h-3 bg-gray-200 rounded w-16"></div>
+          </div>
+        }
+      </div>
+      <div class="bg-white rounded-2xl border border-gray-100 animate-pulse h-96"></div>
+    }
+
+    @if (!isLoading() && report()) {
+
+      <!-- KPI Cards -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        @for (stat of summaryCards(); track stat.label) {
+          <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all group">
+            <div class="flex items-start justify-between">
+              <div>
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">{{ stat.label }}</p>
+                <p class="text-2xl font-bold text-gray-900 group-hover:text-indigo-600 transition-colors">{{ stat.value }}</p>
+              </div>
+              <div class="w-10 h-10 rounded-xl flex items-center justify-center {{ stat.bg }}">
+                <i class="bi bi-{{ stat.icon }} {{ stat.ic }} text-lg"></i>
+              </div>
+            </div>
+            @if (stat.growth !== null && stat.growth !== undefined) {
+              <div class="mt-3">
+                <span class="text-xs font-medium px-2 py-0.5 rounded-full {{ growthClass(stat.growth) }}">
+                  {{ stat.growth >= 0 ? '+' : '' }}{{ stat.growth | number:'1.1-1' }}%
+                </span>
+                <span class="text-xs text-gray-400 ml-1">vs prev period</span>
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Search -->
+      <div class="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
+        <div class="relative max-w-sm">
+          <i class="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+          <input type="text" [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)"
+            placeholder="Search products…"
+            class="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500">
+        </div>
+      </div>
+
+      <!-- ── BY REVENUE TAB ──────────────────────────────────────────────────── -->
+      @if (activeTab() === 'by-revenue') {
+        @if (byRevenue().length) {
+          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div class="p-5 border-b border-gray-100 flex items-center justify-between">
+              <h2 class="text-lg font-semibold text-gray-900">Products by Revenue</h2>
+              <span class="text-sm text-gray-400">{{ byRevenue().length }} products</span>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead>
+                  <tr class="bg-gray-50 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th class="px-5 py-3 text-left w-8">#</th>
+                    <th class="px-5 py-3 text-left">Product</th>
+                    <th class="px-5 py-3 text-right">Revenue</th>
+                    <th class="px-5 py-3 text-right">Orders</th>
+                    <th class="px-5 py-3 text-right">Units</th>
+                    <th class="px-5 py-3 text-right">AOV</th>
+                    <th class="px-5 py-3 text-right">Discount</th>
+                    <th class="px-5 py-3 text-right">Share %</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50">
+                  @for (row of byRevenue(); track row.dimension; let i = $index) {
+                    <tr class="hover:bg-gray-50/50 transition-colors">
+                      <td class="px-5 py-3.5">
+                        <span class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
+                          [class]="i === 0 ? 'bg-yellow-100 text-yellow-800' : i === 1 ? 'bg-gray-100 text-gray-700' : i === 2 ? 'bg-orange-100 text-orange-700' : 'bg-gray-50 text-gray-500'">
+                          {{ i + 1 }}
+                        </span>
+                      </td>
+                      <td class="px-5 py-3.5 font-medium text-gray-900 max-w-[260px] truncate">{{ row.dimension }}</td>
+                      <td class="px-5 py-3.5 text-right font-semibold text-indigo-700">{{ fmt(row.revenue) }}</td>
+                      <td class="px-5 py-3.5 text-right text-gray-600">{{ row.orders | number }}</td>
+                      <td class="px-5 py-3.5 text-right text-gray-600">{{ row.units | number }}</td>
+                      <td class="px-5 py-3.5 text-right text-gray-600">{{ fmt(row.aov) }}</td>
+                      <td class="px-5 py-3.5 text-right text-yellow-700">{{ fmt(row.discount) }}</td>
+                      <td class="px-5 py-3.5 text-right">
+                        <div class="flex items-center justify-end gap-2">
+                          <div class="w-16 bg-gray-100 rounded-full h-1.5">
+                            <div class="h-1.5 bg-indigo-500 rounded-full" [style.width.%]="Math.min(100, row.sharePct)"></div>
+                          </div>
+                          <span class="text-xs text-gray-600 w-10 text-right">{{ row.sharePct | number:'1.1-1' }}%</span>
+                        </div>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        } @else {
+          <div class="bg-white rounded-2xl p-16 border border-gray-100 shadow-sm text-center">
+            <i class="bi bi-box-seam text-5xl text-gray-200 mb-4 block"></i>
+            <h3 class="text-lg font-semibold text-gray-700">No product data for this period</h3>
+            <p class="text-sm text-gray-400 mt-1">Try a different date range.</p>
+          </div>
+        }
+      }
+
+      <!-- ── BY UNITS TAB ────────────────────────────────────────────────────── -->
+      @if (activeTab() === 'by-units') {
+        @if (byUnits().length) {
+          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div class="p-5 border-b border-gray-100 flex items-center justify-between">
+              <h2 class="text-lg font-semibold text-gray-900">Products by Units Sold</h2>
+              <span class="text-sm text-gray-400">{{ byUnits().length }} products</span>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead>
+                  <tr class="bg-gray-50 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th class="px-5 py-3 text-left w-8">#</th>
+                    <th class="px-5 py-3 text-left">Product</th>
+                    <th class="px-5 py-3 text-right">Units Sold</th>
+                    <th class="px-5 py-3 text-right">Revenue</th>
+                    <th class="px-5 py-3 text-right">Orders</th>
+                    <th class="px-5 py-3 text-right">AOV</th>
+                    <th class="px-5 py-3 text-right">Share %</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50">
+                  @for (row of byUnits(); track row.dimension; let i = $index) {
+                    <tr class="hover:bg-gray-50/50 transition-colors">
+                      <td class="px-5 py-3.5">
+                        <span class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
+                          [class]="i === 0 ? 'bg-yellow-100 text-yellow-800' : i === 1 ? 'bg-gray-100 text-gray-700' : i === 2 ? 'bg-orange-100 text-orange-700' : 'bg-gray-50 text-gray-500'">
+                          {{ i + 1 }}
+                        </span>
+                      </td>
+                      <td class="px-5 py-3.5 font-medium text-gray-900 max-w-[260px] truncate">{{ row.dimension }}</td>
+                      <td class="px-5 py-3.5 text-right font-semibold text-emerald-700">{{ row.units | number }}</td>
+                      <td class="px-5 py-3.5 text-right font-medium">{{ fmt(row.revenue) }}</td>
+                      <td class="px-5 py-3.5 text-right text-gray-600">{{ row.orders | number }}</td>
+                      <td class="px-5 py-3.5 text-right text-gray-600">{{ fmt(row.aov) }}</td>
+                      <td class="px-5 py-3.5 text-right">
+                        <div class="flex items-center justify-end gap-2">
+                          <div class="w-16 bg-gray-100 rounded-full h-1.5">
+                            <div class="h-1.5 bg-emerald-500 rounded-full" [style.width.%]="Math.min(100, row.sharePct)"></div>
+                          </div>
+                          <span class="text-xs text-gray-600 w-10 text-right">{{ row.sharePct | number:'1.1-1' }}%</span>
+                        </div>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        } @else {
+          <div class="bg-white rounded-2xl p-16 border border-gray-100 shadow-sm text-center">
+            <i class="bi bi-box-seam text-5xl text-gray-200 mb-4 block"></i>
+            <h3 class="text-lg font-semibold text-gray-700">No product data for this period</h3>
+            <p class="text-sm text-gray-400 mt-1">Try a different date range.</p>
+          </div>
+        }
+      }
+
+      <!-- ── TOP PRODUCTS TAB ────────────────────────────────────────────────── -->
+      @if (activeTab() === 'top-products') {
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+          <!-- Top 10 bar chart -->
+          <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Top 10 Products — Revenue vs Units</h2>
+            <div class="h-80">
+              <canvas #barChart></canvas>
+            </div>
+          </div>
+
+          <!-- Top 10 ranked list -->
+          <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Top Products Ranking</h2>
+            @if (report()!.topProducts?.length) {
+              <div class="space-y-3">
+                @for (prod of report()!.topProducts.slice(0, 10); track prod.productId; let i = $index) {
+                  <div class="flex items-center gap-4 p-3 rounded-xl hover:bg-gray-50 transition-colors">
+                    <span class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
+                      [class]="i === 0 ? 'bg-yellow-100 text-yellow-800' : i === 1 ? 'bg-gray-200 text-gray-700' : i === 2 ? 'bg-orange-100 text-orange-700' : 'bg-indigo-50 text-indigo-600'">
+                      {{ i + 1 }}
+                    </span>
+                    <div class="flex-1 min-w-0">
+                      <p class="text-sm font-semibold text-gray-900 truncate">{{ prod.productName }}</p>
+                      <p class="text-xs text-gray-400">{{ prod.category }} · SKU: {{ prod.sku }}</p>
+                    </div>
+                    <div class="text-right flex-shrink-0">
+                      <p class="text-sm font-bold text-indigo-700">{{ fmt(prod.revenue) }}</p>
+                      <p class="text-xs text-gray-400">{{ prod.unitsSold | number }} units</p>
+                    </div>
+                  </div>
+                }
+              </div>
+            } @else {
+              <p class="text-sm text-gray-400 text-center py-8">No top product data available.</p>
+            }
+          </div>
+        </div>
+      }
+    }
+  </div>
+</div>

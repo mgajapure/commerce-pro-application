@@ -50,7 +50,8 @@ export class Sales implements OnInit, OnDestroy, AfterViewInit {
   ];
   exportItems: DropdownItem[] = [
     { id: 'EXCEL', label: 'Export Excel', icon: 'filetype-xlsx' },
-    { id: 'CSV', label: 'Export CSV', icon: 'filetype-csv' },
+    { id: 'CSV',  label: 'Export CSV',  icon: 'filetype-csv' },
+    { id: 'PDF',  label: 'Export PDF',  icon: 'filetype-pdf' },
     { id: 'JSON', label: 'Export JSON', icon: 'braces' }
   ];
   tabs: { id: SalesTab; label: string; icon: string }[] = [
