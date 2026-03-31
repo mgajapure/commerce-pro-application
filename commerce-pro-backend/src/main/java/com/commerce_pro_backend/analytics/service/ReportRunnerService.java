@@ -141,36 +141,35 @@ public class ReportRunnerService {
 
     private ReportExportService.ExportResult dispatch(ReportFilterDTO filter, ExportFormat format) {
         ReportType type = filter.getReportType();
-        String baseName = type.name().toLowerCase();
         return switch (type) {
             case SALES_OVERVIEW, SALES_BY_DATE ->
-                    exportService.exportSales(salesService.getByDate(filter), format, baseName);
+                    exportService.exportSales(salesService.getByDate(filter), format, type);
             case SALES_BY_PRODUCT ->
-                    exportService.exportSales(salesService.getByProduct(filter), format, baseName);
+                    exportService.exportSales(salesService.getByProduct(filter), format, type);
             case SALES_BY_CATEGORY ->
-                    exportService.exportSales(salesService.getByCategory(filter), format, baseName);
+                    exportService.exportSales(salesService.getByCategory(filter), format, type);
             case SALES_BY_CHANNEL ->
-                    exportService.exportSales(salesService.getByChannel(filter), format, baseName);
+                    exportService.exportSales(salesService.getByChannel(filter), format, type);
             case INVENTORY_STOCK_VALUE ->
-                    exportService.exportInventory(inventoryService.getStockValue(filter), format, baseName);
+                    exportService.exportInventory(inventoryService.getStockValue(filter), format, type);
             case INVENTORY_MOVEMENT ->
-                    exportService.exportInventoryMovement(inventoryService.getMovement(filter), format, baseName);
+                    exportService.exportInventoryMovement(inventoryService.getMovement(filter), format, type);
             case INVENTORY_AGEING ->
-                    exportService.exportInventoryAgeing(inventoryService.getAgeing(filter), format, baseName);
+                    exportService.exportInventoryAgeing(inventoryService.getAgeing(filter), format, type);
             case ORDER_SUMMARY, ORDER_FULFILLMENT_RATE, ORDER_CANCELLATION_RATE ->
-                    exportService.exportOrders(orderService.getReport(filter), format, baseName);
+                    exportService.exportOrders(orderService.getReport(filter), format, type);
             case CUSTOMER_LTV, CUSTOMER_COHORT, CUSTOMER_ACQUISITION ->
-                    exportService.exportCustomers(customerService.getLtvReport(filter), format, baseName);
+                    exportService.exportCustomers(customerService.getLtvReport(filter), format, type);
             case CUSTOMER_CHURN ->
-                    exportService.exportCustomers(customerService.getChurnReport(filter), format, baseName);
+                    exportService.exportCustomers(customerService.getChurnReport(filter), format, type);
             case FINANCIAL_REVENUE, FINANCIAL_MARGIN, FINANCIAL_TAX_SUMMARY ->
-                    exportService.exportFinancial(financialService.getReport(filter), format, baseName);
+                    exportService.exportFinancial(financialService.getReport(filter), format, type);
             case SHIPPING_ON_TIME_DELIVERY, SHIPPING_CARRIER_PERFORMANCE ->
-                    exportService.exportShipping(shippingService.getReport(filter), format, baseName);
+                    exportService.exportShipping(shippingService.getReport(filter), format, type);
             case RETURN_RATE, RETURN_REASON_ANALYSIS ->
-                    exportService.exportReturns(returnService.getReport(filter), format, baseName);
+                    exportService.exportReturns(returnService.getReport(filter), format, type);
             case CUSTOM ->
-                    exportService.exportSales(salesService.getByDate(filter), format, baseName);
+                    exportService.exportSales(salesService.getByDate(filter), format, type);
         };
     }
 

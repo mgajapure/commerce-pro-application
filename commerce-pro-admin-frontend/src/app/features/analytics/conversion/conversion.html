@@ -1,1 +1,261 @@
-<p>conversion works!</p>
+<app-alert></app-alert>
+
+<div class="min-h-screen bg-gray-50/50 p-4 sm:p-6 lg:p-8">
+  <div class="max-w-[1600px] mx-auto space-y-6">
+
+    <!-- Header -->
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center">
+          <i class="bi bi-funnel text-white text-lg"></i>
+        </div>
+        <div>
+          <h1 class="text-2xl font-bold text-gray-900">Conversion & Order Funnel</h1>
+          <p class="text-gray-500 text-sm">Order lifecycle analysis — placement to retention</p>
+        </div>
+      </div>
+      <div class="flex flex-wrap items-center gap-3">
+        <select [ngModel]="datePreset()" (ngModelChange)="datePreset.set($event); loadData()"
+          class="px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-700 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 shadow-sm">
+          @for (p of datePresets; track p.value) { <option [value]="p.value">{{ p.label }}</option> }
+        </select>
+        <app-dropdown label="Export" [items]="exportItems" [showChevron]="true" (itemSelected)="onExport($event)"></app-dropdown>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="bg-white rounded-2xl p-2 shadow-sm border border-gray-100">
+      <div class="flex gap-1.5">
+        @for (tab of tabs; track tab.id) {
+          <button (click)="setTab(tab.id)"
+            class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all"
+            [class.bg-indigo-600]="activeTab() === tab.id" [class.text-white]="activeTab() === tab.id"
+            [class.shadow-md]="activeTab() === tab.id" [class.bg-gray-50]="activeTab() !== tab.id"
+            [class.text-gray-600]="activeTab() !== tab.id">
+            <i class="bi bi-{{ tab.icon }}"></i>{{ tab.label }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Error -->
+    @if (error()) {
+      <div class="bg-red-50 border border-red-200 rounded-2xl p-5 flex items-center gap-4">
+        <i class="bi bi-exclamation-circle-fill text-red-500 text-xl"></i>
+        <p class="text-red-800 font-medium">{{ error() }}</p>
+        <button (click)="loadData()" class="ml-auto text-sm text-red-700 font-medium underline">Retry</button>
+      </div>
+    }
+
+    <!-- Loading skeleton -->
+    @if (isLoading()) {
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        @for (i of [1,2,3,4]; track i) {
+          <div class="bg-white rounded-2xl p-5 border border-gray-100 animate-pulse">
+            <div class="h-3 bg-gray-200 rounded w-20 mb-3"></div>
+            <div class="h-8 bg-gray-200 rounded w-24 mb-2"></div>
+            <div class="h-3 bg-gray-200 rounded w-16"></div>
+          </div>
+        }
+      </div>
+      <div class="bg-white rounded-2xl p-6 border border-gray-100 animate-pulse h-80"></div>
+    }
+
+    @if (!isLoading() && report()) {
+
+      <!-- KPI Cards -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        @for (kpi of kpis; track kpi.label) {
+          <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all">
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">{{ kpi.label }}</p>
+            <p class="text-2xl font-bold text-gray-900">{{ kpi.value }}</p>
+            <p class="text-xs text-gray-400 mt-1">{{ kpi.sub }}</p>
+            @if (kpi.badge) {
+              <span class="mt-2 inline-block text-xs font-semibold px-2 py-0.5 rounded-full {{ kpi.badgeColor }}">
+                {{ kpi.badge }}
+              </span>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- ── FUNNEL TAB ─────────────────────────────────────────────────────── -->
+      @if (activeTab() === 'funnel') {
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+          <!-- Visual funnel cards -->
+          <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+            <h2 class="text-lg font-semibold text-gray-900 mb-5">Order Conversion Funnel</h2>
+            <div class="space-y-3">
+              @for (stage of funnelStages; track stage.label; let i = $index) {
+                <div class="group">
+                  <div class="flex items-center justify-between mb-1">
+                    <div class="flex items-center gap-2">
+                      <div class="w-7 h-7 rounded-lg flex items-center justify-center {{ stage.color }} bg-opacity-15">
+                        <i class="bi bi-{{ stage.icon }} text-sm" [class]="stage.color.replace('bg-', 'text-')"></i>
+                      </div>
+                      <span class="text-sm font-medium text-gray-700">{{ stage.label }}</span>
+                    </div>
+                    <div class="text-right">
+                      <span class="text-sm font-bold text-gray-900">{{ stage.count | number }}</span>
+                      <span class="text-xs text-gray-400 ml-2">{{ stage.pct }}%</span>
+                    </div>
+                  </div>
+                  <div class="relative w-full bg-gray-100 rounded-full h-3">
+                    <div class="h-3 rounded-full transition-all duration-700 {{ stage.color }}"
+                      [style.width.%]="stage.pct"></div>
+                  </div>
+                  @if (i > 0) {
+                    <p class="text-xs text-gray-400 mt-0.5">
+                      Drop-off: {{ (funnelStages[i-1].count - stage.count) | number }}
+                      ({{ (funnelStages[i-1].pct - stage.pct) | number:'1.1-1' }}%)
+                    </p>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Funnel bar chart -->
+          <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Funnel Visualisation</h2>
+            <div class="h-72">
+              <canvas #funnelChart></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Order status breakdown -->
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <div class="p-5 border-b border-gray-100">
+            <h2 class="text-lg font-semibold text-gray-900">Orders by Status</h2>
+          </div>
+          <div class="p-5 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+            @for (entry of statusEntries(); track entry[0]) {
+              <div class="text-center p-3 bg-gray-50 rounded-xl">
+                <p class="text-xl font-bold text-gray-900">{{ entry[1] | number }}</p>
+                <p class="text-xs mt-1">
+                  <span class="px-1.5 py-0.5 rounded-full text-xs font-medium {{ statusBadge(entry[0]) }}">
+                    {{ entry[0] | titlecase }}
+                  </span>
+                </p>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- ── TREND TAB ──────────────────────────────────────────────────────── -->
+      @if (activeTab() === 'trend') {
+        <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+          <div class="flex items-center justify-between mb-5">
+            <h2 class="text-lg font-semibold text-gray-900">Order Volume Trend</h2>
+            <span class="text-sm text-gray-400">{{ report()!.trend?.length ?? 0 }} periods</span>
+          </div>
+          <div class="h-80">
+            <canvas #trendChart></canvas>
+          </div>
+        </div>
+
+        @if (report()!.trend?.length) {
+          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div class="p-5 border-b border-gray-100">
+              <h2 class="text-lg font-semibold text-gray-900">Period Breakdown</h2>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead>
+                  <tr class="bg-gray-50 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th class="px-5 py-3 text-left">Period</th>
+                    <th class="px-5 py-3 text-right">Total</th>
+                    <th class="px-5 py-3 text-right">Fulfilled</th>
+                    <th class="px-5 py-3 text-right">Cancelled</th>
+                    <th class="px-5 py-3 text-right">Fulfil Rate</th>
+                    <th class="px-5 py-3 text-right">Cancel Rate</th>
+                    <th class="px-5 py-3 text-right">Revenue</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50">
+                  @for (row of report()!.trend; track row.period) {
+                    <tr class="hover:bg-gray-50/50 transition-colors">
+                      <td class="px-5 py-3.5 font-medium text-gray-900">{{ row.period }}</td>
+                      <td class="px-5 py-3.5 text-right text-gray-700">{{ row.totalOrders | number }}</td>
+                      <td class="px-5 py-3.5 text-right text-green-700 font-medium">{{ row.fulfilledOrders | number }}</td>
+                      <td class="px-5 py-3.5 text-right text-red-600">{{ row.cancelledOrders | number }}</td>
+                      <td class="px-5 py-3.5 text-right">
+                        <span class="text-xs font-semibold px-2 py-0.5 rounded-full"
+                          [class]="row.fulfillmentRatePct >= 85 ? 'bg-green-100 text-green-800' : row.fulfillmentRatePct >= 70 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'">
+                          {{ row.fulfillmentRatePct | number:'1.1-1' }}%
+                        </span>
+                      </td>
+                      <td class="px-5 py-3.5 text-right">
+                        <span class="text-xs font-semibold px-2 py-0.5 rounded-full"
+                          [class]="row.cancellationRatePct <= 5 ? 'bg-green-100 text-green-800' : row.cancellationRatePct <= 15 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'">
+                          {{ row.cancellationRatePct | number:'1.1-1' }}%
+                        </span>
+                      </td>
+                      <td class="px-5 py-3.5 text-right font-semibold">{{ fmt(row.revenue) }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        }
+      }
+
+      <!-- ── DETAILS TAB ─────────────────────────────────────────────────────── -->
+      @if (activeTab() === 'details') {
+        @if (report()!.rows?.length) {
+          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div class="p-5 border-b border-gray-100 flex items-center justify-between">
+              <h2 class="text-lg font-semibold text-gray-900">Order Detail</h2>
+              <span class="text-sm text-gray-400">{{ report()!.totalRows | number }} total</span>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead>
+                  <tr class="bg-gray-50 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th class="px-5 py-3 text-left">Order #</th>
+                    <th class="px-5 py-3 text-left">Customer</th>
+                    <th class="px-5 py-3 text-left">Status</th>
+                    <th class="px-5 py-3 text-left">Source</th>
+                    <th class="px-5 py-3 text-right">Total</th>
+                    <th class="px-5 py-3 text-right">Items</th>
+                    <th class="px-5 py-3 text-left">Created</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50">
+                  @for (row of report()!.rows.slice(0, 50); track row.orderNumber) {
+                    <tr class="hover:bg-gray-50/50 transition-colors">
+                      <td class="px-5 py-3.5 font-mono text-xs text-indigo-700 font-semibold">{{ row.orderNumber }}</td>
+                      <td class="px-5 py-3.5">
+                        <p class="font-medium text-gray-900">{{ row.customerName }}</p>
+                        <p class="text-xs text-gray-400">{{ row.customerEmail }}</p>
+                      </td>
+                      <td class="px-5 py-3.5">
+                        <span class="px-2 py-0.5 rounded-full text-xs font-medium {{ statusBadge(row.status) }}">
+                          {{ row.status | titlecase }}
+                        </span>
+                      </td>
+                      <td class="px-5 py-3.5 text-gray-600 text-xs">{{ row.source }}</td>
+                      <td class="px-5 py-3.5 text-right font-semibold">{{ fmt(row.totalAmount) }}</td>
+                      <td class="px-5 py-3.5 text-right text-gray-600">{{ row.itemCount }}</td>
+                      <td class="px-5 py-3.5 text-gray-400 text-xs">{{ row.createdAt }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        } @else {
+          <div class="bg-white rounded-2xl p-16 border border-gray-100 shadow-sm text-center">
+            <i class="bi bi-funnel text-5xl text-gray-200 mb-4 block"></i>
+            <h3 class="text-lg font-semibold text-gray-700">No order data for this period</h3>
+            <p class="text-sm text-gray-400 mt-1">Try a different date range.</p>
+          </div>
+        }
+      }
+    }
+  </div>
+</div>

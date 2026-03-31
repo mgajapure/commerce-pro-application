@@ -5,6 +5,7 @@ import { Subject, takeUntil } from 'rxjs';
 import { AnalyticsService } from '../../../core/services/analytics/analytics.service';
 import { AlertService } from '../../../shared/services/alert.service';
 import { AlertComponent } from '../../../shared/components/alert/alert';
+import { Dropdown, DropdownItem } from '../../../shared/components/dropdown/dropdown';
 import { AnalyticsDashboard } from '../../../core/models/analytics/analytics.model';
 
 declare var Chart: any;
@@ -12,7 +13,7 @@ declare var Chart: any;
 @Component({
   selector: 'app-analytics-overview',
   standalone: true,
-  imports: [CommonModule, RouterModule, AlertComponent],
+  imports: [CommonModule, RouterModule, AlertComponent, Dropdown],
   templateUrl: './overview.html',
   styleUrl: './overview.scss'
 })
@@ -27,7 +28,13 @@ export class AnalyticsOverview implements OnInit, OnDestroy, AfterViewInit {
   readonly Math = Math;
   dashboard = signal<AnalyticsDashboard | null>(null);
   isLoading = signal(true);
+  isExporting = signal(false);
   error = signal<string | null>(null);
+
+  exportItems: DropdownItem[] = [
+    { id: 'EXCEL', label: 'Export Excel', icon: 'filetype-xlsx' },
+    { id: 'CSV',   label: 'Export CSV',   icon: 'filetype-csv'  }
+  ];
 
   kpiCards = computed(() => {
     const d = this.dashboard();
@@ -100,6 +107,25 @@ export class AnalyticsOverview implements OnInit, OnDestroy, AfterViewInit {
     this.destroy$.next();
     this.destroy$.complete();
     if (this.revenueChart) this.revenueChart.destroy();
+  }
+
+  onExport(item: DropdownItem): void {
+    this.isExporting.set(true);
+    this.analyticsService.runAdHoc({ reportType: 'SALES_OVERVIEW', exportFormat: item.id as any, datePreset: 'THIS_MONTH' })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: exec => {
+          this.isExporting.set(false);
+          if (exec.downloadUrl) {
+            window.open(exec.downloadUrl, '_blank');
+            this.alertService.success('Export Ready', exec.fileName ?? 'File ready');
+          }
+        },
+        error: () => {
+          this.isExporting.set(false);
+          this.alertService.error('Export Failed', 'Could not generate dashboard export.');
+        }
+      });
   }
 
   loadDashboard(): void {
