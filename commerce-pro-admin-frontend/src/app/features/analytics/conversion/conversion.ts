@@ -47,7 +47,8 @@ export class Conversion implements OnInit, OnDestroy, AfterViewInit {
 
   exportItems: DropdownItem[] = [
     { id: 'EXCEL', label: 'Export Excel', icon: 'filetype-xlsx' },
-    { id: 'CSV',   label: 'Export CSV',   icon: 'filetype-csv'  }
+    { id: 'CSV',   label: 'Export CSV',   icon: 'filetype-csv'  },
+    { id: 'PDF',   label: 'Export PDF',   icon: 'filetype-pdf'  }
   ];
 
   tabs: { id: ConvTab; label: string; icon: string }[] = [

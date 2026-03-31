@@ -120,6 +120,11 @@ dependencies {
 	implementation 'org.springframework.ai:spring-ai-starter-model-openai'
 	
 	// =============================================
+	// PDF Export (OpenPDF — LGPL, iText 2.x fork)
+	// =============================================
+	implementation 'com.github.librepdf:openpdf:1.3.43'
+
+	// =============================================
 	// Development Tools
 	// =============================================
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'

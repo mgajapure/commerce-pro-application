@@ -37,7 +37,9 @@ export class ShippingReportPage implements OnInit, OnDestroy, AfterViewInit {
     { label: 'Last month', value: 'LAST_MONTH' }, { label: 'This quarter', value: 'THIS_QUARTER' }
   ];
   exportItems: DropdownItem[] = [
-    { id: 'EXCEL', label: 'Export Excel', icon: 'filetype-xlsx' }, { id: 'CSV', label: 'Export CSV', icon: 'filetype-csv' }
+    { id: 'EXCEL', label: 'Export Excel', icon: 'filetype-xlsx' },
+    { id: 'CSV',   label: 'Export CSV',   icon: 'filetype-csv'  },
+    { id: 'PDF',   label: 'Export PDF',   icon: 'filetype-pdf'  }
   ];
   tabs = [
     { id: 'summary' as const, label: 'Summary', icon: 'truck' },

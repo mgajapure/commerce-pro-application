@@ -38,7 +38,9 @@ export class OrdersReportPage implements OnInit, OnDestroy, AfterViewInit {
     { label: 'This year', value: 'THIS_YEAR' }
   ];
   exportItems: DropdownItem[] = [
-    { id: 'EXCEL', label: 'Export Excel', icon: 'filetype-xlsx' }, { id: 'CSV', label: 'Export CSV', icon: 'filetype-csv' }
+    { id: 'EXCEL', label: 'Export Excel', icon: 'filetype-xlsx' },
+    { id: 'CSV',   label: 'Export CSV',   icon: 'filetype-csv'  },
+    { id: 'PDF',   label: 'Export PDF',   icon: 'filetype-pdf'  }
   ];
   tabs = [
     { id: 'summary' as const, label: 'Summary', icon: 'clipboard-data' },

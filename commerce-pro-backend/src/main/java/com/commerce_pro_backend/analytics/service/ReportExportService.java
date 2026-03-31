@@ -4,10 +4,15 @@ import com.commerce_pro_backend.analytics.dto.*;
 import com.commerce_pro_backend.analytics.enums.ExportFormat;
 import com.commerce_pro_backend.analytics.enums.ReportType;
 import com.commerce_pro_backend.analytics.service.ReportTemplateRegistry.ColumnDef;
+import com.commerce_pro_backend.analytics.service.ReportTemplateRegistry.ColumnType;
 import com.commerce_pro_backend.analytics.service.ReportTemplateRegistry.ReportTemplate;
+import com.commerce_pro_backend.analytics.service.ReportPdfTemplateRegistry.PdfBranding;
+import com.commerce_pro_backend.analytics.service.ReportPdfTemplateRegistry.PdfTheme;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.lowagie.text.*;
+import com.lowagie.text.pdf.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -54,7 +59,8 @@ public class ReportExportService {
     @Value("${app.file.upload-dir:./uploads}")
     private String uploadDir;
 
-    private final ReportTemplateRegistry templateRegistry;
+    private final ReportTemplateRegistry    templateRegistry;
+    private final ReportPdfTemplateRegistry pdfRegistry;
 
     private Path reportsDir;
     private final ObjectMapper objectMapper = new ObjectMapper()
@@ -174,22 +180,26 @@ public class ReportExportService {
 
     private ExportResult write(List<String[]> dataRows,
                                 ExportFormat format, ReportType reportType, Object reportData) {
-        ReportTemplate template = templateRegistry.getTemplate(reportType);
-        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+        ReportTemplate template  = templateRegistry.getTemplate(reportType);
+        LocalDateTime  now       = LocalDateTime.now();
+        String         timestamp = now.format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+        String         generated = now.format(META_FMT);
         String ext = switch (format) {
             case CSV   -> ".csv";
             case EXCEL -> ".xlsx";
+            case PDF   -> ".pdf";
             case JSON  -> ".json";
             default    -> ".csv";
         };
-        String baseName   = reportType.name().toLowerCase();
-        String fileName   = sanitize(baseName) + "_" + timestamp + ext;
-        Path   filePath   = reportsDir.resolve(fileName);
+        String baseName = reportType.name().toLowerCase();
+        String fileName = sanitize(baseName) + "_" + timestamp + ext;
+        Path   filePath = reportsDir.resolve(fileName);
 
         try {
             switch (format) {
                 case CSV   -> writeCsv(filePath, template, dataRows);
                 case EXCEL -> writeExcel(filePath, template, dataRows);
+                case PDF   -> writePdf(filePath, template, dataRows, generated);
                 case JSON  -> writeJson(filePath, reportData);
             }
             long size = Files.size(filePath);
@@ -199,6 +209,238 @@ public class ReportExportService {
         } catch (Exception ex) {
             log.error("Export failed for {} ({})", fileName, reportType, ex);
             throw new RuntimeException("Report export failed: " + ex.getMessage(), ex);
+        }
+    }
+
+    // ── PDF ───────────────────────────────────────────────────────────────────
+    //
+    // Produces a professional, print-ready PDF using OpenPDF (LGPL).
+    //
+    // Layout:
+    //   1. Banner block  — two-column table: left=accent bg with title + category;
+    //                      right=light bg with generated timestamp + row count
+    //   2. Spacer
+    //   3. Data table    — header row with accent fill + white bold text;
+    //                      alternating white / altRowColor data rows;
+    //                      column widths proportional to ColumnDef.width();
+    //                      font size 7 pt for >10 cols, 8 pt otherwise
+    //   4. Footer (event) — thin rule + "Company · Confidential" left,
+    //                       report title centre, "Page X of Y" right.
+    //
+    // Orientation: landscape A4 for more than 6 columns, portrait otherwise.
+
+    private void writePdf(Path path, ReportTemplate template,
+                          List<String[]> dataRows, String generated) throws Exception {
+
+        PdfTheme    theme    = pdfRegistry.getTheme(template.category());
+        PdfBranding branding = pdfRegistry.getBranding();
+
+        List<ColumnDef> cols    = template.columns();
+        int             colCnt  = cols.size();
+        boolean         landscape = colCnt > 6;
+
+        Rectangle pageSize = landscape
+            ? PageSize.A4.rotate()
+            : PageSize.A4;
+
+        Document doc = new Document(pageSize, 36, 36, 36, 50);
+
+        try (OutputStream os = Files.newOutputStream(path)) {
+            PdfWriter writer = PdfWriter.getInstance(doc, os);
+            writer.setPageEvent(new ReportPageEvent(template.title(), branding, theme));
+            doc.open();
+
+            // ── Banner ────────────────────────────────────────────────────────
+            addReportHeaderBlock(doc, template, generated, dataRows.size(), theme, branding);
+
+            // ── Spacer ────────────────────────────────────────────────────────
+            doc.add(new Paragraph(" "));
+
+            // ── Data table ────────────────────────────────────────────────────
+            buildDataTable(doc, cols, dataRows, theme, landscape);
+
+            doc.close();
+        }
+    }
+
+    private void addReportHeaderBlock(Document doc, ReportTemplate template,
+                                      String generated, int rowCount,
+                                      PdfTheme theme, PdfBranding branding) throws DocumentException {
+
+        Font titleFont    = new Font(Font.HELVETICA, 16, Font.BOLD,   BaseColor.WHITE);
+        Font categoryFont = new Font(Font.HELVETICA,  9, Font.NORMAL, new BaseColor(220, 220, 255));
+        Font companyFont  = new Font(Font.HELVETICA, 10, Font.BOLD,   new BaseColor(180, 180, 220));
+        Font labelFont    = new Font(Font.HELVETICA,  8, Font.NORMAL, new BaseColor(100, 100, 130));
+        Font valueFont    = new Font(Font.HELVETICA,  9, Font.BOLD,   new BaseColor(30,  30,  60));
+
+        PdfPTable banner = new PdfPTable(2);
+        banner.setWidthPercentage(100);
+        banner.setWidths(new float[]{65f, 35f});
+
+        // Left cell — accent background: company name, suite, report title, category
+        PdfPCell left = new PdfPCell();
+        left.setBackgroundColor(theme.accentColor());
+        left.setPadding(14);
+        left.setBorder(Rectangle.NO_BORDER);
+
+        Paragraph brand = new Paragraph(branding.companyName(), companyFont);
+        brand.setSpacingAfter(2);
+        left.addElement(brand);
+
+        Paragraph suite = new Paragraph(branding.suiteName(), categoryFont);
+        suite.setSpacingAfter(8);
+        left.addElement(suite);
+
+        Paragraph title = new Paragraph(template.title(), titleFont);
+        title.setSpacingAfter(4);
+        left.addElement(title);
+
+        left.addElement(new Paragraph("Category: " + template.category(), categoryFont));
+        banner.addCell(left);
+
+        // Right cell — light background: metadata
+        PdfPCell right = new PdfPCell();
+        right.setBackgroundColor(theme.bannerBgColor());
+        right.setPadding(14);
+        right.setBorder(Rectangle.NO_BORDER);
+        right.setVerticalAlignment(Element.ALIGN_MIDDLE);
+
+        right.addElement(new Paragraph("Generated", labelFont));
+        Paragraph genVal = new Paragraph(generated, valueFont);
+        genVal.setSpacingAfter(10);
+        right.addElement(genVal);
+
+        right.addElement(new Paragraph("Total Rows", labelFont));
+        right.addElement(new Paragraph(String.valueOf(rowCount), valueFont));
+        banner.addCell(right);
+
+        doc.add(banner);
+    }
+
+    private void buildDataTable(Document doc, List<ColumnDef> cols,
+                                 List<String[]> dataRows,
+                                 PdfTheme theme, boolean landscape) throws DocumentException {
+
+        int   colCnt   = cols.size();
+        float fontSize = colCnt > 10 ? 7f : 8f;
+
+        Font headerFont = new Font(Font.HELVETICA, fontSize, Font.BOLD,   BaseColor.WHITE);
+        Font dataFont   = new Font(Font.HELVETICA, fontSize, Font.NORMAL, new BaseColor(30, 30, 30));
+
+        // Compute relative widths from ColumnDef.width()
+        float[] widths = new float[colCnt];
+        for (int i = 0; i < colCnt; i++) widths[i] = cols.get(i).width();
+
+        PdfPTable table = new PdfPTable(colCnt);
+        table.setWidthPercentage(100);
+        table.setWidths(widths);
+        table.setHeaderRows(1);
+
+        // Header row
+        for (ColumnDef col : cols) {
+            PdfPCell hc = new PdfPCell(new Phrase(col.header(), headerFont));
+            hc.setBackgroundColor(theme.accentColor());
+            hc.setPadding(5);
+            hc.setBorderColor(new BaseColor(255, 255, 255, 80));
+            hc.setHorizontalAlignment(isNumeric(col.type()) ? Element.ALIGN_RIGHT : Element.ALIGN_LEFT);
+            table.addCell(hc);
+        }
+
+        // Data rows
+        for (int r = 0; r < dataRows.size(); r++) {
+            String[]  row     = dataRows.get(r);
+            BaseColor rowBg   = (r % 2 == 0) ? BaseColor.WHITE : theme.altRowColor();
+            for (int c = 0; c < colCnt; c++) {
+                String val = (c < row.length && row[c] != null) ? row[c] : "";
+                PdfPCell dc = new PdfPCell(new Phrase(val, dataFont));
+                dc.setBackgroundColor(rowBg);
+                dc.setPadding(4);
+                dc.setBorderColor(new BaseColor(220, 220, 220));
+                dc.setHorizontalAlignment(isNumeric(cols.get(c).type()) ? Element.ALIGN_RIGHT : Element.ALIGN_LEFT);
+                table.addCell(dc);
+            }
+        }
+
+        doc.add(table);
+    }
+
+    private boolean isNumeric(ColumnType type) {
+        return type == ColumnType.CURRENCY
+            || type == ColumnType.INTEGER
+            || type == ColumnType.DECIMAL
+            || type == ColumnType.PERCENTAGE;
+    }
+
+    /**
+     * Page-event handler that draws a footer on every page.
+     * Uses the {@code PdfTemplate} placeholder trick to support "Page X of Y".
+     */
+    private static class ReportPageEvent extends PdfPageEventHelper {
+
+        private final String      reportTitle;
+        private final PdfBranding branding;
+        private final PdfTheme    theme;
+        private PdfTemplate       totalPagesTpl;
+
+        ReportPageEvent(String reportTitle, PdfBranding branding, PdfTheme theme) {
+            this.reportTitle = reportTitle;
+            this.branding    = branding;
+            this.theme       = theme;
+        }
+
+        @Override
+        public void onOpenDocument(PdfWriter writer, Document document) {
+            totalPagesTpl = writer.getDirectContent().createTemplate(30, 12);
+        }
+
+        @Override
+        public void onEndPage(PdfWriter writer, Document document) {
+            PdfContentByte cb = writer.getDirectContent();
+
+            float left   = document.leftMargin();
+            float right  = document.right();
+            float bottom = document.bottomMargin() - 18;
+            float y      = bottom + 6;
+
+            // Thin horizontal rule
+            cb.setColorStroke(theme.accentColor());
+            cb.setLineWidth(0.5f);
+            cb.moveTo(left, bottom + 14);
+            cb.lineTo(right, bottom + 14);
+            cb.stroke();
+
+            Font footerFont = new Font(Font.HELVETICA, 7, Font.NORMAL, new BaseColor(100, 100, 100));
+            Font boldFooter = new Font(Font.HELVETICA, 7, Font.BOLD,   new BaseColor(60,  60,  60));
+
+            // Left: confidentiality
+            ColumnText.showTextAligned(cb, Element.ALIGN_LEFT,
+                new Phrase(branding.companyName() + " \u00B7 " + branding.confidentiality(), footerFont),
+                left, y, 0);
+
+            // Centre: report title
+            float centreX = (left + right) / 2f;
+            ColumnText.showTextAligned(cb, Element.ALIGN_CENTER,
+                new Phrase(reportTitle, boldFooter),
+                centreX, y, 0);
+
+            // Right: Page X of Y (Y via PdfTemplate placeholder)
+            int pageNum = writer.getPageNumber();
+            Phrase pagePhrase = new Phrase("Page " + pageNum + " of ", footerFont);
+            float textW = pagePhrase.getFont().getBaseFont() != null
+                ? pagePhrase.getFont().getBaseFont().getWidthPoint("Page " + pageNum + " of ", 7)
+                : 50f;
+            float pageX = right - textW - 30;
+            ColumnText.showTextAligned(cb, Element.ALIGN_LEFT, pagePhrase, pageX, y, 0);
+            cb.addTemplate(totalPagesTpl, pageX + textW, y);
+        }
+
+        @Override
+        public void onCloseDocument(PdfWriter writer, Document document) {
+            totalPagesTpl.beginText();
+            totalPagesTpl.setFontAndSize(
+                new Font(Font.HELVETICA, 7).getCalculatedBaseFont(false), 7);
+            totalPagesTpl.showText(String.valueOf(writer.getPageNumber() - 1));
+            totalPagesTpl.endText();
         }
     }
 
