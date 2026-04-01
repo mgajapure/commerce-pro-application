@@ -35,7 +35,12 @@ export class Login {
       this.isLoading.set(false);
 
       if (!success) {
-        this.errorMessage.set('Invalid credentials or insufficient authentication factors.');
+        this.errorMessage.set('Invalid credentials. Check your username, password, and MFA code.');
+        return;
+      }
+
+      if (this.authService.getMustChangePassword()) {
+        this.router.navigate(['/auth/change-password']);
         return;
       }
 

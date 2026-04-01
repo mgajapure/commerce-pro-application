@@ -1,0 +1,205 @@
+<div class="min-h-screen bg-gray-50/50 p-4 sm:p-6 lg:p-8">
+  <div class="max-w-[900px] mx-auto space-y-6">
+
+    <!-- Header -->
+    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-900">Account Security</h1>
+          <p class="text-gray-500 mt-1 text-sm">Manage your password and two-factor authentication.</p>
+        </div>
+        @if (activeView() !== 'overview') {
+          <button (click)="showView('overview')" class="px-4 py-2 text-sm text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200">
+            ← Back
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Success / Error banners -->
+    @if (successMessage() && activeView() === 'overview') {
+      <div class="px-4 py-3 rounded-2xl bg-green-100 text-green-700 text-sm">{{ successMessage() }}</div>
+    }
+
+    <!-- OVERVIEW -->
+    @if (activeView() === 'overview') {
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        <!-- Password card -->
+        <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm space-y-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center">
+              <i class="bi bi-key text-indigo-600"></i>
+            </div>
+            <div>
+              <p class="text-sm font-semibold text-gray-900">Password</p>
+              <p class="text-xs text-gray-500">Protect your account with a strong password</p>
+            </div>
+          </div>
+          <button (click)="showView('change-password')" class="w-full px-4 py-2.5 bg-indigo-600 text-white rounded-xl shadow-lg shadow-indigo-200 hover:bg-indigo-700 text-sm font-medium">
+            Change Password
+          </button>
+        </div>
+
+        <!-- MFA card -->
+        <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm space-y-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center">
+              <i class="bi bi-shield-check text-green-600"></i>
+            </div>
+            <div>
+              <p class="text-sm font-semibold text-gray-900">Two-Factor Authentication</p>
+              <p class="text-xs text-gray-500">TOTP via Google Authenticator or Authy</p>
+            </div>
+          </div>
+          <div class="flex items-center justify-between py-1">
+            <span class="text-sm text-gray-600">Status</span>
+            <span class="px-2.5 py-1 text-xs font-medium rounded-full" [class]="mfaEnabledLocally() ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'">
+              {{ mfaEnabledLocally() ? 'Enabled' : 'Disabled' }}
+            </span>
+          </div>
+          @if (!mfaEnabledLocally()) {
+            <button (click)="initMfaSetup()" [disabled]="isLoading()" class="w-full px-4 py-2.5 bg-green-600 text-white rounded-xl shadow-lg shadow-green-200 hover:bg-green-700 disabled:opacity-50 text-sm font-medium">
+              {{ isLoading() ? 'Loading...' : 'Enable MFA' }}
+            </button>
+          } @else {
+            <button (click)="showView('mfa-disable')" class="w-full px-4 py-2.5 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 text-sm font-medium">
+              Disable MFA
+            </button>
+          }
+        </div>
+
+        <!-- Session info card -->
+        <div class="md:col-span-2 bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+          <p class="text-sm font-semibold text-gray-900 mb-3">Current Session</p>
+          <div class="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm text-gray-600">
+            <div>
+              <p class="text-xs text-gray-400 mb-1">Username</p>
+              <p class="font-medium text-gray-900">{{ session()?.username || '—' }}</p>
+            </div>
+            <div>
+              <p class="text-xs text-gray-400 mb-1">Role</p>
+              <p class="font-medium text-gray-900">{{ session()?.superAdmin ? 'Super Admin' : 'Admin' }}</p>
+            </div>
+            <div>
+              <p class="text-xs text-gray-400 mb-1">Session expires</p>
+              <p class="font-medium text-gray-900">{{ session()?.expiresAtMs ? (session()!.expiresAtMs! | date:'short') : '—' }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- CHANGE PASSWORD FORM -->
+    @if (activeView() === 'change-password') {
+      <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm space-y-4 max-w-[520px]">
+        <h2 class="text-lg font-semibold text-gray-900">Change Password</h2>
+
+        <div>
+          <label class="text-sm font-medium text-gray-700">Current Password</label>
+          <input type="password" class="mt-1 w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm" [ngModel]="currentPassword()" (ngModelChange)="currentPassword.set($event)" placeholder="••••••••" />
+        </div>
+        <div>
+          <label class="text-sm font-medium text-gray-700">New Password</label>
+          <input type="password" class="mt-1 w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm" [ngModel]="newPassword()" (ngModelChange)="newPassword.set($event)" placeholder="••••••••" />
+        </div>
+        <div>
+          <label class="text-sm font-medium text-gray-700">Confirm New Password</label>
+          <input type="password" class="mt-1 w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm" [ngModel]="confirmPassword()" (ngModelChange)="confirmPassword.set($event)" placeholder="••••••••" />
+        </div>
+
+        @if (errorMessage()) {
+          <div class="px-3 py-2 rounded-xl bg-red-100 text-red-700 text-sm">{{ errorMessage() }}</div>
+        }
+        @if (successMessage()) {
+          <div class="px-3 py-2 rounded-xl bg-green-100 text-green-700 text-sm">{{ successMessage() }}</div>
+        }
+
+        <div class="flex gap-3">
+          <button (click)="changePassword()" [disabled]="isLoading()" class="flex-1 px-4 py-2.5 bg-indigo-600 text-white rounded-xl shadow-lg shadow-indigo-200 hover:bg-indigo-700 disabled:opacity-50 text-sm font-medium">
+            {{ isLoading() ? 'Changing...' : 'Change Password' }}
+          </button>
+          <button (click)="showView('overview')" [disabled]="isLoading()" class="px-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 disabled:opacity-50 text-sm font-medium">
+            Cancel
+          </button>
+        </div>
+      </div>
+    }
+
+    <!-- MFA SETUP FORM -->
+    @if (activeView() === 'mfa-setup' && mfaSetupData()) {
+      <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm space-y-5 max-w-[600px]">
+        <h2 class="text-lg font-semibold text-gray-900">Set Up Two-Factor Authentication</h2>
+
+        <div class="bg-blue-50 rounded-xl p-4 text-sm text-blue-800 space-y-1">
+          <p class="font-medium">Step 1: Scan with your authenticator app</p>
+          <p>Open Google Authenticator, Authy, or another TOTP app and scan the QR code below, or enter the secret manually.</p>
+        </div>
+
+        <div class="flex flex-col items-center gap-4 p-4 bg-gray-50 rounded-xl">
+          <img [src]="'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(mfaSetupData()!.otpauthUrl)" alt="MFA QR Code" class="w-48 h-48 rounded-xl border border-gray-200 bg-white p-2" />
+          <div class="text-center">
+            <p class="text-xs text-gray-500 mb-1">Or enter this secret manually:</p>
+            <code class="px-3 py-1 bg-gray-200 rounded-lg text-sm font-mono text-gray-800">{{ mfaSetupData()!.secret }}</code>
+          </div>
+        </div>
+
+        <div class="bg-blue-50 rounded-xl p-4 text-sm text-blue-800">
+          <p class="font-medium">Step 2: Enter the verification code</p>
+        </div>
+
+        <div>
+          <label class="text-sm font-medium text-gray-700">6-digit verification code</label>
+          <input class="mt-1 w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm tracking-widest text-center" [ngModel]="mfaVerifyCode()" (ngModelChange)="mfaVerifyCode.set($event)" placeholder="123456" maxlength="6" />
+        </div>
+
+        @if (errorMessage()) {
+          <div class="px-3 py-2 rounded-xl bg-red-100 text-red-700 text-sm">{{ errorMessage() }}</div>
+        }
+
+        <div class="flex gap-3">
+          <button (click)="enableMfa()" [disabled]="isLoading()" class="flex-1 px-4 py-2.5 bg-green-600 text-white rounded-xl shadow-lg shadow-green-200 hover:bg-green-700 disabled:opacity-50 text-sm font-medium">
+            {{ isLoading() ? 'Verifying...' : 'Enable MFA' }}
+          </button>
+          <button (click)="showView('overview')" [disabled]="isLoading()" class="px-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 disabled:opacity-50 text-sm font-medium">
+            Cancel
+          </button>
+        </div>
+      </div>
+    }
+
+    <!-- MFA DISABLE FORM -->
+    @if (activeView() === 'mfa-disable') {
+      <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm space-y-4 max-w-[520px]">
+        <h2 class="text-lg font-semibold text-gray-900">Disable Two-Factor Authentication</h2>
+
+        <div class="bg-yellow-50 rounded-xl p-4 text-sm text-yellow-800">
+          Disabling MFA will reduce your account security. Confirm with your current password and MFA code.
+        </div>
+
+        <div>
+          <label class="text-sm font-medium text-gray-700">Current Password</label>
+          <input type="password" class="mt-1 w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm" [ngModel]="mfaDisablePassword()" (ngModelChange)="mfaDisablePassword.set($event)" placeholder="••••••••" />
+        </div>
+        <div>
+          <label class="text-sm font-medium text-gray-700">MFA Code</label>
+          <input class="mt-1 w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm tracking-widest text-center" [ngModel]="mfaDisableCode()" (ngModelChange)="mfaDisableCode.set($event)" placeholder="123456" maxlength="6" />
+        </div>
+
+        @if (errorMessage()) {
+          <div class="px-3 py-2 rounded-xl bg-red-100 text-red-700 text-sm">{{ errorMessage() }}</div>
+        }
+
+        <div class="flex gap-3">
+          <button (click)="disableMfa()" [disabled]="isLoading()" class="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-xl hover:bg-red-700 disabled:opacity-50 text-sm font-medium">
+            {{ isLoading() ? 'Disabling...' : 'Disable MFA' }}
+          </button>
+          <button (click)="showView('overview')" [disabled]="isLoading()" class="px-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 disabled:opacity-50 text-sm font-medium">
+            Cancel
+          </button>
+        </div>
+      </div>
+    }
+
+  </div>
+</div>

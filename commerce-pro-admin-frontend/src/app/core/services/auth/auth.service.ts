@@ -4,7 +4,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, catchError, map, of, tap } from 'rxjs';
 
 import { ApiResponse } from '../../models/common';
-import { AuthRequest, AuthResponse, AuthSession } from '../../models/auth';
+import { AuthRequest, AuthResponse, AuthSession, ChangePasswordRequest, MfaDisableRequest, MfaEnableRequest, MfaSetupResponse } from '../../models/auth';
 import { NotificationService } from '../notification/notification.service';
 
 @Injectable({
@@ -88,6 +88,50 @@ export class AuthService {
       );
   }
 
+  changePassword(payload: ChangePasswordRequest): Observable<boolean> {
+    return this.http
+      .post<ApiResponse<string>>(`${this.authBase}/change-password`, payload)
+      .pipe(
+        map(() => true),
+        catchError(() => of(false))
+      );
+  }
+
+  setupMfa(): Observable<MfaSetupResponse | null> {
+    return this.http
+      .post<ApiResponse<MfaSetupResponse>>(`${this.authBase}/mfa/setup`, {})
+      .pipe(
+        map(response => response.data),
+        catchError(() => of(null))
+      );
+  }
+
+  enableMfa(payload: MfaEnableRequest): Observable<boolean> {
+    return this.http
+      .post<ApiResponse<string>>(`${this.authBase}/mfa/enable`, payload)
+      .pipe(
+        map(() => true),
+        catchError(() => of(false))
+      );
+  }
+
+  disableMfa(payload: MfaDisableRequest): Observable<boolean> {
+    return this.http
+      .post<ApiResponse<string>>(`${this.authBase}/mfa/disable`, payload)
+      .pipe(
+        map(() => true),
+        catchError(() => of(false))
+      );
+  }
+
+  isMfaEnabled(): boolean {
+    return this.sessionSignal()?.mustChangePassword === true;
+  }
+
+  getMustChangePassword(): boolean {
+    return this.sessionSignal()?.mustChangePassword ?? false;
+  }
+
   hasAuthority(authority: string): boolean {
     return this.sessionSignal()?.authorities?.includes(authority) ?? false;
   }
@@ -120,7 +164,8 @@ export class AuthService {
       username: response.username,
       superAdmin: response.superAdmin,
       authorities,
-      expiresAtMs: expiryMs
+      expiresAtMs: expiryMs,
+      mustChangePassword: response.mustChangePassword ?? false
     };
 
     this.sessionSignal.set(session);

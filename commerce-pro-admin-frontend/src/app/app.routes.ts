@@ -8,6 +8,16 @@ export const routes: Routes = [
     loadComponent: () => import('./features/auth/login/login').then(m => m.Login)
   },
   {
+    path: 'auth/change-password',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/auth/change-password/change-password').then(m => m.ChangePassword)
+  },
+  {
+    path: 'account/security',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/account/security/security').then(m => m.AccountSecurity)
+  },
+  {
     path: '',
     redirectTo: 'dashboard',
     pathMatch: 'full'

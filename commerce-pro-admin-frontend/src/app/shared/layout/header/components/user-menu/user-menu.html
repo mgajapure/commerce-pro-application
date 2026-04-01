@@ -3,7 +3,7 @@
         <img src="https://i.pravatar.cc/150?img=11" alt="Profile" class="w-8 h-8 rounded-full border-2 border-gray-100">
         <div class="hidden md:block text-left">
             <p class="text-sm font-medium text-gray-900">{{ displayName() }}</p>
-            <p class="text-xs text-gray-500">Store Admin</p>
+            <p class="text-xs text-gray-500">{{ session()?.superAdmin ? 'Super Admin' : 'Store Admin' }}</p>
         </div>
         <i class="bi bi-chevron-down w-4 h-4 text-gray-400 hidden md:block"></i>
     </button>
@@ -16,25 +16,23 @@
                     class="w-12 h-12 rounded-full border-2 border-gray-100">
                 <div>
                     <p class="font-semibold text-gray-900">{{ displayName() }}</p>
-                    <p class="text-xs text-gray-500">{{ session()?.username || "-" }}</p>
+                    <p class="text-xs text-gray-500">{{ session()?.username || '—' }}</p>
+                    @if (session()?.superAdmin) {
+                        <span class="text-xs px-1.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700 font-medium">Super Admin</span>
+                    }
                 </div>
             </div>
         </div>
         <div class="p-2">
-            <a href="#"
+            <a [routerLink]="['/account/security']" (click)="toggle()"
                 class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
-                <i class="bi bi-people w-4 h-4"></i>
-                <span class="text-sm">My Profile</span>
+                <i class="bi bi-shield-lock w-4 h-4"></i>
+                <span class="text-sm">Security Settings</span>
             </a>
-            <a href="#"
+            <a [routerLink]="['/auth/change-password']" (click)="toggle()"
                 class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
-                <i class="bi bi-gear w-4 h-4"></i>
-                <span class="text-sm">Account Settings</span>
-            </a>
-            <a href="#"
-                class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
-                <i class="bi bi-shield w-4 h-4"></i>
-                <span class="text-sm">Security</span>
+                <i class="bi bi-key w-4 h-4"></i>
+                <span class="text-sm">Change Password</span>
             </a>
             <div class="border-t border-gray-100 my-1"></div>
             <button (click)="logout()"
