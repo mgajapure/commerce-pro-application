@@ -1,7 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
 
 import { MfaSetupResponse } from '../../../core/models/auth';
 import { AuthService } from '../../../core/services/auth/auth.service';
@@ -11,18 +10,14 @@ type SecurityView = 'overview' | 'change-password' | 'mfa-setup' | 'mfa-disable'
 @Component({
   selector: 'app-account-security',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './security.html',
   styleUrl: './security.scss'
 })
-export class AccountSecurity implements OnInit {
+export class AccountSecurity {
   private readonly authService = inject(AuthService);
 
   readonly session = this.authService.session;
-  readonly isMfaEnabled = computed(() => {
-    const authorities = this.session()?.authorities ?? [];
-    return authorities.includes('mfa:enabled') || false;
-  });
 
   readonly activeView = signal<SecurityView>('overview');
   readonly isLoading = signal(false);
@@ -46,10 +41,6 @@ export class AccountSecurity implements OnInit {
   readonly mfaEnabledLocally = signal(false);
 
   readonly encodeURIComponent = encodeURIComponent;
-
-  ngOnInit(): void {
-    // No initial loading needed — data comes from session
-  }
 
   showView(view: SecurityView): void {
     this.activeView.set(view);

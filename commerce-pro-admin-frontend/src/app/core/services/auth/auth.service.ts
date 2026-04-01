@@ -124,10 +124,6 @@ export class AuthService {
       );
   }
 
-  isMfaEnabled(): boolean {
-    return this.sessionSignal()?.mustChangePassword === true;
-  }
-
   getMustChangePassword(): boolean {
     return this.sessionSignal()?.mustChangePassword ?? false;
   }
