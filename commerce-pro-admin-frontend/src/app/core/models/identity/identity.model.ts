@@ -60,6 +60,14 @@ export interface CreateIdentityRoleRequest {
   allowedIpPatterns?: string;
 }
 
+export interface UpdateIdentityRoleRequest {
+  name?: string;
+  description?: string;
+  requiresMfa?: boolean;
+  sessionTimeoutMinutes?: number;
+  allowedIpPatterns?: string;
+}
+
 export interface IdentityPermission {
   code: string;
   name: string;

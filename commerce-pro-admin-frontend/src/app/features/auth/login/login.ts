@@ -22,6 +22,7 @@ export class Login {
   readonly mfaCode = signal('');
   readonly isLoading = signal(false);
   readonly errorMessage = signal('');
+  readonly year = new Date().getFullYear();
 
   submit(): void {
     this.isLoading.set(true);

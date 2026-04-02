@@ -16,6 +16,7 @@ import {
   IdentityUserDetail,
   ImpersonationToken,
   SuperAdminConfigView,
+  UpdateIdentityRoleRequest,
   UpdateIdentityUserRequest
 } from '../../models/identity';
 import { AuthService } from '../auth/auth.service';
@@ -137,6 +138,18 @@ export class IdentityService {
       .pipe(map(res => res.data), catchError(() => of(null)));
   }
 
+  updateRole(id: string, payload: UpdateIdentityRoleRequest): Observable<IdentityRole | null> {
+    return this.http
+      .put<ApiResponse<IdentityRole>>(`${this.baseUrl}/roles/${id}`, payload, { headers: this.adminHeaders() })
+      .pipe(map(res => res.data), catchError(() => of(null)));
+  }
+
+  deleteRole(id: string): Observable<boolean> {
+    return this.http
+      .delete<ApiResponse<string>>(`${this.baseUrl}/roles/${id}`, { headers: this.adminHeaders() })
+      .pipe(map(() => true), catchError(() => of(false)));
+  }
+
   grantPermissions(roleId: string, permissionCodes: string[]): Observable<boolean> {
     return this.http
       .post<ApiResponse<string>>(`${this.baseUrl}/roles/${roleId}/permissions`, permissionCodes, {
@@ -173,8 +186,17 @@ export class IdentityService {
       .pipe(map(res => res.data), catchError(() => of(null)));
   }
 
-  getAuditLogs(page = 0, size = 10): Observable<PageResponse<AuditLogEntry>> {
-    const params = new HttpParams().set('page', page).set('size', size);
+  deletePermission(code: string): Observable<boolean> {
+    return this.http
+      .delete<ApiResponse<string>>(`${this.baseUrl}/permissions/${code}`, { headers: this.adminHeaders() })
+      .pipe(map(() => true), catchError(() => of(false)));
+  }
+
+  getAuditLogs(page = 0, size = 10, search = '', action = '', successOnly: boolean | null = null): Observable<PageResponse<AuditLogEntry>> {
+    let params = new HttpParams().set('page', page).set('size', size);
+    if (search.trim()) params = params.set('search', search.trim());
+    if (action.trim()) params = params.set('action', action.trim());
+    if (successOnly !== null) params = params.set('success', successOnly);
 
     return this.http
       .get<ApiResponse<PageResponse<AuditLogEntry>>>(`${this.baseUrl}/audit/logs`, { params })

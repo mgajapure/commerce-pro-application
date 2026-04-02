@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
-import { AuditLogEntry, CreateIdentityUserRequest, IdentityUser, IdentityUserDetail } from '../../../core/models/identity';
+import { AuditLogEntry, CreateIdentityUserRequest, IdentityUser, IdentityUserDetail, ImpersonationToken } from '../../../core/models/identity';
 import { IdentityService } from '../../../core/services/identity/identity.service';
 
 type UsersPanel = 'create' | 'assign-roles' | 'user-detail';
@@ -40,6 +40,9 @@ export class IdentityUsers implements OnInit {
   readonly userAuditLogs = signal<AuditLogEntry[]>([]);
   readonly isDetailLoading = signal(false);
   readonly detailTab = signal<'info' | 'audit'>('info');
+
+  // Impersonation
+  readonly impersonationToken = signal<ImpersonationToken | null>(null);
 
   // Action feedback
   readonly actionMessage = signal('');
@@ -127,6 +130,24 @@ export class IdentityUsers implements OnInit {
         this.activePanel.set('create');
       }
     });
+  }
+
+  impersonate(user: IdentityUser): void {
+    this.clearMessages();
+    this.impersonationToken.set(null);
+    this.identityService.impersonateUser(user.id).subscribe(token => {
+      if (!token) {
+        this.actionError.set(`Failed to start impersonation for "${user.username}".`);
+        return;
+      }
+      this.impersonationToken.set(token);
+      this.actionMessage.set(`Impersonation session started for "${user.username}". Token expires: ${new Date(token.expiresAt).toLocaleTimeString()}.`);
+    });
+  }
+
+  clearImpersonation(): void {
+    this.impersonationToken.set(null);
+    this.clearMessages();
   }
 
   viewUserDetail(user: IdentityUser): void {
