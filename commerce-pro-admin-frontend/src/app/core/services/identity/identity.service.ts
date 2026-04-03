@@ -13,7 +13,10 @@ import {
   IdentityPermission,
   IdentityRole,
   IdentityUser,
+  IdentityUserDetail,
+  ImpersonationToken,
   SuperAdminConfigView,
+  UpdateIdentityRoleRequest,
   UpdateIdentityUserRequest
 } from '../../models/identity';
 import { AuthService } from '../auth/auth.service';
@@ -53,6 +56,12 @@ export class IdentityService {
       .pipe(map(res => res.data), catchError(() => of(null)));
   }
 
+  getUserDetail(id: string): Observable<IdentityUserDetail | null> {
+    return this.http
+      .get<ApiResponse<IdentityUserDetail>>(`${this.baseUrl}/users/${id}`)
+      .pipe(map(res => res.data), catchError(() => of(null)));
+  }
+
   updateUser(id: string, payload: UpdateIdentityUserRequest): Observable<IdentityUser | null> {
     return this.http
       .put<ApiResponse<IdentityUser>>(`${this.baseUrl}/users/${id}`, payload, { headers: this.adminHeaders() })
@@ -66,6 +75,40 @@ export class IdentityService {
     return this.http
       .post<ApiResponse<string>>(`${this.baseUrl}/users/${id}/${endpoint}`, {}, { headers: this.adminHeaders(), params })
       .pipe(map(() => true), catchError(() => of(false)));
+  }
+
+  deleteUser(id: string, reason?: string): Observable<boolean> {
+    let params = new HttpParams();
+    if (reason) params = params.set('reason', reason);
+    return this.http
+      .delete<ApiResponse<string>>(`${this.baseUrl}/users/${id}`, { headers: this.adminHeaders(), params })
+      .pipe(map(() => true), catchError(() => of(false)));
+  }
+
+  resetUserPassword(id: string, notifyUser = true): Observable<boolean> {
+    const params = new HttpParams().set('notifyUser', notifyUser);
+    return this.http
+      .post<ApiResponse<string>>(`${this.baseUrl}/users/${id}/reset-password`, {}, { headers: this.adminHeaders(), params })
+      .pipe(map(() => true), catchError(() => of(false)));
+  }
+
+  unlockUserAccount(id: string): Observable<boolean> {
+    return this.http
+      .post<ApiResponse<string>>(`${this.baseUrl}/users/${id}/unlock`, {}, { headers: this.adminHeaders() })
+      .pipe(map(() => true), catchError(() => of(false)));
+  }
+
+  impersonateUser(id: string): Observable<ImpersonationToken | null> {
+    return this.http
+      .post<ApiResponse<ImpersonationToken>>(`${this.baseUrl}/users/${id}/impersonate`, {}, { headers: this.adminHeaders() })
+      .pipe(map(res => res.data), catchError(() => of(null)));
+  }
+
+  getUserAudit(id: string, page = 0, size = 10): Observable<PageResponse<AuditLogEntry>> {
+    const params = new HttpParams().set('page', page).set('size', size);
+    return this.http
+      .get<ApiResponse<PageResponse<AuditLogEntry>>>(`${this.baseUrl}/users/${id}/audit`, { params })
+      .pipe(map(res => res.data), catchError(() => of(this.emptyPage<AuditLogEntry>())));
   }
 
   assignRoles(userId: string, roleCodes: string[]): Observable<boolean> {
@@ -93,6 +136,18 @@ export class IdentityService {
     return this.http
       .post<ApiResponse<IdentityRole>>(`${this.baseUrl}/roles`, payload, { headers: this.adminHeaders() })
       .pipe(map(res => res.data), catchError(() => of(null)));
+  }
+
+  updateRole(id: string, payload: UpdateIdentityRoleRequest): Observable<IdentityRole | null> {
+    return this.http
+      .put<ApiResponse<IdentityRole>>(`${this.baseUrl}/roles/${id}`, payload, { headers: this.adminHeaders() })
+      .pipe(map(res => res.data), catchError(() => of(null)));
+  }
+
+  deleteRole(id: string): Observable<boolean> {
+    return this.http
+      .delete<ApiResponse<string>>(`${this.baseUrl}/roles/${id}`, { headers: this.adminHeaders() })
+      .pipe(map(() => true), catchError(() => of(false)));
   }
 
   grantPermissions(roleId: string, permissionCodes: string[]): Observable<boolean> {
@@ -131,8 +186,17 @@ export class IdentityService {
       .pipe(map(res => res.data), catchError(() => of(null)));
   }
 
-  getAuditLogs(page = 0, size = 10): Observable<PageResponse<AuditLogEntry>> {
-    const params = new HttpParams().set('page', page).set('size', size);
+  deletePermission(code: string): Observable<boolean> {
+    return this.http
+      .delete<ApiResponse<string>>(`${this.baseUrl}/permissions/${code}`, { headers: this.adminHeaders() })
+      .pipe(map(() => true), catchError(() => of(false)));
+  }
+
+  getAuditLogs(page = 0, size = 10, search = '', action = '', successOnly: boolean | null = null): Observable<PageResponse<AuditLogEntry>> {
+    let params = new HttpParams().set('page', page).set('size', size);
+    if (search.trim()) params = params.set('search', search.trim());
+    if (action.trim()) params = params.set('action', action.trim());
+    if (successOnly !== null) params = params.set('success', successOnly);
 
     return this.http
       .get<ApiResponse<PageResponse<AuditLogEntry>>>(`${this.baseUrl}/audit/logs`, { params })

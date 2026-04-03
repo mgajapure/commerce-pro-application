@@ -60,6 +60,14 @@ export interface CreateIdentityRoleRequest {
   allowedIpPatterns?: string;
 }
 
+export interface UpdateIdentityRoleRequest {
+  name?: string;
+  description?: string;
+  requiresMfa?: boolean;
+  sessionTimeoutMinutes?: number;
+  allowedIpPatterns?: string;
+}
+
 export interface IdentityPermission {
   code: string;
   name: string;
@@ -80,6 +88,31 @@ export interface CreateIdentityPermissionRequest {
   riskLevel?: number;
   requiresApproval?: boolean;
   applicableScopes?: string[];
+}
+
+export interface IdentityUserDetail extends IdentityUser {
+  failedLoginAttempts?: number;
+  lockedUntil?: string;
+  mustChangePassword?: boolean;
+  passwordChangedAt?: string;
+  lastLoginIp?: string;
+  roleAssignments?: IdentityRoleAssignment[];
+}
+
+export interface IdentityRoleAssignment {
+  id: string;
+  roleCode: string;
+  roleName: string;
+  status: string;
+  assignedAt: string;
+  assignedBy?: string;
+}
+
+export interface ImpersonationToken {
+  token: string;
+  targetUserId: string;
+  targetUsername: string;
+  expiresAt: string;
 }
 
 export interface AuditLogEntry {
