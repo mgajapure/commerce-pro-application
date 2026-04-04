@@ -1,0 +1,168 @@
+@if (isLoading()) {
+  <div class="flex items-center justify-center py-20">
+    <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600"></div>
+  </div>
+} @else {
+  <div class="space-y-6">
+    <!-- Header -->
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">Security Settings</h1>
+        <p class="mt-1 text-sm text-gray-500">Configure password policies, session management, and access controls.</p>
+      </div>
+      <button
+        (click)="save()"
+        [disabled]="isSaving()"
+        class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+        @if (isSaving()) {
+          <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+          </svg>
+          Saving...
+        } @else {
+          Save Settings
+        }
+      </button>
+    </div>
+
+    <!-- Success / Error Messages -->
+    @if (successMessage()) {
+      <div class="rounded-lg bg-green-50 border border-green-200 p-4">
+        <div class="flex">
+          <svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+          </svg>
+          <p class="ml-3 text-sm font-medium text-green-800">{{ successMessage() }}</p>
+        </div>
+      </div>
+    }
+    @if (errorMessage()) {
+      <div class="rounded-lg bg-red-50 border border-red-200 p-4">
+        <div class="flex">
+          <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+          </svg>
+          <p class="ml-3 text-sm font-medium text-red-800">{{ errorMessage() }}</p>
+        </div>
+      </div>
+    }
+
+    <!-- Password Policy -->
+    <div class="bg-white rounded-lg shadow p-6">
+      <h2 class="text-lg font-semibold text-gray-900 mb-4">Password Policy</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Minimum Length</label>
+          <input type="number" [ngModel]="minLength()" (ngModelChange)="minLength.set($event)"
+            min="6" max="128"
+            class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Password Expiry (days)</label>
+          <input type="number" [ngModel]="expiryDays()" (ngModelChange)="expiryDays.set($event)"
+            min="0" max="365"
+            class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" />
+          <p class="mt-1 text-xs text-gray-500">Set to 0 to disable password expiry.</p>
+        </div>
+        <div class="flex items-center justify-between md:col-span-2">
+          <div class="space-y-4 w-full">
+            <label class="flex items-center justify-between">
+              <span class="text-sm font-medium text-gray-700">Require Uppercase Letters</span>
+              <button (click)="requireUppercase.set(!requireUppercase())" type="button"
+                [class]="requireUppercase() ? 'bg-indigo-600' : 'bg-gray-200'"
+                class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out">
+                <span [class]="requireUppercase() ? 'translate-x-5' : 'translate-x-0'"
+                  class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"></span>
+              </button>
+            </label>
+            <label class="flex items-center justify-between">
+              <span class="text-sm font-medium text-gray-700">Require Numbers</span>
+              <button (click)="requireNumbers.set(!requireNumbers())" type="button"
+                [class]="requireNumbers() ? 'bg-indigo-600' : 'bg-gray-200'"
+                class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out">
+                <span [class]="requireNumbers() ? 'translate-x-5' : 'translate-x-0'"
+                  class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"></span>
+              </button>
+            </label>
+            <label class="flex items-center justify-between">
+              <span class="text-sm font-medium text-gray-700">Require Special Characters</span>
+              <button (click)="requireSpecialChars.set(!requireSpecialChars())" type="button"
+                [class]="requireSpecialChars() ? 'bg-indigo-600' : 'bg-gray-200'"
+                class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out">
+                <span [class]="requireSpecialChars() ? 'translate-x-5' : 'translate-x-0'"
+                  class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"></span>
+              </button>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Session Configuration -->
+    <div class="bg-white rounded-lg shadow p-6">
+      <h2 class="text-lg font-semibold text-gray-900 mb-4">Session Configuration</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Session Timeout (minutes)</label>
+          <input type="number" [ngModel]="timeoutMinutes()" (ngModelChange)="timeoutMinutes.set($event)"
+            min="5" max="1440"
+            class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Max Concurrent Sessions</label>
+          <input type="number" [ngModel]="maxConcurrentSessions()" (ngModelChange)="maxConcurrentSessions.set($event)"
+            min="1" max="10"
+            class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Login Configuration -->
+    <div class="bg-white rounded-lg shadow p-6">
+      <h2 class="text-lg font-semibold text-gray-900 mb-4">Login Configuration</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Max Login Attempts</label>
+          <input type="number" [ngModel]="maxAttempts()" (ngModelChange)="maxAttempts.set($event)"
+            min="1" max="20"
+            class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Lockout Duration (minutes)</label>
+          <input type="number" [ngModel]="lockoutDurationMinutes()" (ngModelChange)="lockoutDurationMinutes.set($event)"
+            min="1" max="1440"
+            class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" />
+        </div>
+      </div>
+    </div>
+
+    <!-- IP Whitelist -->
+    <div class="bg-white rounded-lg shadow p-6">
+      <h2 class="text-lg font-semibold text-gray-900 mb-4">IP Whitelist</h2>
+      <p class="text-sm text-gray-500 mb-4">Restrict admin access to specific IP addresses. Leave empty to allow all.</p>
+      <div class="flex gap-3 mb-4">
+        <input type="text" [ngModel]="newIp()" (ngModelChange)="newIp.set($event)"
+          (keydown.enter)="addIp()"
+          placeholder="e.g. 192.168.1.0/24"
+          class="flex-1 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" />
+        <button (click)="addIp()"
+          class="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors">
+          Add IP
+        </button>
+      </div>
+      @if (ipWhitelist().length > 0) {
+        <div class="space-y-2">
+          @for (ip of ipWhitelist(); track ip) {
+            <div class="flex items-center justify-between bg-gray-50 rounded-lg px-4 py-2">
+              <span class="text-sm font-mono text-gray-700">{{ ip }}</span>
+              <button (click)="removeIp(ip)" class="text-red-500 hover:text-red-700 text-sm font-medium">Remove</button>
+            </div>
+          }
+        </div>
+      } @else {
+        <p class="text-sm text-gray-400 italic">No IP addresses whitelisted. All IPs are allowed.</p>
+      }
+    </div>
+  </div>
+}

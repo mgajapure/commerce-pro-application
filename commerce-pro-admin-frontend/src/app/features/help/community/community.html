@@ -1,0 +1,60 @@
+<div class="p-6 max-w-4xl mx-auto space-y-6">
+  <div>
+    <h1 class="text-2xl font-bold text-gray-900">Community</h1>
+    <p class="text-sm text-gray-500 mt-1">Connect with the Commerce Pro community</p>
+  </div>
+
+  <!-- Community Links -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    @for (link of links; track link.name) {
+      <a [href]="link.url" class="block bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:border-indigo-200 hover:shadow transition-all">
+        <h3 class="text-base font-semibold text-gray-900">{{ link.name }}</h3>
+        <p class="text-sm text-gray-500 mt-1">{{ link.description }}</p>
+      </a>
+    }
+  </div>
+
+  <!-- Featured Discussions -->
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-100">
+      <h2 class="text-lg font-semibold text-gray-900">Featured Discussions</h2>
+    </div>
+    @for (disc of discussions; track disc.title) {
+      <div class="px-6 py-4 border-b border-gray-50 last:border-b-0 hover:bg-gray-50/50">
+        <h3 class="text-sm font-medium text-gray-900">{{ disc.title }}</h3>
+        <div class="flex items-center gap-3 mt-1 text-xs text-gray-500">
+          <span>by {{ disc.author }}</span>
+          <span>{{ disc.replies }} replies</span>
+          <span>{{ disc.date }}</span>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- Changelog -->
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-6">
+    <h2 class="text-lg font-semibold text-gray-900">Release Notes</h2>
+    @for (release of changelog; track release.version) {
+      <div class="border-l-2 border-indigo-200 pl-4">
+        <div class="flex items-center gap-3">
+          <span class="text-sm font-bold text-indigo-600">{{ release.version }}</span>
+          <span class="text-xs text-gray-500">{{ release.date }}</span>
+        </div>
+        <ul class="mt-2 space-y-1">
+          @for (change of release.changes; track change) {
+            <li class="text-sm text-gray-600 flex items-start gap-2">
+              <span class="text-indigo-400 mt-1">-</span>
+              {{ change }}
+            </li>
+          }
+        </ul>
+      </div>
+    }
+  </div>
+
+  <!-- Contributing -->
+  <div class="bg-indigo-50 border border-indigo-200 rounded-2xl p-6">
+    <h2 class="text-lg font-semibold text-indigo-900">Contributing</h2>
+    <p class="text-sm text-indigo-700 mt-2">We welcome contributions! Check out our contributing guidelines on GitHub to get started. Whether it's bug reports, feature requests, or code contributions, every bit helps.</p>
+  </div>
+</div>
