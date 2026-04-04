@@ -103,7 +103,7 @@ export class Product implements OnInit, OnDestroy, AfterViewInit {
     const rows = this.report()?.rows ?? [];
     const q = this.searchQuery().toLowerCase();
     const filtered = q ? rows.filter(r => r.dimension.toLowerCase().includes(q)) : rows;
-    return [...filtered].sort((a, b) => (b.revenue?.toNumber?.() ?? +b.revenue) - (a.revenue?.toNumber?.() ?? +a.revenue));
+    return [...filtered].sort((a, b) => (+b.revenue) - (+a.revenue));
   });
 
   byUnits = computed(() => {

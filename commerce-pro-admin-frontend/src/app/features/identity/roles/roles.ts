@@ -60,6 +60,10 @@ export class IdentityRoles implements OnInit {
     this.createRoleForm.update(current => ({ ...current, [field]: value }));
   }
 
+  updateEditFormField(field: keyof UpdateIdentityRoleRequest, value: string): void {
+    this.editForm.update(current => ({ ...current, [field]: value }));
+  }
+
   createRole(): void {
     this.clearMessages();
     this.identityService.createRole(this.createRoleForm()).subscribe(role => {

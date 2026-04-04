@@ -151,11 +151,11 @@
               </div>
               <div>
                 <label class="text-xs font-medium text-gray-600">Role Name</label>
-                <input class="mt-1 w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400" [ngModel]="editForm().name" (ngModelChange)="editForm.update(f => ({...f, name: $event}))" />
+                <input class="mt-1 w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400" [ngModel]="editForm().name" (ngModelChange)="updateEditFormField('name', $event)" />
               </div>
               <div>
                 <label class="text-xs font-medium text-gray-600">Description</label>
-                <textarea class="mt-1 w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 resize-none" rows="3" [ngModel]="editForm().description" (ngModelChange)="editForm.update(f => ({...f, description: $event}))"></textarea>
+                <textarea class="mt-1 w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 resize-none" rows="3" [ngModel]="editForm().description" (ngModelChange)="updateEditFormField('description', $event)"></textarea>
               </div>
               <button (click)="saveEdit()" class="w-full px-4 py-2.5 bg-indigo-600 text-white rounded-xl shadow-sm shadow-indigo-200 hover:bg-indigo-700 text-sm font-medium transition-colors">
                 Save Changes
