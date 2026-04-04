@@ -88,6 +88,26 @@ export const routes: Routes = [
     loadChildren: () => import('./features/ai/ai.route').then(m => m.AI_ROUTES)
   },
   {
+    path: 'security',
+    canActivate: [authGuard],
+    loadChildren: () => import('./features/security/security.route').then(m => m.SECURITY_ROUTES)
+  },
+  {
+    path: 'system',
+    canActivate: [authGuard],
+    loadChildren: () => import('./features/system/system.route').then(m => m.SYSTEM_ROUTES)
+  },
+  {
+    path: 'settings',
+    canActivate: [authGuard],
+    loadChildren: () => import('./features/settings/settings.route').then(m => m.SETTINGS_ROUTES)
+  },
+  {
+    path: 'help',
+    canActivate: [authGuard],
+    loadChildren: () => import('./features/help/help.route').then(m => m.HELP_ROUTES)
+  },
+  {
     path: '**',
     redirectTo: 'dashboard'
   }

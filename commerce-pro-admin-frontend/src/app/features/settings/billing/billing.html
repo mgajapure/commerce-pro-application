@@ -1,0 +1,93 @@
+<div class="p-6 max-w-4xl mx-auto space-y-6">
+  <div>
+    <h1 class="text-2xl font-bold text-gray-900">Billing & Plan</h1>
+    <p class="text-sm text-gray-500 mt-1">Manage your subscription and billing information</p>
+  </div>
+
+  @if (loading()) {
+    <div class="text-center py-12 text-gray-500">Loading billing info...</div>
+  } @else {
+    <!-- Current Plan -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-lg font-semibold text-gray-900">Current Plan</h2>
+          <div class="mt-2 space-y-1">
+            <p class="text-2xl font-bold text-indigo-600">{{ plan() }} <span class="text-base font-normal text-gray-500">${{ price() }}/{{ billingCycle() }}</span></p>
+            <p class="text-sm text-gray-500">Next billing: {{ nextBillingDate() }}</p>
+            <span class="inline-block px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-800">{{ status() }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Usage -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+      <h2 class="text-lg font-semibold text-gray-900 mb-4">Current Usage</h2>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="p-4 bg-gray-50 rounded-xl">
+          <p class="text-xs text-gray-500 uppercase font-medium">Orders (this month)</p>
+          <p class="text-2xl font-bold text-gray-900 mt-1">{{ usage().ordersThisMonth | number }}</p>
+        </div>
+        <div class="p-4 bg-gray-50 rounded-xl">
+          <p class="text-xs text-gray-500 uppercase font-medium">Products</p>
+          <p class="text-2xl font-bold text-gray-900 mt-1">{{ usage().products | number }}</p>
+        </div>
+        <div class="p-4 bg-gray-50 rounded-xl">
+          <p class="text-xs text-gray-500 uppercase font-medium">Storage</p>
+          <p class="text-2xl font-bold text-gray-900 mt-1">{{ (usage().storageUsedMb / 1024).toFixed(1) }} GB</p>
+        </div>
+        <div class="p-4 bg-gray-50 rounded-xl">
+          <p class="text-xs text-gray-500 uppercase font-medium">API Calls</p>
+          <p class="text-2xl font-bold text-gray-900 mt-1">{{ usage().apiCalls | number }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Payment Method -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+      <h2 class="text-lg font-semibold text-gray-900 mb-4">Payment Method</h2>
+      <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
+        <div class="w-12 h-8 bg-indigo-100 rounded-lg flex items-center justify-center text-xs font-bold text-indigo-700">
+          {{ paymentMethod().type }}
+        </div>
+        <div>
+          <p class="text-sm font-medium text-gray-900">{{ paymentMethod().type }} ending in {{ paymentMethod().last4 }}</p>
+          <p class="text-xs text-gray-500">Expires {{ paymentMethod().expiry }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Billing History -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div class="px-6 py-4 border-b border-gray-100">
+        <h2 class="text-lg font-semibold text-gray-900">Billing History</h2>
+      </div>
+      <table class="w-full">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Date</th>
+            <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Description</th>
+            <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Amount</th>
+            <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of history(); track item.date) {
+            <tr class="border-t border-gray-100">
+              <td class="px-6 py-4 text-sm text-gray-900">{{ item.date }}</td>
+              <td class="px-6 py-4 text-sm text-gray-600">{{ item.description }}</td>
+              <td class="px-6 py-4 text-sm font-medium text-gray-900">${{ item.amount }}</td>
+              <td class="px-6 py-4">
+                <span class="px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-800">{{ item.status }}</span>
+              </td>
+            </tr>
+          }
+          @if (history().length === 0) {
+            <tr><td colspan="4" class="px-6 py-8 text-center text-gray-500">No billing history</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

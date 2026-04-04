@@ -1,0 +1,181 @@
+<div class="min-h-screen bg-gray-50/50 p-4 sm:p-6 lg:p-8">
+  <div class="max-w-[1600px] mx-auto space-y-6">
+
+    <!-- Header -->
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">Integrations</h1>
+        <p class="text-gray-500 mt-1 text-sm">Connect external services and manage third-party integrations</p>
+      </div>
+      <button (click)="openAdd()"
+        class="px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 transition-all flex items-center gap-2 shadow-lg shadow-indigo-200">
+        <i class="bi bi-plus-lg"></i> Add Integration
+      </button>
+    </div>
+
+    <!-- Message -->
+    @if (message(); as msg) {
+      <div class="rounded-xl p-4 flex items-center gap-3"
+        [class]="msg.type === 'success' ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700'">
+        <i class="bi" [class]="msg.type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-circle-fill'"></i>
+        <span class="text-sm font-medium">{{ msg.text }}</span>
+      </div>
+    }
+
+    <!-- Filters -->
+    <div class="flex flex-wrap gap-3 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+      <div class="relative flex-1 min-w-[200px]">
+        <i class="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+        <input type="text" placeholder="Search integrations..."
+          class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+          [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)">
+      </div>
+      <select class="px-4 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+        [ngModel]="filterType()" (ngModelChange)="filterType.set($event)">
+        <option value="">All Types</option>
+        @for (t of integrationTypes; track t) {
+          <option [value]="t">{{ t }}</option>
+        }
+      </select>
+    </div>
+
+    <!-- Loading -->
+    @if (isLoading()) {
+      <div class="flex items-center justify-center py-20">
+        <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600"></div>
+      </div>
+    } @else {
+      <!-- Table -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead>
+              <tr class="border-b border-gray-100 bg-gray-50/50">
+                <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Name</th>
+                <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Type</th>
+                <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Last Synced</th>
+                <th class="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-50">
+              @for (item of filtered(); track item.id) {
+                <tr class="hover:bg-gray-50/50 transition-colors">
+                  <td class="px-6 py-4">
+                    <span class="text-sm font-medium text-gray-900">{{ item.name }}</span>
+                  </td>
+                  <td class="px-6 py-4">
+                    <span class="px-2.5 py-1 bg-indigo-50 text-indigo-700 text-xs font-medium rounded-full">{{ item.type }}</span>
+                  </td>
+                  <td class="px-6 py-4">
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full {{ getStatusColor(item.status) }}">
+                      <span class="w-1.5 h-1.5 rounded-full {{ getStatusDot(item.status) }}"></span>
+                      {{ item.status }}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 text-sm text-gray-500">
+                    {{ item.lastSyncedAt ? (item.lastSyncedAt | date:'medium') : 'Never' }}
+                  </td>
+                  <td class="px-6 py-4">
+                    <div class="flex items-center justify-end gap-2">
+                      <button (click)="testConnection(item)"
+                        class="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                        [disabled]="testingId() === item.id" title="Test Connection">
+                        @if (testingId() === item.id) {
+                          <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-600"></div>
+                        } @else {
+                          <i class="bi bi-lightning-charge"></i>
+                        }
+                      </button>
+                      @if (testResult()?.id === item.id) {
+                        <span class="text-xs font-medium" [class]="testResult()?.success ? 'text-green-600' : 'text-red-600'">
+                          {{ testResult()?.success ? 'OK' : 'Fail' }}
+                        </span>
+                      }
+                      <button (click)="openEdit(item)"
+                        class="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="Edit">
+                        <i class="bi bi-pencil"></i>
+                      </button>
+                      <button (click)="delete(item)"
+                        class="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Delete">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="5" class="px-6 py-16 text-center">
+                    <div class="flex flex-col items-center gap-3">
+                      <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                        <i class="bi bi-plug text-gray-400 text-xl"></i>
+                      </div>
+                      <p class="text-gray-500 text-sm">No integrations found</p>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+
+    <!-- Slide Panel -->
+    @if (showPanel()) {
+      <div class="fixed inset-0 z-50 flex justify-end">
+        <div class="absolute inset-0 bg-black/30" (click)="closePanel()"></div>
+        <div class="relative w-full max-w-lg bg-white shadow-xl flex flex-col animate-slide-in">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+            <h2 class="text-lg font-semibold text-gray-900">
+              {{ editingIntegration() ? 'Edit Integration' : 'Add Integration' }}
+            </h2>
+            <button (click)="closePanel()" class="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </div>
+          <div class="flex-1 overflow-y-auto p-6 space-y-5">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Name</label>
+              <input type="text" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                [ngModel]="formName()" (ngModelChange)="formName.set($event)" placeholder="Integration name">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Type</label>
+              <select class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                [ngModel]="formType()" (ngModelChange)="formType.set($event)">
+                @for (t of integrationTypes; track t) {
+                  <option [value]="t">{{ t }}</option>
+                }
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Configuration (JSON)</label>
+              <textarea rows="6"
+                class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm font-mono focus:ring-2 focus:ring-indigo-500 outline-none"
+                [ngModel]="formConfig()" (ngModelChange)="formConfig.set($event)"></textarea>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Credentials (JSON)</label>
+              <textarea rows="4"
+                class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm font-mono focus:ring-2 focus:ring-indigo-500 outline-none"
+                [ngModel]="formCredentials()" (ngModelChange)="formCredentials.set($event)"></textarea>
+            </div>
+          </div>
+          <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-end gap-3">
+            <button (click)="closePanel()" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50">
+              Cancel
+            </button>
+            <button (click)="save()" [disabled]="isSaving() || !formName()"
+              class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-2">
+              @if (isSaving()) {
+                <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+              }
+              {{ editingIntegration() ? 'Update' : 'Create' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</div>
