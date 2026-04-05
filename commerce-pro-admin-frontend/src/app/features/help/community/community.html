@@ -1,60 +1,90 @@
-<div class="p-6 max-w-4xl mx-auto space-y-6">
-  <div>
-    <h1 class="text-2xl font-bold text-gray-900">Community</h1>
-    <p class="text-sm text-gray-500 mt-1">Connect with the Commerce Pro community</p>
-  </div>
+<div class="min-h-screen bg-gray-50/50 p-4 sm:p-6 lg:p-8">
+  <div class="max-w-[1600px] mx-auto space-y-6">
 
-  <!-- Community Links -->
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-    @for (link of links; track link.name) {
-      <a [href]="link.url" class="block bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:border-indigo-200 hover:shadow transition-all">
-        <h3 class="text-base font-semibold text-gray-900">{{ link.name }}</h3>
-        <p class="text-sm text-gray-500 mt-1">{{ link.description }}</p>
-      </a>
-    }
-  </div>
-
-  <!-- Featured Discussions -->
-  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-    <div class="px-6 py-4 border-b border-gray-100">
-      <h2 class="text-lg font-semibold text-gray-900">Featured Discussions</h2>
+    <!-- Header -->
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">Community</h1>
+        <p class="text-gray-500 mt-1 text-sm">Connect with the Commerce Pro community</p>
+      </div>
+      <button (click)="showHelp.set(true)" class="p-2.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors" title="Help"><i class="bi bi-question-circle text-lg"></i></button>
     </div>
-    @for (disc of discussions; track disc.title) {
-      <div class="px-6 py-4 border-b border-gray-50 last:border-b-0 hover:bg-gray-50/50">
-        <h3 class="text-sm font-medium text-gray-900">{{ disc.title }}</h3>
-        <div class="flex items-center gap-3 mt-1 text-xs text-gray-500">
-          <span>by {{ disc.author }}</span>
-          <span>{{ disc.replies }} replies</span>
-          <span>{{ disc.date }}</span>
-        </div>
-      </div>
-    }
-  </div>
 
-  <!-- Changelog -->
-  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-6">
-    <h2 class="text-lg font-semibold text-gray-900">Release Notes</h2>
-    @for (release of changelog; track release.version) {
-      <div class="border-l-2 border-indigo-200 pl-4">
-        <div class="flex items-center gap-3">
-          <span class="text-sm font-bold text-indigo-600">{{ release.version }}</span>
-          <span class="text-xs text-gray-500">{{ release.date }}</span>
+    <!-- Community Links -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      @for (link of links; track link.name) {
+        <a [href]="link.url"
+          class="flex items-center gap-4 bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:border-indigo-200 hover:shadow-md transition-all group">
+          <div class="w-12 h-12 {{ link.color }} rounded-xl flex items-center justify-center flex-shrink-0">
+            <i class="bi {{ link.icon }} text-white text-xl"></i>
+          </div>
+          <div class="flex-1 min-w-0">
+            <h3 class="text-base font-semibold text-gray-900 group-hover:text-indigo-700 transition-colors">{{ link.name }}</h3>
+            <p class="text-sm text-gray-500 mt-0.5">{{ link.description }}</p>
+          </div>
+          <i class="bi bi-arrow-right text-gray-300 group-hover:text-indigo-500 transition-colors"></i>
+        </a>
+      }
+    </div>
+
+    <!-- Featured Discussions -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div class="px-6 py-4 border-b border-gray-100">
+        <h2 class="text-lg font-bold text-gray-900 flex items-center gap-2"><i class="bi bi-chat-left-text text-indigo-500"></i> Featured Discussions</h2>
+      </div>
+      @if (discussions.length === 0) {
+        <div class="p-12 text-center">
+          <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4"><i class="bi bi-chat-dots text-2xl text-gray-400"></i></div>
+          <h3 class="text-sm font-semibold text-gray-900">No Discussions Yet</h3>
+          <p class="text-xs text-gray-500 mt-1">Be the first to start a discussion</p>
         </div>
-        <ul class="mt-2 space-y-1">
-          @for (change of release.changes; track change) {
-            <li class="text-sm text-gray-600 flex items-start gap-2">
-              <span class="text-indigo-400 mt-1">-</span>
-              {{ change }}
-            </li>
+      } @else {
+        <div class="divide-y divide-gray-50">
+          @for (disc of discussions; track disc.title) {
+            <div class="px-6 py-4 hover:bg-gray-50/50 transition-colors cursor-pointer">
+              <h3 class="text-sm font-medium text-gray-900 hover:text-indigo-700 transition-colors">{{ disc.title }}</h3>
+              <div class="flex items-center gap-4 mt-2 text-xs text-gray-500">
+                <span class="flex items-center gap-1"><i class="bi bi-person"></i> {{ disc.author }}</span>
+                <span class="flex items-center gap-1"><i class="bi bi-chat"></i> {{ disc.replies }} replies</span>
+                <span class="flex items-center gap-1"><i class="bi bi-calendar3"></i> {{ disc.date }}</span>
+              </div>
+            </div>
           }
-        </ul>
-      </div>
-    }
-  </div>
+        </div>
+      }
+    </div>
 
-  <!-- Contributing -->
-  <div class="bg-indigo-50 border border-indigo-200 rounded-2xl p-6">
-    <h2 class="text-lg font-semibold text-indigo-900">Contributing</h2>
-    <p class="text-sm text-indigo-700 mt-2">We welcome contributions! Check out our contributing guidelines on GitHub to get started. Whether it's bug reports, feature requests, or code contributions, every bit helps.</p>
+    <!-- Release Notes -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-6">
+      <h2 class="text-lg font-bold text-gray-900 flex items-center gap-2"><i class="bi bi-megaphone text-indigo-500"></i> Release Notes</h2>
+      @for (release of changelog; track release.version) {
+        <div class="border-l-3 border-indigo-300 pl-5 relative">
+          <div class="absolute -left-[7px] top-0 w-3 h-3 bg-indigo-500 rounded-full border-2 border-white"></div>
+          <div class="flex items-center gap-3 mb-2">
+            <span class="px-2.5 py-1 text-xs font-bold text-indigo-700 bg-indigo-100 rounded-lg">{{ release.version }}</span>
+            <span class="text-xs text-gray-500">{{ release.date }}</span>
+          </div>
+          <ul class="space-y-1.5">
+            @for (change of release.changes; track change) {
+              <li class="text-sm text-gray-600 flex items-start gap-2">
+                <i class="bi bi-check-circle text-indigo-400 mt-0.5 text-xs"></i>
+                {{ change }}
+              </li>
+            }
+          </ul>
+        </div>
+      }
+    </div>
+
+    <!-- Contributing -->
+    <div class="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-2xl p-6">
+      <div class="flex items-center gap-3 mb-3">
+        <div class="w-10 h-10 bg-indigo-200 rounded-xl flex items-center justify-center"><i class="bi bi-heart text-indigo-700"></i></div>
+        <h2 class="text-lg font-bold text-indigo-900">Contributing</h2>
+      </div>
+      <p class="text-sm text-indigo-700">We welcome contributions! Check out our contributing guidelines on GitHub to get started. Whether it's bug reports, feature requests, or code contributions, every bit helps.</p>
+    </div>
+
+    <app-help-sidebar [isOpen]="showHelp()" title="Community Help" [sections]="helpSections" (closed)="showHelp.set(false)"></app-help-sidebar>
   </div>
 </div>

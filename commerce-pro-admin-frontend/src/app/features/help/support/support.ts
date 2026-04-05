@@ -1,29 +1,40 @@
-import { Component, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { AlertService } from '../../../shared/services/alert.service';
+import { HelpSidebar, HelpSection } from '../../../shared/components/help-sidebar/help-sidebar';
+import { TooltipLabel } from '../../../shared/components/tooltip-label/tooltip-label';
 
 @Component({
   selector: 'app-contact-support',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, HelpSidebar, TooltipLabel],
   templateUrl: './support.html',
   styles: [`:host { display: block; }`]
 })
 export class ContactSupport {
+  private alertSvc = inject(AlertService);
+
   name = signal('');
   email = signal('');
   subject = signal('');
   category = signal('general');
   priority = signal('medium');
   message = signal('');
-  submitted = signal(false);
   submitting = signal(false);
 
+  showHelp = signal(false);
+  helpSections: HelpSection[] = [
+    { title: 'Submitting Tickets', content: 'Fill out the form with details about your issue. Choose the appropriate category and priority for faster routing.' },
+    { title: 'Priority Levels', content: 'Low: General questions. Medium: Non-urgent issues. High: Business-impacting issues. Critical: System down or data loss.' },
+    { title: 'Response Times', content: 'Critical: 1 hour. High: 4 hours. Medium: 24 hours. Low: 48 hours.' }
+  ];
+
   categories = [
-    { value: 'bug', label: 'Bug Report' },
-    { value: 'feature', label: 'Feature Request' },
-    { value: 'billing', label: 'Billing' },
-    { value: 'general', label: 'General Inquiry' },
+    { value: 'bug', label: 'Bug Report', icon: 'bi-bug' },
+    { value: 'feature', label: 'Feature Request', icon: 'bi-lightbulb' },
+    { value: 'billing', label: 'Billing', icon: 'bi-credit-card' },
+    { value: 'general', label: 'General Inquiry', icon: 'bi-chat-dots' },
   ];
 
   recentTickets = [
@@ -33,15 +44,16 @@ export class ContactSupport {
   ];
 
   submit() {
-    if (!this.name() || !this.email() || !this.subject() || !this.message()) return;
+    if (!this.name() || !this.email() || !this.subject() || !this.message()) {
+      this.alertSvc.warning('Missing Fields', 'Please fill in all required fields');
+      return;
+    }
     this.submitting.set(true);
     setTimeout(() => {
       this.submitting.set(false);
-      this.submitted.set(true);
-      this.name.set('');
-      this.email.set('');
-      this.subject.set('');
-      this.message.set('');
+      this.alertSvc.success('Ticket Submitted', 'We\'ll get back to you within 24 hours');
+      this.name.set(''); this.email.set('');
+      this.subject.set(''); this.message.set('');
     }, 1000);
   }
 
@@ -51,6 +63,15 @@ export class ContactSupport {
       case 'resolved': return 'bg-green-100 text-green-700';
       case 'in-progress': return 'bg-yellow-100 text-yellow-700';
       default: return 'bg-gray-100 text-gray-700';
+    }
+  }
+
+  statusIcon(status: string): string {
+    switch (status) {
+      case 'open': return 'bi-circle';
+      case 'resolved': return 'bi-check-circle-fill';
+      case 'in-progress': return 'bi-arrow-repeat';
+      default: return 'bi-circle';
     }
   }
 }

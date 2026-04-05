@@ -1,113 +1,136 @@
-<div class="p-6 max-w-4xl mx-auto space-y-6">
-  <div>
-    <h1 class="text-2xl font-bold text-gray-900">Notification Settings</h1>
-    <p class="text-sm text-gray-500 mt-1">Configure email, SMS, and push notification channels</p>
-  </div>
+<div class="min-h-screen bg-gray-50/50 p-4 sm:p-6 lg:p-8">
+  <div class="max-w-[1600px] mx-auto space-y-6">
 
-  @if (success()) {
-    <div class="px-4 py-3 rounded-xl bg-green-50 border border-green-200 text-green-800 text-sm">Notification settings saved.</div>
-  }
-  @if (error()) {
-    <div class="px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-800 text-sm">{{ error() }}</div>
-  }
-
-  @if (loading()) {
-    <div class="text-center py-12 text-gray-500">Loading notification settings...</div>
-  } @else {
-    <!-- Email -->
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-4">
-      <div class="flex items-center justify-between">
-        <h2 class="text-lg font-semibold text-gray-900">Email Notifications</h2>
-        <label class="relative inline-flex items-center cursor-pointer">
-          <input type="checkbox" class="sr-only peer" [ngModel]="emailEnabled()" (ngModelChange)="emailEnabled.set($event)">
-          <div class="w-11 h-6 bg-gray-200 peer-focus:ring-2 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
-        </label>
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">Notification Settings</h1>
+        <p class="text-gray-500 mt-1 text-sm">Configure email, SMS, and push notification channels</p>
       </div>
-      @if (emailEnabled()) {
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">From Email</label>
-            <input type="email" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"
-                   [ngModel]="emailFrom()" (ngModelChange)="emailFrom.set($event)">
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">From Name</label>
-            <input type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"
-                   [ngModel]="emailFromName()" (ngModelChange)="emailFromName.set($event)">
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">SMTP Host</label>
-            <input type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"
-                   [ngModel]="smtpHost()" (ngModelChange)="smtpHost.set($event)">
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">SMTP Port</label>
-            <input type="number" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"
-                   [ngModel]="smtpPort()" (ngModelChange)="smtpPort.set($event)">
-          </div>
-        </div>
-        <label class="flex items-center gap-3">
-          <input type="checkbox" class="rounded border-gray-300 text-indigo-600" [ngModel]="smtpUseTls()" (ngModelChange)="smtpUseTls.set($event)">
-          <span class="text-sm text-gray-700">Use TLS encryption</span>
-        </label>
-      }
-    </div>
-
-    <!-- SMS -->
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-4">
-      <div class="flex items-center justify-between">
-        <h2 class="text-lg font-semibold text-gray-900">SMS Notifications</h2>
-        <label class="relative inline-flex items-center cursor-pointer">
-          <input type="checkbox" class="sr-only peer" [ngModel]="smsEnabled()" (ngModelChange)="smsEnabled.set($event)">
-          <div class="w-11 h-6 bg-gray-200 peer-focus:ring-2 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
-        </label>
-      </div>
-      @if (smsEnabled()) {
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Provider</label>
-          <select class="w-full max-w-xs px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"
-                  [ngModel]="smsProvider()" (ngModelChange)="smsProvider.set($event)">
-            <option value="twilio">Twilio</option>
-            <option value="nexmo">Nexmo / Vonage</option>
-            <option value="aws_sns">AWS SNS</option>
-          </select>
-        </div>
-      }
-    </div>
-
-    <!-- Push -->
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-      <div class="flex items-center justify-between">
-        <div>
-          <h2 class="text-lg font-semibold text-gray-900">Push Notifications</h2>
-          <p class="text-sm text-gray-500 mt-1">Browser and mobile push notifications</p>
-        </div>
-        <label class="relative inline-flex items-center cursor-pointer">
-          <input type="checkbox" class="sr-only peer" [ngModel]="pushEnabled()" (ngModelChange)="pushEnabled.set($event)">
-          <div class="w-11 h-6 bg-gray-200 peer-focus:ring-2 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
-        </label>
+      <div class="flex items-center gap-3">
+        <button (click)="showHelp.set(true)" class="p-2.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors" title="Help"><i class="bi bi-question-circle text-lg"></i></button>
+        <button (click)="save()" [disabled]="saving()"
+          class="px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 transition-all flex items-center gap-2 shadow-lg shadow-indigo-200 disabled:opacity-50">
+          @if (saving()) { <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div> }
+          <i class="bi bi-check-lg"></i> Save Changes
+        </button>
       </div>
     </div>
 
-    <!-- Templates -->
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-4">
-      <h2 class="text-lg font-semibold text-gray-900">Notification Templates</h2>
-      <div class="space-y-3">
-        @for (tpl of templateList; track tpl.key) {
-          <div class="flex items-center justify-between p-3 border rounded-xl">
-            <span class="text-sm text-gray-700">{{ tpl.label }}</span>
-            <label class="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" class="sr-only peer" [checked]="templates()[tpl.key]" (change)="toggleTemplate(tpl.key)">
-              <div class="w-9 h-5 bg-gray-200 peer-focus:ring-2 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
+    @if (loading()) {
+      <div class="space-y-4">
+        @for (i of [1,2,3,4]; track i) {
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 animate-pulse">
+            <div class="h-5 bg-gray-200 rounded w-40 mb-4"></div>
+            <div class="grid grid-cols-2 gap-4"><div class="h-10 bg-gray-200 rounded-xl"></div><div class="h-10 bg-gray-200 rounded-xl"></div></div>
+          </div>
+        }
+      </div>
+    } @else {
+      <!-- Email Notifications -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-bold text-gray-900 flex items-center gap-2"><i class="bi bi-envelope text-indigo-500"></i> Email Notifications</h2>
+          <div class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" class="sr-only peer" [checked]="emailEnabled()" (change)="emailEnabled.set(!emailEnabled())">
+            <div class="w-11 h-6 bg-gray-200 peer-focus:ring-2 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+          </div>
+        </div>
+        @if (emailEnabled()) {
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div>
+              <app-tooltip-label label="From Email" tooltip="The email address notifications are sent from"></app-tooltip-label>
+              <input type="email" [ngModel]="emailFrom()" (ngModelChange)="emailFrom.set($event)"
+                class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="noreply@store.com">
+            </div>
+            <div>
+              <app-tooltip-label label="From Name" tooltip="Display name shown in the email sender field"></app-tooltip-label>
+              <input type="text" [ngModel]="emailFromName()" (ngModelChange)="emailFromName.set($event)"
+                class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="My Store">
+            </div>
+            <div>
+              <app-tooltip-label label="SMTP Host" tooltip="The SMTP server hostname for sending emails"></app-tooltip-label>
+              <input type="text" [ngModel]="smtpHost()" (ngModelChange)="smtpHost.set($event)"
+                class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="smtp.example.com">
+            </div>
+            <div>
+              <app-tooltip-label label="SMTP Port" tooltip="The port number for SMTP connection (usually 587 or 465)"></app-tooltip-label>
+              <input type="number" [ngModel]="smtpPort()" (ngModelChange)="smtpPort.set($event)"
+                class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+            </div>
+          </div>
+          <div class="mt-4">
+            <label class="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors cursor-pointer">
+              <div>
+                <span class="text-sm font-medium text-gray-900">Use TLS Encryption</span>
+                <p class="text-xs text-gray-500 mt-0.5">Encrypt email communication with the SMTP server</p>
+              </div>
+              <div class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" class="sr-only peer" [checked]="smtpUseTls()" (change)="smtpUseTls.set(!smtpUseTls())">
+                <div class="w-11 h-6 bg-gray-200 peer-focus:ring-2 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+              </div>
             </label>
           </div>
         }
       </div>
-    </div>
 
-    <button (click)="save()" [disabled]="saving()"
-            class="px-6 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-xl hover:bg-indigo-700 disabled:opacity-50">
-      {{ saving() ? 'Saving...' : 'Save Notification Settings' }}
-    </button>
-  }
+      <!-- SMS Notifications -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-bold text-gray-900 flex items-center gap-2"><i class="bi bi-chat-dots text-indigo-500"></i> SMS Notifications</h2>
+          <div class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" class="sr-only peer" [checked]="smsEnabled()" (change)="smsEnabled.set(!smsEnabled())">
+            <div class="w-11 h-6 bg-gray-200 peer-focus:ring-2 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+          </div>
+        </div>
+        @if (smsEnabled()) {
+          <div>
+            <app-tooltip-label label="SMS Provider" tooltip="The SMS gateway provider for sending text messages"></app-tooltip-label>
+            <select [ngModel]="smsProvider()" (ngModelChange)="smsProvider.set($event)"
+              class="w-full max-w-xs px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+              <option value="twilio">Twilio</option>
+              <option value="nexmo">Nexmo / Vonage</option>
+              <option value="aws_sns">AWS SNS</option>
+            </select>
+          </div>
+        }
+      </div>
+
+      <!-- Push Notifications -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-lg font-bold text-gray-900 flex items-center gap-2"><i class="bi bi-bell text-indigo-500"></i> Push Notifications</h2>
+            <p class="text-sm text-gray-500 mt-1">Browser and mobile push notifications for real-time alerts</p>
+          </div>
+          <div class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" class="sr-only peer" [checked]="pushEnabled()" (change)="pushEnabled.set(!pushEnabled())">
+            <div class="w-11 h-6 bg-gray-200 peer-focus:ring-2 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Notification Templates -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <h2 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2"><i class="bi bi-file-earmark-text text-indigo-500"></i> Notification Templates</h2>
+        <div class="space-y-3">
+          @for (tpl of templateList; track tpl.key) {
+            <label class="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors cursor-pointer">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 bg-indigo-100 rounded-lg flex items-center justify-center">
+                  <i class="bi {{ tpl.icon }} text-indigo-600"></i>
+                </div>
+                <span class="text-sm font-medium text-gray-900">{{ tpl.label }}</span>
+              </div>
+              <div class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" class="sr-only peer" [checked]="templates()[tpl.key]" (change)="toggleTemplate(tpl.key)">
+                <div class="w-11 h-6 bg-gray-200 peer-focus:ring-2 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+              </div>
+            </label>
+          }
+        </div>
+      </div>
+    }
+
+    <app-help-sidebar [isOpen]="showHelp()" title="Notification Settings Help" [sections]="helpSections" (closed)="showHelp.set(false)"></app-help-sidebar>
+  </div>
 </div>

@@ -1,22 +1,26 @@
-import { Component, signal, computed, inject, OnInit } from '@angular/core';
+import { Component, signal, inject, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Subject, takeUntil } from 'rxjs';
 import { SecurityService, SecuritySettings as SecuritySettingsModel } from '../security.service';
+import { AlertService } from '../../../shared/services/alert.service';
+import { HelpSidebar, HelpSection } from '../../../shared/components/help-sidebar/help-sidebar';
+import { TooltipLabel } from '../../../shared/components/tooltip-label/tooltip-label';
 
 @Component({
   selector: 'app-security-settings',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, HelpSidebar, TooltipLabel],
   templateUrl: './settings.html',
   styles: [`:host { display: block; }`]
 })
-export class SecuritySettings implements OnInit {
+export class SecuritySettings implements OnInit, OnDestroy {
   private securityService = inject(SecurityService);
+  private alertSvc = inject(AlertService);
+  private destroy$ = new Subject<void>();
 
   isLoading = signal(true);
   isSaving = signal(false);
-  successMessage = signal('');
-  errorMessage = signal('');
 
   // Password policy
   minLength = signal(8);
@@ -37,8 +41,17 @@ export class SecuritySettings implements OnInit {
   ipWhitelist = signal<string[]>([]);
   newIp = signal('');
 
+  // Help
+  showHelp = signal(false);
+  helpSections: HelpSection[] = [
+    { title: 'Password Policy', content: 'Configure minimum password requirements to ensure account security. Require uppercase, numbers, and special characters.' },
+    { title: 'Session Management', content: 'Set session timeout and concurrent session limits. Shorter timeouts improve security but may inconvenience users.' },
+    { title: 'Login Protection', content: 'Configure maximum login attempts before account lockout. This prevents brute-force attacks.' },
+    { title: 'IP Whitelist', content: 'Restrict admin access to specific IP addresses. Leave empty to allow all IPs.' }
+  ];
+
   ngOnInit() {
-    this.securityService.getSecuritySettings().subscribe(settings => {
+    this.securityService.getSecuritySettings().pipe(takeUntil(this.destroy$)).subscribe(settings => {
       this.minLength.set(settings.passwordPolicy.minLength);
       this.requireUppercase.set(settings.passwordPolicy.requireUppercase);
       this.requireNumbers.set(settings.passwordPolicy.requireNumbers);
@@ -52,6 +65,8 @@ export class SecuritySettings implements OnInit {
       this.isLoading.set(false);
     });
   }
+
+  ngOnDestroy() { this.destroy$.next(); this.destroy$.complete(); }
 
   addIp() {
     const ip = this.newIp().trim();
@@ -67,9 +82,6 @@ export class SecuritySettings implements OnInit {
 
   save() {
     this.isSaving.set(true);
-    this.successMessage.set('');
-    this.errorMessage.set('');
-
     const settings: SecuritySettingsModel = {
       passwordPolicy: {
         minLength: this.minLength(),
@@ -89,14 +101,14 @@ export class SecuritySettings implements OnInit {
       ipWhitelist: this.ipWhitelist()
     };
 
-    this.securityService.updateSecuritySettings(settings).subscribe({
+    this.securityService.updateSecuritySettings(settings).pipe(takeUntil(this.destroy$)).subscribe({
       next: () => {
         this.isSaving.set(false);
-        this.successMessage.set('Security settings saved successfully.');
+        this.alertSvc.success('Settings Saved', 'Security settings updated successfully');
       },
       error: () => {
         this.isSaving.set(false);
-        this.errorMessage.set('Failed to save security settings. Please try again.');
+        this.alertSvc.error('Failed', 'Could not save security settings');
       }
     });
   }

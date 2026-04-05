@@ -1,22 +1,26 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Subject, takeUntil } from 'rxjs';
 import { SettingsService } from '../settings.service';
+import { AlertService } from '../../../shared/services/alert.service';
+import { HelpSidebar, HelpSection } from '../../../shared/components/help-sidebar/help-sidebar';
+import { TooltipLabel } from '../../../shared/components/tooltip-label/tooltip-label';
 
 @Component({
   selector: 'app-checkout-settings',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, HelpSidebar, TooltipLabel],
   templateUrl: './checkout.html',
   styles: [`:host { display: block; }`]
 })
-export class CheckoutSettings implements OnInit {
+export class CheckoutSettings implements OnInit, OnDestroy {
   private svc = inject(SettingsService);
+  private alertSvc = inject(AlertService);
+  private destroy$ = new Subject<void>();
 
   loading = signal(true);
   saving = signal(false);
-  success = signal(false);
-  error = signal<string | null>(null);
 
   guestCheckoutEnabled = signal(true);
   minOrderAmount = signal(0);
@@ -33,23 +37,30 @@ export class CheckoutSettings implements OnInit {
     standard: true, express: true, overnight: false, pickup: false
   });
 
+  showHelp = signal(false);
+  helpSections: HelpSection[] = [
+    { title: 'General Options', content: 'Configure guest checkout, order limits, confirmation emails, and terms requirements.' },
+    { title: 'Payment Methods', content: 'Enable or disable payment options available to customers during checkout.' },
+    { title: 'Shipping Methods', content: 'Choose which shipping methods are available for customer orders.' }
+  ];
+
   allPaymentMethods = [
-    { key: 'credit_card', label: 'Credit Card' },
-    { key: 'paypal', label: 'PayPal' },
-    { key: 'bank_transfer', label: 'Bank Transfer' },
-    { key: 'apple_pay', label: 'Apple Pay' },
-    { key: 'google_pay', label: 'Google Pay' }
+    { key: 'credit_card', label: 'Credit Card', icon: 'bi-credit-card' },
+    { key: 'paypal', label: 'PayPal', icon: 'bi-paypal' },
+    { key: 'bank_transfer', label: 'Bank Transfer', icon: 'bi-bank' },
+    { key: 'apple_pay', label: 'Apple Pay', icon: 'bi-apple' },
+    { key: 'google_pay', label: 'Google Pay', icon: 'bi-google' }
   ];
 
   allShippingMethods = [
-    { key: 'standard', label: 'Standard Shipping' },
-    { key: 'express', label: 'Express Shipping' },
-    { key: 'overnight', label: 'Overnight Shipping' },
-    { key: 'pickup', label: 'In-Store Pickup' }
+    { key: 'standard', label: 'Standard Shipping', icon: 'bi-truck' },
+    { key: 'express', label: 'Express Shipping', icon: 'bi-lightning' },
+    { key: 'overnight', label: 'Overnight Shipping', icon: 'bi-airplane' },
+    { key: 'pickup', label: 'In-Store Pickup', icon: 'bi-shop' }
   ];
 
   ngOnInit() {
-    this.svc.getCheckoutSettings().subscribe(data => {
+    this.svc.getCheckoutSettings().pipe(takeUntil(this.destroy$)).subscribe(data => {
       if (data) {
         this.guestCheckoutEnabled.set(data.guestCheckoutEnabled ?? true);
         this.minOrderAmount.set(data.minOrderAmount ?? 0);
@@ -72,14 +83,13 @@ export class CheckoutSettings implements OnInit {
     });
   }
 
+  ngOnDestroy() { this.destroy$.next(); this.destroy$.complete(); }
+
   togglePayment(key: string) { this.paymentMethods.update(m => ({ ...m, [key]: !m[key] })); }
   toggleShipping(key: string) { this.shippingMethods.update(m => ({ ...m, [key]: !m[key] })); }
 
   save() {
     this.saving.set(true);
-    this.success.set(false);
-    this.error.set(null);
-
     const payload = {
       guestCheckoutEnabled: this.guestCheckoutEnabled(),
       minOrderAmount: this.minOrderAmount(),
@@ -91,9 +101,9 @@ export class CheckoutSettings implements OnInit {
       shippingMethods: Object.entries(this.shippingMethods()).filter(([, v]) => v).map(([k]) => k),
     };
 
-    this.svc.updateCheckoutSettings(payload).subscribe({
-      next: () => { this.saving.set(false); this.success.set(true); setTimeout(() => this.success.set(false), 3000); },
-      error: () => { this.saving.set(false); this.error.set('Failed to save checkout settings.'); }
+    this.svc.updateCheckoutSettings(payload).pipe(takeUntil(this.destroy$)).subscribe({
+      next: () => { this.saving.set(false); this.alertSvc.success('Settings Saved', 'Checkout settings updated successfully'); },
+      error: () => { this.saving.set(false); this.alertSvc.error('Failed', 'Could not save checkout settings'); }
     });
   }
 }

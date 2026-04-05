@@ -1,37 +1,71 @@
-<div class="p-6 max-w-4xl mx-auto space-y-6">
-  <div>
-    <h1 class="text-2xl font-bold text-gray-900">Documentation</h1>
-    <p class="text-sm text-gray-500 mt-1">Learn how to use Commerce Pro admin features</p>
-  </div>
+<div class="min-h-screen bg-gray-50/50 p-4 sm:p-6 lg:p-8">
+  <div class="max-w-[1600px] mx-auto space-y-6">
 
-  <input type="text" placeholder="Search documentation..."
-         class="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500"
-         [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)">
-
-  <div class="space-y-3">
-    @for (section of filteredSections(); track section.id) {
-      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <button (click)="toggleSection(section.id)"
-                class="w-full flex items-center justify-between px-6 py-4 hover:bg-gray-50 transition-colors">
-          <h2 class="text-base font-semibold text-gray-900">{{ section.title }}</h2>
-          <span class="text-gray-400 text-lg">{{ expandedSection() === section.id ? '-' : '+' }}</span>
-        </button>
-
-        @if (expandedSection() === section.id) {
-          <div class="border-t border-gray-100 px-6 py-4 space-y-3">
-            @for (item of section.items; track item.title) {
-              <a [routerLink]="item.link" class="block p-3 rounded-xl hover:bg-indigo-50 transition-colors group">
-                <h3 class="text-sm font-medium text-gray-900 group-hover:text-indigo-700">{{ item.title }}</h3>
-                <p class="text-xs text-gray-500 mt-0.5">{{ item.description }}</p>
-              </a>
-            }
-          </div>
-        }
+    <!-- Header -->
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">Documentation</h1>
+        <p class="text-gray-500 mt-1 text-sm">Learn how to use Commerce Pro admin features</p>
       </div>
-    }
+      <button (click)="showHelp.set(true)" class="p-2.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors" title="Help"><i class="bi bi-question-circle text-lg"></i></button>
+    </div>
 
-    @if (filteredSections().length === 0) {
-      <div class="text-center py-12 text-gray-500">No matching documentation found</div>
-    }
+    <!-- Search -->
+    <div class="relative">
+      <i class="bi bi-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+      <input type="text" placeholder="Search documentation..."
+        class="w-full pl-11 pr-4 py-3.5 bg-white border border-gray-200 rounded-2xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm"
+        [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)">
+    </div>
+
+    <!-- Sections -->
+    <div class="space-y-3">
+      @for (section of filteredSections(); track section.id) {
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <button (click)="toggleSection(section.id)"
+            class="w-full flex items-center justify-between px-6 py-4 hover:bg-gray-50 transition-colors">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 bg-indigo-100 rounded-lg flex items-center justify-center">
+                <i class="bi {{ section.icon }} text-indigo-600"></i>
+              </div>
+              <div class="text-left">
+                <h2 class="text-base font-semibold text-gray-900">{{ section.title }}</h2>
+                <p class="text-xs text-gray-500">{{ section.items.length }} articles</p>
+              </div>
+            </div>
+            <i class="bi text-gray-400 text-lg transition-transform duration-200"
+              [class]="expandedSection() === section.id ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+          </button>
+
+          @if (expandedSection() === section.id) {
+            <div class="border-t border-gray-100 px-6 py-4 space-y-2">
+              @for (item of section.items; track item.title) {
+                <a [routerLink]="item.link"
+                  class="flex items-center gap-3 p-3 rounded-xl hover:bg-indigo-50 transition-colors group">
+                  <div class="w-8 h-8 bg-gray-100 group-hover:bg-indigo-100 rounded-lg flex items-center justify-center transition-colors">
+                    <i class="bi bi-file-earmark-text text-gray-400 group-hover:text-indigo-600 text-sm transition-colors"></i>
+                  </div>
+                  <div>
+                    <h3 class="text-sm font-medium text-gray-900 group-hover:text-indigo-700">{{ item.title }}</h3>
+                    <p class="text-xs text-gray-500 mt-0.5">{{ item.description }}</p>
+                  </div>
+                  <i class="bi bi-arrow-right text-gray-300 group-hover:text-indigo-500 ml-auto transition-colors"></i>
+                </a>
+              }
+            </div>
+          }
+        </div>
+      }
+
+      @if (filteredSections().length === 0) {
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center">
+          <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4"><i class="bi bi-search text-2xl text-gray-400"></i></div>
+          <h3 class="text-sm font-semibold text-gray-900">No Results Found</h3>
+          <p class="text-xs text-gray-500 mt-1">Try a different search term</p>
+        </div>
+      }
+    </div>
+
+    <app-help-sidebar [isOpen]="showHelp()" title="Documentation Help" [sections]="helpSections" (closed)="showHelp.set(false)"></app-help-sidebar>
   </div>
 </div>

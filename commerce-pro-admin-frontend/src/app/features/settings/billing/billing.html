@@ -1,93 +1,184 @@
-<div class="p-6 max-w-4xl mx-auto space-y-6">
-  <div>
-    <h1 class="text-2xl font-bold text-gray-900">Billing & Plan</h1>
-    <p class="text-sm text-gray-500 mt-1">Manage your subscription and billing information</p>
-  </div>
+<div class="min-h-screen bg-gray-50/50 p-4 sm:p-6 lg:p-8">
+  <div class="max-w-[1600px] mx-auto space-y-6">
 
-  @if (loading()) {
-    <div class="text-center py-12 text-gray-500">Loading billing info...</div>
-  } @else {
-    <!-- Current Plan -->
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-      <div class="flex items-center justify-between">
-        <div>
-          <h2 class="text-lg font-semibold text-gray-900">Current Plan</h2>
-          <div class="mt-2 space-y-1">
-            <p class="text-2xl font-bold text-indigo-600">{{ plan() }} <span class="text-base font-normal text-gray-500">${{ price() }}/{{ billingCycle() }}</span></p>
-            <p class="text-sm text-gray-500">Next billing: {{ nextBillingDate() }}</p>
-            <span class="inline-block px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-800">{{ status() }}</span>
+    <!-- Header -->
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">Billing & Plan</h1>
+        <p class="text-gray-500 mt-1 text-sm">Manage your subscription and billing information</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <button (click)="showHelp.set(true)" class="p-2.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors" title="Help"><i class="bi bi-question-circle text-lg"></i></button>
+      </div>
+    </div>
+
+    @if (loading()) {
+      <div class="space-y-4">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 animate-pulse">
+          <div class="h-6 bg-gray-200 rounded w-32 mb-4"></div>
+          <div class="h-10 bg-gray-200 rounded w-64 mb-2"></div>
+          <div class="h-4 bg-gray-200 rounded w-48"></div>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          @for (i of [1,2,3,4]; track i) {
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 animate-pulse">
+              <div class="h-3 bg-gray-200 rounded w-20 mb-3"></div>
+              <div class="h-7 bg-gray-200 rounded w-16"></div>
+            </div>
+          }
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 animate-pulse">
+          <div class="h-5 bg-gray-200 rounded w-40 mb-4"></div>
+          <div class="h-16 bg-gray-200 rounded-xl"></div>
+        </div>
+      </div>
+    } @else {
+      <!-- Current Plan -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <div class="flex items-start justify-between">
+          <div>
+            <h2 class="text-lg font-bold text-gray-900 flex items-center gap-2"><i class="bi bi-gem text-indigo-500"></i> Current Plan</h2>
+            <div class="mt-3 space-y-2">
+              <p class="text-3xl font-bold text-indigo-600">{{ plan() }}
+                <span class="text-base font-normal text-gray-500">${{ price() }}/{{ billingCycle() }}</span>
+              </p>
+              <p class="text-sm text-gray-500 flex items-center gap-1.5"><i class="bi bi-calendar3"></i> Next billing: {{ nextBillingDate() }}</p>
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full {{ statusConfig().bg }} {{ statusConfig().text }}">
+                <span class="w-1.5 h-1.5 rounded-full {{ statusConfig().dot }}"></span>
+                {{ status() | titlecase }}
+              </span>
+            </div>
+          </div>
+          <button (click)="changePlan()" class="px-4 py-2 text-sm font-medium text-indigo-600 border border-indigo-200 rounded-xl hover:bg-indigo-50 transition-colors">
+            <i class="bi bi-arrow-up-circle"></i> Change Plan
+          </button>
+        </div>
+      </div>
+
+      <!-- Usage Stats -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+          <div class="flex items-center gap-2 mb-2">
+            <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center"><i class="bi bi-bag text-blue-600 text-sm"></i></div>
+            <p class="text-xs text-gray-500 font-medium uppercase">Orders (Month)</p>
+          </div>
+          <p class="text-2xl font-bold text-gray-900">{{ usage().ordersThisMonth | number }}</p>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+          <div class="flex items-center gap-2 mb-2">
+            <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center"><i class="bi bi-box-seam text-purple-600 text-sm"></i></div>
+            <p class="text-xs text-gray-500 font-medium uppercase">Products</p>
+          </div>
+          <p class="text-2xl font-bold text-gray-900">{{ usage().products | number }}</p>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+          <div class="flex items-center gap-2 mb-2">
+            <div class="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center"><i class="bi bi-hdd text-amber-600 text-sm"></i></div>
+            <p class="text-xs text-gray-500 font-medium uppercase">Storage</p>
+          </div>
+          <p class="text-2xl font-bold text-gray-900">{{ storageDisplay() }}</p>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+          <div class="flex items-center gap-2 mb-2">
+            <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center"><i class="bi bi-braces text-green-600 text-sm"></i></div>
+            <p class="text-xs text-gray-500 font-medium uppercase">API Calls</p>
+          </div>
+          <p class="text-2xl font-bold text-gray-900">{{ usage().apiCalls | number }}</p>
+        </div>
+      </div>
+
+      <!-- Payment Method -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-bold text-gray-900 flex items-center gap-2"><i class="bi bi-credit-card-2-front text-indigo-500"></i> Payment Method</h2>
+          <button (click)="updatePayment()" class="text-sm font-medium text-indigo-600 hover:text-indigo-800 transition-colors"><i class="bi bi-pencil"></i> Update</button>
+        </div>
+        <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
+          <div class="w-14 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+            <i class="bi bi-credit-card text-indigo-700 text-xl"></i>
+          </div>
+          <div>
+            <p class="text-sm font-medium text-gray-900">{{ paymentMethod().type }} ending in {{ paymentMethod().last4 }}</p>
+            <p class="text-xs text-gray-500">Expires {{ paymentMethod().expiry }}</p>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- Usage -->
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-      <h2 class="text-lg font-semibold text-gray-900 mb-4">Current Usage</h2>
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div class="p-4 bg-gray-50 rounded-xl">
-          <p class="text-xs text-gray-500 uppercase font-medium">Orders (this month)</p>
-          <p class="text-2xl font-bold text-gray-900 mt-1">{{ usage().ordersThisMonth | number }}</p>
+      <!-- Billing History -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+          <h2 class="text-lg font-bold text-gray-900 flex items-center gap-2"><i class="bi bi-clock-history text-indigo-500"></i> Billing History</h2>
+          <span class="text-xs text-gray-500">{{ history().length }} records</span>
         </div>
-        <div class="p-4 bg-gray-50 rounded-xl">
-          <p class="text-xs text-gray-500 uppercase font-medium">Products</p>
-          <p class="text-2xl font-bold text-gray-900 mt-1">{{ usage().products | number }}</p>
-        </div>
-        <div class="p-4 bg-gray-50 rounded-xl">
-          <p class="text-xs text-gray-500 uppercase font-medium">Storage</p>
-          <p class="text-2xl font-bold text-gray-900 mt-1">{{ (usage().storageUsedMb / 1024).toFixed(1) }} GB</p>
-        </div>
-        <div class="p-4 bg-gray-50 rounded-xl">
-          <p class="text-xs text-gray-500 uppercase font-medium">API Calls</p>
-          <p class="text-2xl font-bold text-gray-900 mt-1">{{ usage().apiCalls | number }}</p>
-        </div>
-      </div>
-    </div>
 
-    <!-- Payment Method -->
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-      <h2 class="text-lg font-semibold text-gray-900 mb-4">Payment Method</h2>
-      <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
-        <div class="w-12 h-8 bg-indigo-100 rounded-lg flex items-center justify-center text-xs font-bold text-indigo-700">
-          {{ paymentMethod().type }}
-        </div>
-        <div>
-          <p class="text-sm font-medium text-gray-900">{{ paymentMethod().type }} ending in {{ paymentMethod().last4 }}</p>
-          <p class="text-xs text-gray-500">Expires {{ paymentMethod().expiry }}</p>
-        </div>
-      </div>
-    </div>
+        @if (history().length === 0) {
+          <div class="p-12 text-center">
+            <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4"><i class="bi bi-receipt text-2xl text-gray-400"></i></div>
+            <h3 class="text-sm font-semibold text-gray-900">No Billing History</h3>
+            <p class="text-xs text-gray-500 mt-1">Your billing records will appear here</p>
+          </div>
+        } @else {
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Date</th>
+                  <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Description</th>
+                  <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Amount</th>
+                  <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Status</th>
+                  <th class="text-right px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                @for (item of paginatedHistory(); track item.date) {
+                  <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="px-6 py-4 text-sm text-gray-900 whitespace-nowrap">{{ item.date }}</td>
+                    <td class="px-6 py-4 text-sm text-gray-600">{{ item.description }}</td>
+                    <td class="px-6 py-4 text-sm font-semibold text-gray-900">${{ item.amount }}</td>
+                    <td class="px-6 py-4">
+                      <span class="px-2.5 py-1 text-xs font-medium rounded-full"
+                        [class]="item.status === 'paid' ? 'bg-green-100 text-green-800' : item.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'">
+                        {{ item.status | titlecase }}
+                      </span>
+                    </td>
+                    <td class="px-6 py-4 text-right">
+                      <button (click)="downloadInvoice(item)" class="text-sm text-indigo-600 hover:text-indigo-800 transition-colors" title="Download invoice">
+                        <i class="bi bi-download"></i>
+                      </button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
 
-    <!-- Billing History -->
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-      <div class="px-6 py-4 border-b border-gray-100">
-        <h2 class="text-lg font-semibold text-gray-900">Billing History</h2>
-      </div>
-      <table class="w-full">
-        <thead class="bg-gray-50">
-          <tr>
-            <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Date</th>
-            <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Description</th>
-            <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Amount</th>
-            <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (item of history(); track item.date) {
-            <tr class="border-t border-gray-100">
-              <td class="px-6 py-4 text-sm text-gray-900">{{ item.date }}</td>
-              <td class="px-6 py-4 text-sm text-gray-600">{{ item.description }}</td>
-              <td class="px-6 py-4 text-sm font-medium text-gray-900">${{ item.amount }}</td>
-              <td class="px-6 py-4">
-                <span class="px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-800">{{ item.status }}</span>
-              </td>
-            </tr>
+          <!-- Pagination -->
+          @if (totalPages() > 1) {
+            <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
+              <p class="text-sm text-gray-500">Page {{ currentPage() }} of {{ totalPages() }}</p>
+              <div class="flex items-center gap-1">
+                <button (click)="goToPage(currentPage() - 1)" [disabled]="currentPage() === 1"
+                  class="px-3 py-1.5 text-sm rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                  <i class="bi bi-chevron-left"></i>
+                </button>
+                @for (p of [].constructor(totalPages()); track $index) {
+                  <button (click)="goToPage($index + 1)"
+                    class="px-3 py-1.5 text-sm rounded-lg border transition-colors"
+                    [class]="currentPage() === $index + 1 ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-200 hover:bg-gray-50'">
+                    {{ $index + 1 }}
+                  </button>
+                }
+                <button (click)="goToPage(currentPage() + 1)" [disabled]="currentPage() === totalPages()"
+                  class="px-3 py-1.5 text-sm rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                  <i class="bi bi-chevron-right"></i>
+                </button>
+              </div>
+            </div>
           }
-          @if (history().length === 0) {
-            <tr><td colspan="4" class="px-6 py-8 text-center text-gray-500">No billing history</td></tr>
-          }
-        </tbody>
-      </table>
-    </div>
-  }
+        }
+      </div>
+    }
+
+    <app-help-sidebar [isOpen]="showHelp()" title="Billing Help" [sections]="helpSections" (closed)="showHelp.set(false)"></app-help-sidebar>
+  </div>
 </div>

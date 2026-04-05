@@ -7,18 +7,32 @@
         <h1 class="text-2xl font-bold text-gray-900">Integrations</h1>
         <p class="text-gray-500 mt-1 text-sm">Connect external services and manage third-party integrations</p>
       </div>
-      <button (click)="openAdd()"
-        class="px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 transition-all flex items-center gap-2 shadow-lg shadow-indigo-200">
-        <i class="bi bi-plus-lg"></i> Add Integration
-      </button>
+      <div class="flex items-center gap-3">
+        <button (click)="showHelp.set(true)" class="p-2.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors" title="Help">
+          <i class="bi bi-question-circle text-lg"></i>
+        </button>
+        <button (click)="load()" class="p-2.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors" title="Reload">
+          <i class="bi bi-arrow-clockwise text-lg"></i>
+        </button>
+        <button (click)="openAdd()"
+          class="px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 transition-all flex items-center gap-2 shadow-lg shadow-indigo-200">
+          <i class="bi bi-plus-lg"></i> Add Integration
+        </button>
+      </div>
     </div>
 
-    <!-- Message -->
-    @if (message(); as msg) {
-      <div class="rounded-xl p-4 flex items-center gap-3"
-        [class]="msg.type === 'success' ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700'">
-        <i class="bi" [class]="msg.type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-circle-fill'"></i>
-        <span class="text-sm font-medium">{{ msg.text }}</span>
+    <!-- Bulk Actions Bar -->
+    @if (selectedIds().length > 0) {
+      <div class="bg-indigo-600 text-white px-6 py-3 rounded-2xl flex items-center justify-between shadow-lg shadow-indigo-200">
+        <span class="text-sm font-medium">{{ selectedIds().length }} integration(s) selected</span>
+        <div class="flex items-center gap-3">
+          <button (click)="bulkDelete()" class="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white text-sm rounded-lg flex items-center gap-1.5 transition-colors">
+            <i class="bi bi-trash"></i> Delete Selected
+          </button>
+          <button (click)="selectedIds.set([])" class="px-3 py-1.5 bg-white/20 hover:bg-white/30 text-white text-sm rounded-lg transition-colors">
+            Clear
+          </button>
+        </div>
       </div>
     }
 
@@ -27,22 +41,39 @@
       <div class="relative flex-1 min-w-[200px]">
         <i class="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
         <input type="text" placeholder="Search integrations..."
-          class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-          [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)">
+          class="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+          [ngModel]="searchQuery()" (ngModelChange)="onSearchInput($event)">
       </div>
-      <select class="px-4 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
-        [ngModel]="filterType()" (ngModelChange)="filterType.set($event)">
+      <select class="px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+        [ngModel]="filterType()" (ngModelChange)="filterType.set($event); currentPage.set(1)">
         <option value="">All Types</option>
         @for (t of integrationTypes; track t) {
           <option [value]="t">{{ t }}</option>
         }
       </select>
+      <select class="px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+        [ngModel]="filterStatus()" (ngModelChange)="filterStatus.set($event); currentPage.set(1)">
+        <option value="">All Statuses</option>
+        <option value="active">Active</option>
+        <option value="inactive">Inactive</option>
+        <option value="error">Error</option>
+      </select>
     </div>
 
-    <!-- Loading -->
+    <!-- Loading Skeleton -->
     @if (isLoading()) {
-      <div class="flex items-center justify-center py-20">
-        <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600"></div>
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="p-6 space-y-4">
+          @for (i of [1,2,3,4,5]; track i) {
+            <div class="animate-pulse flex items-center gap-4">
+              <div class="h-4 w-4 bg-gray-200 rounded"></div>
+              <div class="h-4 bg-gray-200 rounded flex-1"></div>
+              <div class="h-4 bg-gray-200 rounded w-20"></div>
+              <div class="h-4 bg-gray-200 rounded w-20"></div>
+              <div class="h-4 bg-gray-200 rounded w-32"></div>
+            </div>
+          }
+        </div>
       </div>
     } @else {
       <!-- Table -->
@@ -51,6 +82,9 @@
           <table class="w-full">
             <thead>
               <tr class="border-b border-gray-100 bg-gray-50/50">
+                <th class="w-12 px-4 py-3">
+                  <input type="checkbox" class="rounded border-gray-300 text-indigo-600" [checked]="isAllSelected()" (change)="toggleSelectAll()">
+                </th>
                 <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Name</th>
                 <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Type</th>
                 <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
@@ -59,10 +93,13 @@
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-50">
-              @for (item of filtered(); track item.id) {
+              @for (item of paginatedItems(); track item.id) {
                 <tr class="hover:bg-gray-50/50 transition-colors">
+                  <td class="w-12 px-4 py-4">
+                    <input type="checkbox" class="rounded border-gray-300 text-indigo-600" [checked]="isSelected(item.id)" (change)="toggleSelection(item.id)">
+                  </td>
                   <td class="px-6 py-4">
-                    <span class="text-sm font-medium text-gray-900">{{ item.name }}</span>
+                    <button (click)="openDetail(item)" class="text-sm font-medium text-gray-900 hover:text-indigo-600 transition-colors">{{ item.name }}</button>
                   </td>
                   <td class="px-6 py-4">
                     <span class="px-2.5 py-1 bg-indigo-50 text-indigo-700 text-xs font-medium rounded-full">{{ item.type }}</span>
@@ -73,44 +110,27 @@
                       {{ item.status }}
                     </span>
                   </td>
-                  <td class="px-6 py-4 text-sm text-gray-500">
-                    {{ item.lastSyncedAt ? (item.lastSyncedAt | date:'medium') : 'Never' }}
-                  </td>
+                  <td class="px-6 py-4 text-sm text-gray-500">{{ formatDate(item.lastSyncedAt) }}</td>
                   <td class="px-6 py-4">
-                    <div class="flex items-center justify-end gap-2">
-                      <button (click)="testConnection(item)"
-                        class="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                        [disabled]="testingId() === item.id" title="Test Connection">
-                        @if (testingId() === item.id) {
-                          <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-600"></div>
-                        } @else {
-                          <i class="bi bi-lightning-charge"></i>
-                        }
-                      </button>
-                      @if (testResult()?.id === item.id) {
-                        <span class="text-xs font-medium" [class]="testResult()?.success ? 'text-green-600' : 'text-red-600'">
-                          {{ testResult()?.success ? 'OK' : 'Fail' }}
-                        </span>
-                      }
-                      <button (click)="openEdit(item)"
-                        class="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="Edit">
-                        <i class="bi bi-pencil"></i>
-                      </button>
-                      <button (click)="delete(item)"
-                        class="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Delete">
-                        <i class="bi bi-trash"></i>
-                      </button>
+                    <div class="flex justify-end">
+                      <app-dropdown [items]="getRowActions(item)" (itemSelected)="onRowAction($event, item)" align="end" [showChevron]="false" triggerClass="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg">
+                        <i class="bi bi-three-dots-vertical"></i>
+                      </app-dropdown>
                     </div>
                   </td>
                 </tr>
               } @empty {
                 <tr>
-                  <td colspan="5" class="px-6 py-16 text-center">
+                  <td colspan="6" class="px-6 py-16 text-center">
                     <div class="flex flex-col items-center gap-3">
-                      <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
-                        <i class="bi bi-plug text-gray-400 text-xl"></i>
+                      <div class="w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center">
+                        <i class="bi bi-plug text-gray-400 text-2xl"></i>
                       </div>
-                      <p class="text-gray-500 text-sm">No integrations found</p>
+                      <p class="text-gray-500 text-sm font-medium">No integrations found</p>
+                      <p class="text-gray-400 text-xs">Add your first integration to connect external services</p>
+                      <button (click)="openAdd()" class="mt-2 px-4 py-2 bg-indigo-600 text-white text-sm rounded-xl hover:bg-indigo-700">
+                        <i class="bi bi-plus-lg mr-1"></i> Add Integration
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -118,31 +138,60 @@
             </tbody>
           </table>
         </div>
+
+        <!-- Pagination -->
+        @if (totalPages() > 1) {
+          <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
+            <p class="text-sm text-gray-500">
+              Showing {{ (currentPage() - 1) * itemsPerPage() + 1 }} to {{ currentPage() * itemsPerPage() > filtered().length ? filtered().length : currentPage() * itemsPerPage() }} of {{ filtered().length }}
+            </p>
+            <div class="flex items-center gap-1">
+              <button (click)="previousPage()" [disabled]="currentPage() === 1"
+                class="px-3 py-1.5 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                <i class="bi bi-chevron-left"></i>
+              </button>
+              @for (page of visiblePages(); track page) {
+                @if (page === '...') {
+                  <span class="px-2 text-gray-400">...</span>
+                } @else {
+                  <button (click)="goToPage(+page)" class="px-3 py-1.5 text-sm rounded-lg transition-colors"
+                    [class]="currentPage() === page ? 'bg-indigo-600 text-white' : 'border border-gray-200 hover:bg-gray-50'">
+                    {{ page }}
+                  </button>
+                }
+              }
+              <button (click)="nextPage()" [disabled]="currentPage() === totalPages()"
+                class="px-3 py-1.5 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                <i class="bi bi-chevron-right"></i>
+              </button>
+            </div>
+          </div>
+        }
       </div>
     }
 
-    <!-- Slide Panel -->
+    <!-- Create/Edit Slide Panel -->
     @if (showPanel()) {
       <div class="fixed inset-0 z-50 flex justify-end">
-        <div class="absolute inset-0 bg-black/30" (click)="closePanel()"></div>
-        <div class="relative w-full max-w-lg bg-white shadow-xl flex flex-col animate-slide-in">
+        <div class="absolute inset-0 bg-black/30 backdrop-blur-sm" (click)="closePanel()"></div>
+        <div class="relative w-full max-w-lg bg-white shadow-xl flex flex-col">
           <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-            <h2 class="text-lg font-semibold text-gray-900">
+            <h2 class="text-lg font-bold text-gray-900">
               {{ editingIntegration() ? 'Edit Integration' : 'Add Integration' }}
             </h2>
-            <button (click)="closePanel()" class="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg">
+            <button (click)="closePanel()" class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-colors">
               <i class="bi bi-x-lg"></i>
             </button>
           </div>
           <div class="flex-1 overflow-y-auto p-6 space-y-5">
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Name</label>
-              <input type="text" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+              <app-tooltip-label label="Name" tooltip="A descriptive name for this integration" [required]="true"></app-tooltip-label>
+              <input type="text" class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
                 [ngModel]="formName()" (ngModelChange)="formName.set($event)" placeholder="Integration name">
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Type</label>
-              <select class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+              <app-tooltip-label label="Type" tooltip="The category of this integration"></app-tooltip-label>
+              <select class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
                 [ngModel]="formType()" (ngModelChange)="formType.set($event)">
                 @for (t of integrationTypes; track t) {
                   <option [value]="t">{{ t }}</option>
@@ -150,24 +199,24 @@
               </select>
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Configuration (JSON)</label>
+              <app-tooltip-label label="Configuration (JSON)" tooltip="JSON configuration for the integration endpoint"></app-tooltip-label>
               <textarea rows="6"
-                class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm font-mono focus:ring-2 focus:ring-indigo-500 outline-none"
+                class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm font-mono focus:ring-2 focus:ring-indigo-500 outline-none"
                 [ngModel]="formConfig()" (ngModelChange)="formConfig.set($event)"></textarea>
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Credentials (JSON)</label>
+              <app-tooltip-label label="Credentials (JSON)" tooltip="Authentication credentials in JSON format"></app-tooltip-label>
               <textarea rows="4"
-                class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm font-mono focus:ring-2 focus:ring-indigo-500 outline-none"
+                class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm font-mono focus:ring-2 focus:ring-indigo-500 outline-none"
                 [ngModel]="formCredentials()" (ngModelChange)="formCredentials.set($event)"></textarea>
             </div>
           </div>
           <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-end gap-3">
-            <button (click)="closePanel()" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50">
+            <button (click)="closePanel()" class="px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50">
               Cancel
             </button>
             <button (click)="save()" [disabled]="isSaving() || !formName()"
-              class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-2">
+              class="px-4 py-2.5 text-sm font-medium text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-2">
               @if (isSaving()) {
                 <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
               }
@@ -177,5 +226,62 @@
         </div>
       </div>
     }
+
+    <!-- Detail Sidebar -->
+    @if (showDetail() && detailItem()) {
+      <div class="fixed inset-0 z-50 flex justify-end">
+        <div class="absolute inset-0 bg-black/30 backdrop-blur-sm" (click)="showDetail.set(false)"></div>
+        <div class="relative w-full max-w-md bg-white shadow-xl flex flex-col">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+            <h2 class="text-lg font-bold text-gray-900">Integration Details</h2>
+            <button (click)="showDetail.set(false)" class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-colors">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </div>
+          <div class="flex-1 overflow-y-auto p-6 space-y-5">
+            <div class="space-y-3">
+              <div>
+                <p class="text-xs text-gray-400 uppercase font-semibold">Name</p>
+                <p class="text-sm font-medium text-gray-900 mt-0.5">{{ detailItem()!.name }}</p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-400 uppercase font-semibold">Type</p>
+                <span class="px-2.5 py-1 bg-indigo-50 text-indigo-700 text-xs font-medium rounded-full">{{ detailItem()!.type }}</span>
+              </div>
+              <div>
+                <p class="text-xs text-gray-400 uppercase font-semibold">Status</p>
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full {{ getStatusColor(detailItem()!.status) }}">
+                  <span class="w-1.5 h-1.5 rounded-full {{ getStatusDot(detailItem()!.status) }}"></span>
+                  {{ detailItem()!.status }}
+                </span>
+              </div>
+              <div>
+                <p class="text-xs text-gray-400 uppercase font-semibold">Last Synced</p>
+                <p class="text-sm text-gray-700 mt-0.5">{{ formatDate(detailItem()!.lastSyncedAt) }}</p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-400 uppercase font-semibold">Created</p>
+                <p class="text-sm text-gray-700 mt-0.5">{{ formatDate(detailItem()!.createdAt) }}</p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-400 uppercase font-semibold">Configuration</p>
+                <pre class="mt-1 p-3 bg-gray-50 rounded-xl text-xs font-mono text-gray-700 overflow-auto max-h-40">{{ detailItem()!.configuration | json }}</pre>
+              </div>
+            </div>
+          </div>
+          <div class="px-6 py-4 border-t border-gray-100 flex items-center gap-3">
+            <button (click)="openEdit(detailItem()!); showDetail.set(false)" class="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-indigo-600 rounded-xl hover:bg-indigo-700">
+              <i class="bi bi-pencil mr-1"></i> Edit
+            </button>
+            <button (click)="testConnection(detailItem()!)" class="px-4 py-2.5 text-sm font-medium text-indigo-700 bg-indigo-50 rounded-xl hover:bg-indigo-100">
+              <i class="bi bi-lightning-charge mr-1"></i> Test
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Help Sidebar -->
+    <app-help-sidebar [isOpen]="showHelp()" title="Integrations Help" subtitle="Learn how to manage integrations" [sections]="helpSections" (closed)="showHelp.set(false)"></app-help-sidebar>
   </div>
 </div>

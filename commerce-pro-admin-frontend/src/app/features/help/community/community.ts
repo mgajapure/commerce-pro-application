@@ -1,19 +1,27 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HelpSidebar, HelpSection } from '../../../shared/components/help-sidebar/help-sidebar';
 
 @Component({
   selector: 'app-community',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, HelpSidebar],
   templateUrl: './community.html',
   styles: [`:host { display: block; }`]
 })
 export class Community {
+  showHelp = signal(false);
+  helpSections: HelpSection[] = [
+    { title: 'Community Links', content: 'Connect with other Commerce Pro users and developers across various platforms.' },
+    { title: 'Discussions', content: 'Browse and participate in featured community discussions about best practices.' },
+    { title: 'Release Notes', content: 'Stay up to date with the latest features and improvements in each release.' }
+  ];
+
   links = [
-    { name: 'GitHub Repository', description: 'Browse source code, report issues, and contribute', icon: 'github', url: '#' },
-    { name: 'Discord Community', description: 'Chat with other developers and get real-time help', icon: 'chat', url: '#' },
-    { name: 'Stack Overflow', description: 'Find answers tagged with commerce-pro', icon: 'stack', url: '#' },
-    { name: 'Community Forum', description: 'Discuss features, share tips, and get advice', icon: 'forum', url: '#' },
+    { name: 'GitHub Repository', description: 'Browse source code, report issues, and contribute', icon: 'bi-github', color: 'bg-gray-900', url: '#' },
+    { name: 'Discord Community', description: 'Chat with other developers and get real-time help', icon: 'bi-discord', color: 'bg-indigo-600', url: '#' },
+    { name: 'Stack Overflow', description: 'Find answers tagged with commerce-pro', icon: 'bi-stack-overflow', color: 'bg-orange-500', url: '#' },
+    { name: 'Community Forum', description: 'Discuss features, share tips, and get advice', icon: 'bi-chat-square-dots', color: 'bg-green-600', url: '#' },
   ];
 
   discussions = [

@@ -1,25 +1,45 @@
-import { Component, signal, computed, inject, OnInit } from '@angular/core';
+import { Component, signal, computed, inject, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Subject, takeUntil } from 'rxjs';
 import { SecurityService, PciComplianceItem } from '../security.service';
+import { AlertService } from '../../../shared/services/alert.service';
+import { HelpSidebar, HelpSection } from '../../../shared/components/help-sidebar/help-sidebar';
 
 @Component({
   selector: 'app-pci-compliance',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, HelpSidebar],
   templateUrl: './pci.html',
   styles: [':host { display: block; }']
 })
-export class PciCompliance implements OnInit {
+export class PciCompliance implements OnInit, OnDestroy {
   private svc = inject(SecurityService);
+  private alertSvc = inject(AlertService);
+  private destroy$ = new Subject<void>();
 
   loading = signal(true);
   saving = signal(false);
-  success = signal('');
-  error = signal('');
   items = signal<PciComplianceItem[]>([]);
 
+  // Detail sidebar
+  showDetail = signal(false);
+  detailItem = signal<PciComplianceItem | null>(null);
+
+  showHelp = signal(false);
+  helpSections: HelpSection[] = [
+    { title: 'PCI DSS', content: 'The Payment Card Industry Data Security Standard (PCI DSS) is a set of requirements to ensure secure handling of credit card information.' },
+    { title: 'Compliance Status', content: 'Track each of the 12 PCI DSS requirements. Update status as your organization achieves compliance.' },
+    { title: 'Audits', content: 'Regular audits verify compliance. Keep audit dates current and add notes about remediation progress.' }
+  ];
+
+  // Pagination
+  currentPage = signal(1);
+  itemsPerPage = signal(12);
+
   compliantCount = computed(() => this.items().filter(i => i.status === 'compliant').length);
+  inProgressCount = computed(() => this.items().filter(i => i.status === 'in-progress').length);
+  nonCompliantCount = computed(() => this.items().filter(i => i.status === 'non-compliant').length);
 
   complianceRate = computed(() => {
     const all = this.items();
@@ -27,16 +47,21 @@ export class PciCompliance implements OnInit {
     return Math.round((this.compliantCount() / all.length) * 100);
   });
 
+  totalPages = computed(() => Math.ceil(this.items().length / this.itemsPerPage()));
+  paginatedItems = computed(() => {
+    const start = (this.currentPage() - 1) * this.itemsPerPage();
+    return this.items().slice(start, start + this.itemsPerPage());
+  });
+
   ngOnInit() {
-    this.svc.getPciStatus().subscribe(items => {
-      if (items.length === 0) {
-        this.items.set(this.defaultItems());
-      } else {
-        this.items.set(items);
-      }
+    this.svc.getPciStatus().pipe(takeUntil(this.destroy$)).subscribe(items => {
+      if (items.length === 0) this.items.set(this.defaultItems());
+      else this.items.set(items);
       this.loading.set(false);
     });
   }
+
+  ngOnDestroy() { this.destroy$.next(); this.destroy$.complete(); }
 
   updateItemStatus(id: string, status: string) {
     this.items.update(list => list.map(i => i.id === id ? { ...i, status: status as any } : i));
@@ -46,14 +71,17 @@ export class PciCompliance implements OnInit {
     this.items.update(list => list.map(i => i.id === id ? { ...i, notes } : i));
   }
 
+  openDetail(item: PciComplianceItem) {
+    this.detailItem.set(item);
+    this.showDetail.set(true);
+  }
+
   save() {
     this.saving.set(true);
-    this.success.set('');
-    this.error.set('');
-    this.svc.updatePciStatus(this.items()).subscribe(res => {
+    this.svc.updatePciStatus(this.items()).pipe(takeUntil(this.destroy$)).subscribe(res => {
       this.saving.set(false);
-      if (res) this.success.set('PCI compliance status saved.');
-      else this.error.set('Failed to save PCI compliance status.');
+      if (res) this.alertSvc.success('PCI Status Saved');
+      else this.alertSvc.error('Failed', 'Could not save PCI compliance status');
     });
   }
 
@@ -65,6 +93,24 @@ export class PciCompliance implements OnInit {
       default: return 'bg-gray-100 text-gray-800';
     }
   }
+
+  statusDot(status: string): string {
+    switch (status) {
+      case 'compliant': return 'bg-green-500';
+      case 'non-compliant': return 'bg-red-500';
+      case 'in-progress': return 'bg-yellow-500';
+      default: return 'bg-gray-400';
+    }
+  }
+
+  formatDate(iso: string): string {
+    if (!iso) return '—';
+    return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(iso));
+  }
+
+  goToPage(p: number) { this.currentPage.set(p); }
+  previousPage() { if (this.currentPage() > 1) this.currentPage.update(p => p - 1); }
+  nextPage() { if (this.currentPage() < this.totalPages()) this.currentPage.update(p => p + 1); }
 
   private defaultItems(): PciComplianceItem[] {
     return [
