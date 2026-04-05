@@ -1,69 +1,85 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Subject, takeUntil } from 'rxjs';
 
 import { AuditLogEntry } from '../../../core/models/identity';
 import { IdentityService } from '../../../core/services/identity/identity.service';
+import { AlertService } from '../../../shared/services/alert.service';
+import { HelpSidebar, HelpSection } from '../../../shared/components/help-sidebar/help-sidebar';
 
 @Component({
   selector: 'app-identity-audit',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, HelpSidebar],
   templateUrl: './audit.html',
-  styleUrl: './audit.scss'
+  styles: [`:host { display: block; }`]
 })
-export class IdentityAudit implements OnInit {
-  private readonly identityService = inject(IdentityService);
+export class IdentityAudit implements OnInit, OnDestroy {
+  private readonly svc = inject(IdentityService);
+  private readonly alertSvc = inject(AlertService);
+  private destroy$ = new Subject<void>();
 
-  readonly logs = signal<AuditLogEntry[]>([]);
-  readonly isLoading = signal(false);
-  readonly totalElements = signal(0);
-  readonly currentPage = signal(0);
-  readonly pageSize = 25;
+  logs = signal<AuditLogEntry[]>([]);
+  loading = signal(true);
+  totalElements = signal(0);
+  currentPage = signal(0);
+  totalPages = signal(0);
+  pageSize = 25;
 
-  readonly searchQuery = signal('');
-  readonly actionFilter = signal('');
-  readonly successFilter = signal<'' | 'true' | 'false'>('');
+  searchQuery = signal('');
+  actionFilter = signal('');
+  successFilter = signal<'' | 'true' | 'false'>('');
+  dateFrom = signal('');
+  dateTo = signal('');
+  showFilters = signal(true);
 
-  ngOnInit(): void {
-    this.loadLogs();
-  }
+  // Detail sidebar
+  showDetail = signal(false);
+  selectedLog = signal<AuditLogEntry | null>(null);
 
-  loadLogs(page = 0): void {
-    this.isLoading.set(true);
+  // Help
+  showHelp = signal(false);
+  helpSections: HelpSection[] = [
+    { title: 'Audit Logs', content: 'All identity-related activities are logged here for compliance and security monitoring.' },
+    { title: 'Filters', content: 'Search by actor, target, or description. Filter by action type, outcome (success/failure), and date range.' },
+    { title: 'Log Details', content: 'Click on any log entry to view full details including IP address, timestamps, and descriptions.' }
+  ];
+
+  ngOnInit() { this.loadLogs(); }
+  ngOnDestroy() { this.destroy$.next(); this.destroy$.complete(); }
+
+  loadLogs(page = 0) {
+    this.loading.set(true);
     this.currentPage.set(page);
-
     const successOnly = this.successFilter() === '' ? null : this.successFilter() === 'true';
 
-    this.identityService
-      .getAuditLogs(page, this.pageSize, this.searchQuery(), this.actionFilter(), successOnly)
-      .subscribe(result => {
+    this.svc.getAuditLogs(page, this.pageSize, this.searchQuery(), this.actionFilter(), successOnly)
+      .pipe(takeUntil(this.destroy$)).subscribe(result => {
         this.logs.set(result.content);
         this.totalElements.set(result.totalElements);
-        this.isLoading.set(false);
+        this.totalPages.set(result.totalPages);
+        this.loading.set(false);
       });
   }
 
-  applyFilters(): void {
-    this.loadLogs(0);
-  }
+  reload() { this.loadLogs(this.currentPage()); }
 
-  clearFilters(): void {
+  applyFilters() { this.loadLogs(0); }
+
+  clearFilters() {
     this.searchQuery.set('');
     this.actionFilter.set('');
     this.successFilter.set('');
+    this.dateFrom.set('');
+    this.dateTo.set('');
     this.loadLogs(0);
   }
 
-  nextPage(): void {
-    this.loadLogs(this.currentPage() + 1);
+  viewDetail(log: AuditLogEntry) {
+    this.selectedLog.set(log);
+    this.showDetail.set(true);
   }
 
-  prevPage(): void {
-    if (this.currentPage() > 0) this.loadLogs(this.currentPage() - 1);
-  }
-
-  get hasMore(): boolean {
-    return (this.currentPage() + 1) * this.pageSize < this.totalElements();
-  }
+  goToPage(page: number) { if (page >= 0 && page < this.totalPages()) this.loadLogs(page); }
 }
