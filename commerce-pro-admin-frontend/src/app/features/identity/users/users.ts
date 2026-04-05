@@ -1,204 +1,278 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
 
-import { AuditLogEntry, CreateIdentityUserRequest, IdentityUser, IdentityUserDetail, ImpersonationToken } from '../../../core/models/identity';
+import { AuditLogEntry, CreateIdentityUserRequest, IdentityUser, IdentityUserDetail, IdentityRole, ImpersonationToken } from '../../../core/models/identity';
 import { IdentityService } from '../../../core/services/identity/identity.service';
-
-type UsersPanel = 'create' | 'assign-roles' | 'user-detail';
+import { AlertService } from '../../../shared/services/alert.service';
+import { Dropdown, DropdownItem } from '../../../shared/components/dropdown/dropdown';
+import { HelpSidebar, HelpSection } from '../../../shared/components/help-sidebar/help-sidebar';
+import { TooltipLabel } from '../../../shared/components/tooltip-label/tooltip-label';
 
 @Component({
   selector: 'app-identity-users',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, Dropdown, HelpSidebar, TooltipLabel],
   templateUrl: './users.html',
-  styleUrl: './users.scss'
+  styles: [`:host { display: block; }`]
 })
-export class IdentityUsers implements OnInit {
-  private readonly identityService = inject(IdentityService);
+export class IdentityUsers implements OnInit, OnDestroy {
+  private readonly svc = inject(IdentityService);
+  private readonly alertSvc = inject(AlertService);
+  private destroy$ = new Subject<void>();
+  private search$ = new Subject<string>();
 
-  readonly users = signal<IdentityUser[]>([]);
-  readonly isLoading = signal(false);
-  readonly searchQuery = signal('');
-  readonly activePanel = signal<UsersPanel>('create');
+  // List state
+  users = signal<IdentityUser[]>([]);
+  allRoles = signal<IdentityRole[]>([]);
+  loading = signal(true);
+  totalElements = signal(0);
+  totalPages = signal(0);
+  currentPage = signal(0);
+  pageSize = signal(10);
+  searchQuery = signal('');
+  statusFilter = signal<'' | 'active' | 'inactive'>('');
+  mfaFilter = signal<'' | 'enabled' | 'disabled'>('');
+  showFilters = signal(true);
 
-  // Create user
-  readonly createUserForm = signal<CreateIdentityUserRequest>({
-    username: '',
-    email: '',
-    password: '',
-    sendWelcomeEmail: true,
-    initialRoleCodes: []
+  // Create/Edit modal
+  showCreateModal = signal(false);
+  editingUser = signal<IdentityUser | null>(null);
+  createStep = signal(1);
+  saving = signal(false);
+  createForm = signal<CreateIdentityUserRequest>({
+    username: '', email: '', password: '', firstName: '', lastName: '', phone: '',
+    sendWelcomeEmail: true, initialRoleCodes: []
   });
+  editForm = signal<{ email: string; firstName: string; lastName: string; phone: string; active: boolean; mfaEnabled: boolean }>({
+    email: '', firstName: '', lastName: '', phone: '', active: true, mfaEnabled: false
+  });
+  selectedRoleCodes = signal<string[]>([]);
 
-  // Assign roles
-  readonly selectedUserId = signal('');
-  readonly roleCodesInput = signal('');
-
-  // User detail / audit
-  readonly selectedUser = signal<IdentityUserDetail | null>(null);
-  readonly userAuditLogs = signal<AuditLogEntry[]>([]);
-  readonly isDetailLoading = signal(false);
-  readonly detailTab = signal<'info' | 'audit'>('info');
+  // Detail sidebar
+  showDetail = signal(false);
+  selectedUser = signal<IdentityUserDetail | null>(null);
+  userAuditLogs = signal<AuditLogEntry[]>([]);
+  detailLoading = signal(false);
+  detailTab = signal<'info' | 'roles' | 'audit'>('info');
 
   // Impersonation
-  readonly impersonationToken = signal<ImpersonationToken | null>(null);
+  impersonationToken = signal<ImpersonationToken | null>(null);
 
-  // Action feedback
-  readonly actionMessage = signal('');
-  readonly actionError = signal('');
+  // Help
+  showHelp = signal(false);
+  helpSections: HelpSection[] = [
+    { title: 'User Management', content: 'Create, edit, and manage user accounts. Assign roles and permissions to control access.' },
+    { title: 'User Actions', content: 'Use the action menu on each row to view details, reset passwords, lock/unlock accounts, or impersonate users.' },
+    { title: 'Filters', content: 'Filter users by status, MFA status, or search by username/email.' },
+    { title: 'Roles', content: 'Assign roles during user creation or via the detail panel. Roles determine what permissions a user has.' }
+  ];
 
-  readonly filteredUsers = computed(() => {
-    const query = this.searchQuery().trim().toLowerCase();
-    if (!query) return this.users();
-    return this.users().filter(user => [user.username, user.email].some(value => value.toLowerCase().includes(query)));
+  filteredUsers = computed(() => {
+    let list = this.users();
+    const status = this.statusFilter();
+    const mfa = this.mfaFilter();
+    if (status === 'active') list = list.filter(u => u.active);
+    else if (status === 'inactive') list = list.filter(u => !u.active);
+    if (mfa === 'enabled') list = list.filter(u => u.mfaEnabled);
+    else if (mfa === 'disabled') list = list.filter(u => !u.mfaEnabled);
+    return list;
   });
 
-  ngOnInit(): void {
+  userActions: DropdownItem[] = [
+    { id: 'view', label: 'View Details', icon: 'bi-eye' },
+    { id: 'edit', label: 'Edit User', icon: 'bi-pencil' },
+    { id: 'divider1', label: '', divider: true },
+    { id: 'reset-pwd', label: 'Reset Password', icon: 'bi-key' },
+    { id: 'unlock', label: 'Unlock Account', icon: 'bi-unlock' },
+    { id: 'toggle', label: 'Toggle Status', icon: 'bi-toggle-on' },
+    { id: 'impersonate', label: 'Impersonate', icon: 'bi-person-badge' },
+    { id: 'divider2', label: '', divider: true },
+    { id: 'delete', label: 'Delete User', icon: 'bi-trash', danger: true }
+  ];
+
+  ngOnInit() {
     this.loadUsers();
+    this.loadRoles();
+    this.search$.pipe(
+      debounceTime(400), distinctUntilChanged(), takeUntil(this.destroy$)
+    ).subscribe(() => this.loadUsers(0));
   }
 
-  loadUsers(): void {
-    this.isLoading.set(true);
-    this.identityService.getUsers(0, 50).subscribe(page => {
-      this.users.set(page.content);
-      this.isLoading.set(false);
+  ngOnDestroy() { this.destroy$.next(); this.destroy$.complete(); }
+
+  onSearchChange(q: string) {
+    this.searchQuery.set(q);
+    this.search$.next(q);
+  }
+
+  loadUsers(page = 0) {
+    this.loading.set(true);
+    this.currentPage.set(page);
+    this.svc.getUsers(page, this.pageSize(), this.searchQuery()).pipe(takeUntil(this.destroy$)).subscribe(res => {
+      this.users.set(res.content);
+      this.totalElements.set(res.totalElements);
+      this.totalPages.set(res.totalPages);
+      this.loading.set(false);
     });
   }
 
-  updateCreateUserField(field: keyof CreateIdentityUserRequest, value: string | boolean): void {
-    this.createUserForm.update(current => ({ ...current, [field]: value }));
-  }
-
-  createUser(): void {
-    this.clearMessages();
-    this.identityService.createUser(this.createUserForm()).subscribe(user => {
-      if (!user) {
-        this.actionError.set('Failed to create user.');
-        return;
-      }
-      this.users.update(list => [user, ...list]);
-      this.createUserForm.set({ username: '', email: '', password: '', sendWelcomeEmail: true, initialRoleCodes: [] });
-      this.actionMessage.set(`User "${user.username}" created successfully.`);
+  loadRoles() {
+    this.svc.getRoles(0, 100).pipe(takeUntil(this.destroy$)).subscribe(res => {
+      this.allRoles.set(res.content);
     });
   }
 
-  toggleUserStatus(user: IdentityUser): void {
-    this.clearMessages();
-    this.identityService.toggleUserActivation(user.id, !user.active).subscribe(success => {
-      if (!success) {
-        this.actionError.set('Failed to update user status.');
+  reload() { this.loadUsers(this.currentPage()); }
+
+  // Create / Edit
+  openCreate() {
+    this.editingUser.set(null);
+    this.createStep.set(1);
+    this.createForm.set({ username: '', email: '', password: '', firstName: '', lastName: '', phone: '', sendWelcomeEmail: true, initialRoleCodes: [] });
+    this.selectedRoleCodes.set([]);
+    this.showCreateModal.set(true);
+  }
+
+  openEdit(user: IdentityUser) {
+    this.editingUser.set(user);
+    this.createStep.set(1);
+    this.editForm.set({
+      email: user.email, firstName: user.firstName ?? '', lastName: user.lastName ?? '',
+      phone: user.phone ?? '', active: user.active, mfaEnabled: user.mfaEnabled
+    });
+    this.selectedRoleCodes.set([...user.roleCodes]);
+    this.showCreateModal.set(true);
+  }
+
+  updateCreateField(field: string, value: any) {
+    this.createForm.update(f => ({ ...f, [field]: value }));
+  }
+
+  updateEditField(field: string, value: any) {
+    this.editForm.update(f => ({ ...f, [field]: value }));
+  }
+
+  toggleRoleSelection(code: string) {
+    this.selectedRoleCodes.update(codes => codes.includes(code) ? codes.filter(c => c !== code) : [...codes, code]);
+  }
+
+  saveUser() {
+    this.saving.set(true);
+    if (this.editingUser()) {
+      const user = this.editingUser()!;
+      this.svc.updateUser(user.id, this.editForm()).pipe(takeUntil(this.destroy$)).subscribe(updated => {
+        if (!updated) { this.saving.set(false); this.alertSvc.error('Failed', 'Could not update user'); return; }
+        // Assign roles if changed
+        this.svc.assignRoles(user.id, this.selectedRoleCodes()).pipe(takeUntil(this.destroy$)).subscribe(() => {
+          this.saving.set(false);
+          this.showCreateModal.set(false);
+          this.alertSvc.success('User Updated', `"${updated.username}" updated successfully`);
+          this.reload();
+        });
+      });
+    } else {
+      const form = this.createForm();
+      if (!form.username || !form.email || !form.password) {
+        this.saving.set(false);
+        this.alertSvc.warning('Missing Fields', 'Username, email, and password are required');
         return;
       }
-      this.users.update(list => list.map(value => value.id === user.id ? { ...value, active: !value.active } : value));
+      const payload = { ...form, initialRoleCodes: this.selectedRoleCodes() };
+      this.svc.createUser(payload).pipe(takeUntil(this.destroy$)).subscribe(user => {
+        this.saving.set(false);
+        if (!user) { this.alertSvc.error('Failed', 'Could not create user'); return; }
+        this.showCreateModal.set(false);
+        this.alertSvc.success('User Created', `"${user.username}" created successfully`);
+        this.reload();
+      });
+    }
+  }
+
+  // User actions
+  handleAction(item: DropdownItem, user: IdentityUser) {
+    switch (item.id) {
+      case 'view': this.viewDetail(user); break;
+      case 'edit': this.openEdit(user); break;
+      case 'toggle': this.toggleStatus(user); break;
+      case 'reset-pwd': this.resetPassword(user); break;
+      case 'unlock': this.unlockAccount(user); break;
+      case 'impersonate': this.impersonate(user); break;
+      case 'delete': this.deleteUser(user); break;
+    }
+  }
+
+  toggleStatus(user: IdentityUser) {
+    this.svc.toggleUserActivation(user.id, !user.active).pipe(takeUntil(this.destroy$)).subscribe(ok => {
+      if (ok) {
+        this.alertSvc.success('Status Changed', `"${user.username}" ${user.active ? 'deactivated' : 'activated'}`);
+        this.reload();
+      } else this.alertSvc.error('Failed', 'Could not change user status');
     });
   }
 
-  resetUserPassword(user: IdentityUser): void {
-    this.clearMessages();
-    this.identityService.resetUserPassword(user.id, true).subscribe(success => {
-      if (!success) {
-        this.actionError.set(`Failed to reset password for "${user.username}".`);
-        return;
-      }
-      this.actionMessage.set(`Password reset initiated for "${user.username}". Notification email sent.`);
+  async resetPassword(user: IdentityUser) {
+    const confirmed = await this.alertSvc.confirm({ title: 'Reset Password', message: `Send password reset email to "${user.username}"?` });
+    if (!confirmed) return;
+    this.svc.resetUserPassword(user.id, true).pipe(takeUntil(this.destroy$)).subscribe(ok => {
+      if (ok) this.alertSvc.success('Password Reset', 'Reset email sent successfully');
+      else this.alertSvc.error('Failed', 'Could not reset password');
     });
   }
 
-  unlockUser(user: IdentityUser): void {
-    this.clearMessages();
-    this.identityService.unlockUserAccount(user.id).subscribe(success => {
-      if (!success) {
-        this.actionError.set(`Failed to unlock account for "${user.username}".`);
-        return;
-      }
-      this.actionMessage.set(`Account "${user.username}" unlocked successfully.`);
+  unlockAccount(user: IdentityUser) {
+    this.svc.unlockUserAccount(user.id).pipe(takeUntil(this.destroy$)).subscribe(ok => {
+      if (ok) { this.alertSvc.success('Account Unlocked', `"${user.username}" unlocked`); this.reload(); }
+      else this.alertSvc.error('Failed', 'Could not unlock account');
     });
   }
 
-  deleteUser(user: IdentityUser): void {
-    this.clearMessages();
-    this.identityService.deleteUser(user.id, 'Deleted via admin UI').subscribe(success => {
-      if (!success) {
-        this.actionError.set(`Failed to delete user "${user.username}".`);
-        return;
-      }
-      this.users.update(list => list.filter(value => value.id !== user.id));
-      this.actionMessage.set(`User "${user.username}" deleted.`);
-      if (this.selectedUser()?.id === user.id) {
-        this.selectedUser.set(null);
-        this.activePanel.set('create');
-      }
-    });
-  }
-
-  impersonate(user: IdentityUser): void {
-    this.clearMessages();
-    this.impersonationToken.set(null);
-    this.identityService.impersonateUser(user.id).subscribe(token => {
-      if (!token) {
-        this.actionError.set(`Failed to start impersonation for "${user.username}".`);
-        return;
-      }
+  impersonate(user: IdentityUser) {
+    this.svc.impersonateUser(user.id).pipe(takeUntil(this.destroy$)).subscribe(token => {
+      if (!token) { this.alertSvc.error('Failed', 'Could not start impersonation'); return; }
       this.impersonationToken.set(token);
-      this.actionMessage.set(`Impersonation session started for "${user.username}". Token expires: ${new Date(token.expiresAt).toLocaleTimeString()}.`);
+      this.alertSvc.success('Impersonation Started', `Now impersonating "${user.username}"`);
     });
   }
 
-  clearImpersonation(): void {
-    this.impersonationToken.set(null);
-    this.clearMessages();
+  async deleteUser(user: IdentityUser) {
+    const confirmed = await this.alertSvc.confirm({ title: 'Delete User', message: `Are you sure you want to delete "${user.username}"? This action cannot be undone.`, danger: true });
+    if (!confirmed) return;
+    this.svc.deleteUser(user.id, 'Deleted via admin UI').pipe(takeUntil(this.destroy$)).subscribe(ok => {
+      if (ok) {
+        this.alertSvc.success('User Deleted', `"${user.username}" removed`);
+        if (this.selectedUser()?.id === user.id) this.showDetail.set(false);
+        this.reload();
+      } else this.alertSvc.error('Failed', 'Could not delete user');
+    });
   }
 
-  viewUserDetail(user: IdentityUser): void {
-    this.clearMessages();
-    this.activePanel.set('user-detail');
-    this.detailTab.set('info');
-    this.isDetailLoading.set(true);
-    this.userAuditLogs.set([]);
+  clearImpersonation() { this.impersonationToken.set(null); }
 
-    this.identityService.getUserDetail(user.id).subscribe(detail => {
-      this.isDetailLoading.set(false);
+  // Detail sidebar
+  viewDetail(user: IdentityUser) {
+    this.showDetail.set(true);
+    this.detailTab.set('info');
+    this.detailLoading.set(true);
+    this.userAuditLogs.set([]);
+    this.svc.getUserDetail(user.id).pipe(takeUntil(this.destroy$)).subscribe(detail => {
+      this.detailLoading.set(false);
       this.selectedUser.set(detail);
     });
   }
 
-  loadUserAudit(): void {
+  loadUserAudit() {
     const user = this.selectedUser();
     if (!user) return;
     this.detailTab.set('audit');
-    this.isDetailLoading.set(true);
-
-    this.identityService.getUserAudit(user.id, 0, 20).subscribe(page => {
-      this.isDetailLoading.set(false);
+    this.detailLoading.set(true);
+    this.svc.getUserAudit(user.id, 0, 20).pipe(takeUntil(this.destroy$)).subscribe(page => {
+      this.detailLoading.set(false);
       this.userAuditLogs.set(page.content);
     });
   }
 
-  mapRolesToUser(): void {
-    if (!this.selectedUserId()) return;
-
-    const roleCodes = this.roleCodesInput().split(',').map(value => value.trim()).filter(Boolean);
-    if (!roleCodes.length) return;
-
-    this.clearMessages();
-    this.identityService.assignRoles(this.selectedUserId(), roleCodes).subscribe(success => {
-      if (!success) {
-        this.actionError.set('Failed to assign roles.');
-        return;
-      }
-      this.roleCodesInput.set('');
-      this.actionMessage.set('Roles assigned successfully.');
-    });
-  }
-
-  showPanel(panel: UsersPanel): void {
-    this.activePanel.set(panel);
-    this.clearMessages();
-  }
-
-  private clearMessages(): void {
-    this.actionMessage.set('');
-    this.actionError.set('');
-  }
+  // Pagination
+  goToPage(page: number) { if (page >= 0 && page < this.totalPages()) this.loadUsers(page); }
 }

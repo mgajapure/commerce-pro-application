@@ -1,29 +1,132 @@
 <div class="min-h-screen bg-gray-50/50 p-4 sm:p-6 lg:p-8">
   <div class="max-w-[1600px] mx-auto space-y-6">
-    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-      <h1 class="text-2xl font-bold text-gray-900">Identity Configuration</h1>
-      <p class="text-gray-500 mt-1 text-sm">Review super-admin policy and configuration controls.</p>
+
+    <!-- Header -->
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">Identity System Configuration</h1>
+        <p class="text-gray-500 mt-1 text-sm">Review and manage super-admin policy and configuration controls</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <button (click)="loadConfiguration()" class="p-2.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors" title="Refresh"><i class="bi bi-arrow-clockwise text-lg"></i></button>
+        <button (click)="showHelp.set(true)" class="p-2.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors" title="Help"><i class="bi bi-question-circle text-lg"></i></button>
+        <button (click)="reloadConfiguration()" [disabled]="reloading()"
+          class="px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 transition-all flex items-center gap-2 shadow-lg shadow-indigo-200 disabled:opacity-50">
+          @if (reloading()) { <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div> }
+          <i class="bi bi-arrow-repeat"></i> Reload Configuration
+        </button>
+      </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-        <h2 class="text-lg font-semibold text-gray-900">Security Policy</h2>
-        <div class="mt-4 space-y-2 text-sm text-gray-600">
-          <p><span class="font-medium text-gray-900">MFA required:</span> {{ config()?.securityPolicy?.requireMfa ? 'Yes' : 'No' }}</p>
-          <p><span class="font-medium text-gray-900">Session timeout:</span> {{ config()?.securityPolicy?.sessionTimeoutMinutes ?? '—' }} minutes</p>
-          <p><span class="font-medium text-gray-900">Max concurrent sessions:</span> {{ config()?.securityPolicy?.maxConcurrentSessions ?? '—' }}</p>
+    @if (loading()) {
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        @for (i of [1,2]; track i) {
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 animate-pulse">
+            <div class="h-6 bg-gray-200 rounded w-40 mb-6"></div>
+            <div class="space-y-4"><div class="h-4 bg-gray-200 rounded w-full"></div><div class="h-4 bg-gray-200 rounded w-3/4"></div><div class="h-4 bg-gray-200 rounded w-1/2"></div></div>
+          </div>
+        }
+      </div>
+    } @else if (!config()) {
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center">
+        <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4"><i class="bi bi-gear text-2xl text-gray-400"></i></div>
+        <h3 class="text-sm font-semibold text-gray-900">Configuration Not Available</h3>
+        <p class="text-xs text-gray-500 mt-1">Could not load the identity system configuration</p>
+      </div>
+    } @else {
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Security Policy -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+          <h2 class="text-lg font-bold text-gray-900 flex items-center gap-2 mb-6"><i class="bi bi-shield-check text-indigo-500"></i> Security Policy</h2>
+          <div class="space-y-4">
+            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+              <div>
+                <p class="text-sm font-medium text-gray-900">MFA Required</p>
+                <p class="text-xs text-gray-500 mt-0.5">Enforce multi-factor authentication for all users</p>
+              </div>
+              <span class="px-3 py-1 text-xs font-medium rounded-full" [class]="config()!.securityPolicy?.requireMfa ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'">
+                {{ config()!.securityPolicy?.requireMfa ? 'Enabled' : 'Disabled' }}
+              </span>
+            </div>
+            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+              <div>
+                <p class="text-sm font-medium text-gray-900">Session Timeout</p>
+                <p class="text-xs text-gray-500 mt-0.5">Maximum idle time before session expires</p>
+              </div>
+              <span class="text-sm font-semibold text-gray-700">{{ config()!.securityPolicy?.sessionTimeoutMinutes ?? '—' }} min</span>
+            </div>
+            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+              <div>
+                <p class="text-sm font-medium text-gray-900">Max Concurrent Sessions</p>
+                <p class="text-xs text-gray-500 mt-0.5">Maximum active sessions per user</p>
+              </div>
+              <span class="text-sm font-semibold text-gray-700">{{ config()!.securityPolicy?.maxConcurrentSessions ?? '—' }}</span>
+            </div>
+            @if (config()!.securityPolicy?.allowedIpRanges?.length) {
+              <div class="p-4 bg-gray-50 rounded-xl">
+                <p class="text-sm font-medium text-gray-900 mb-2">Allowed IP Ranges</p>
+                <div class="flex flex-wrap gap-2">
+                  @for (ip of config()!.securityPolicy!.allowedIpRanges; track ip) {
+                    <span class="px-2.5 py-1 text-xs bg-white border border-gray-200 text-gray-700 rounded-lg font-mono">{{ ip }}</span>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Configuration Management -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+          <h2 class="text-lg font-bold text-gray-900 flex items-center gap-2 mb-6"><i class="bi bi-sliders text-indigo-500"></i> Configuration Management</h2>
+          <div class="space-y-4">
+            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+              <div>
+                <p class="text-sm font-medium text-gray-900">Delete System Roles</p>
+                <p class="text-xs text-gray-500 mt-0.5">Allow deletion of built-in system roles</p>
+              </div>
+              <span class="px-3 py-1 text-xs font-medium rounded-full" [class]="config()!.configManagement?.canDeleteSystemRoles ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-500'">
+                {{ config()!.configManagement?.canDeleteSystemRoles ? 'Allowed' : 'Denied' }}
+              </span>
+            </div>
+            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+              <div>
+                <p class="text-sm font-medium text-gray-900">Modify Own Role</p>
+                <p class="text-xs text-gray-500 mt-0.5">Allow admins to modify their own role assignments</p>
+              </div>
+              <span class="px-3 py-1 text-xs font-medium rounded-full" [class]="config()!.configManagement?.canModifyOwnRole ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-500'">
+                {{ config()!.configManagement?.canModifyOwnRole ? 'Allowed' : 'Denied' }}
+              </span>
+            </div>
+            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+              <div>
+                <p class="text-sm font-medium text-gray-900">Minimum Super Admins</p>
+                <p class="text-xs text-gray-500 mt-0.5">Minimum number of super admin accounts required</p>
+              </div>
+              <span class="text-sm font-semibold text-gray-700">{{ config()!.configManagement?.minSuperAdmins ?? '—' }}</span>
+            </div>
+            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+              <div>
+                <p class="text-sm font-medium text-gray-900">Remote Config Reload</p>
+                <p class="text-xs text-gray-500 mt-0.5">Allow remote configuration reload via API</p>
+              </div>
+              <span class="px-3 py-1 text-xs font-medium rounded-full" [class]="config()!.configManagement?.allowRemoteConfigReload ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'">
+                {{ config()!.configManagement?.allowRemoteConfigReload ? 'Enabled' : 'Disabled' }}
+              </span>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-        <h2 class="text-lg font-semibold text-gray-900">Configuration Management</h2>
-        <div class="mt-4 space-y-2 text-sm text-gray-600">
-          <p><span class="font-medium text-gray-900">Can delete system roles:</span> {{ config()?.configManagement?.canDeleteSystemRoles ? 'Yes' : 'No' }}</p>
-          <p><span class="font-medium text-gray-900">Can modify own role:</span> {{ config()?.configManagement?.canModifyOwnRole ? 'Yes' : 'No' }}</p>
-          <p><span class="font-medium text-gray-900">Minimum super admins:</span> {{ config()?.configManagement?.minSuperAdmins ?? '—' }}</p>
+      <!-- Info Banner -->
+      <div class="bg-blue-50 border border-blue-200 rounded-2xl p-5 flex items-start gap-3">
+        <i class="bi bi-info-circle text-blue-500 text-lg mt-0.5"></i>
+        <div>
+          <p class="text-sm font-medium text-blue-900">Configuration is Read-Only</p>
+          <p class="text-sm text-blue-700 mt-1">These settings are managed at the server level. Use the "Reload Configuration" button to refresh after server-side changes.</p>
         </div>
-        <button (click)="reloadConfiguration()" class="mt-4 px-4 py-2.5 bg-indigo-600 text-white rounded-xl shadow-lg shadow-indigo-200 hover:bg-indigo-700 text-sm font-medium">Reload configuration</button>
       </div>
-    </div>
+    }
+
+    <app-help-sidebar [isOpen]="showHelp()" title="Configuration Help" [sections]="helpSections" (closed)="showHelp.set(false)"></app-help-sidebar>
   </div>
 </div>

@@ -2,47 +2,69 @@
   <div class="max-w-[1600px] mx-auto space-y-6">
 
     <!-- Header -->
-    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 class="text-2xl font-bold text-gray-900">Identity Audit Logs</h1>
-          <p class="text-gray-500 mt-1 text-sm">Review all identity module activities for compliance and troubleshooting.</p>
-        </div>
-        <span class="self-start sm:self-auto px-4 py-2 bg-gray-100 text-gray-700 text-sm font-semibold rounded-xl">
-          {{ totalElements() }} total entries
-        </span>
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">Audit Logs</h1>
+        <p class="text-gray-500 mt-1 text-sm">Review all identity module activities for compliance and troubleshooting</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <span class="px-3 py-1.5 bg-gray-100 text-gray-700 text-sm font-semibold rounded-xl">{{ totalElements() }} entries</span>
+        <button (click)="reload()" class="p-2.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors" title="Refresh"><i class="bi bi-arrow-clockwise text-lg"></i></button>
+        <button (click)="showFilters.set(!showFilters())" class="p-2.5 rounded-xl transition-colors" [class]="showFilters() ? 'text-indigo-600 bg-indigo-50' : 'text-gray-400 hover:text-indigo-600 hover:bg-indigo-50'" title="Filters"><i class="bi bi-funnel text-lg"></i></button>
+        <button (click)="showHelp.set(true)" class="p-2.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors" title="Help"><i class="bi bi-question-circle text-lg"></i></button>
       </div>
     </div>
 
     <!-- Filters -->
-    <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
-      <div class="flex flex-col sm:flex-row gap-3">
-        <input class="flex-1 px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400" placeholder="Search by actor, target, description..." [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" (keyup.enter)="applyFilters()" />
-        <input class="sm:w-52 px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400" placeholder="Action (e.g. LOGIN_SUCCESS)" [ngModel]="actionFilter()" (ngModelChange)="actionFilter.set($event)" (keyup.enter)="applyFilters()" />
-        <select class="sm:w-44 px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400" [ngModel]="successFilter()" (ngModelChange)="successFilter.set($event)">
-          <option value="">All outcomes</option>
-          <option value="true">Success only</option>
-          <option value="false">Failures only</option>
-        </select>
-        <div class="flex gap-2">
-          <button (click)="applyFilters()" class="px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 transition-colors">
-            Search
-          </button>
-          <button (click)="clearFilters()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors">
-            Clear
-          </button>
+    @if (showFilters()) {
+      <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 space-y-3">
+        <div class="flex flex-col sm:flex-row gap-3">
+          <div class="relative flex-1">
+            <i class="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+            <input class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Search by actor, target, description..."
+              [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" (keyup.enter)="applyFilters()">
+          </div>
+          <input class="sm:w-52 px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Action (e.g. LOGIN_SUCCESS)"
+            [ngModel]="actionFilter()" (ngModelChange)="actionFilter.set($event)" (keyup.enter)="applyFilters()">
+          <select class="sm:w-44 px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+            [ngModel]="successFilter()" (ngModelChange)="successFilter.set($event)">
+            <option value="">All Outcomes</option>
+            <option value="true">Success Only</option>
+            <option value="false">Failures Only</option>
+          </select>
+        </div>
+        <div class="flex flex-col sm:flex-row gap-3">
+          <div class="flex items-center gap-2">
+            <label class="text-xs text-gray-500 font-medium">From:</label>
+            <input type="date" class="px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+              [ngModel]="dateFrom()" (ngModelChange)="dateFrom.set($event)">
+          </div>
+          <div class="flex items-center gap-2">
+            <label class="text-xs text-gray-500 font-medium">To:</label>
+            <input type="date" class="px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+              [ngModel]="dateTo()" (ngModelChange)="dateTo.set($event)">
+          </div>
+          <div class="flex gap-2 ml-auto">
+            <button (click)="applyFilters()" class="px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 transition-colors flex items-center gap-2"><i class="bi bi-search"></i> Search</button>
+            <button (click)="clearFilters()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors">Clear</button>
+          </div>
         </div>
       </div>
-    </div>
+    }
 
     <!-- Table -->
     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-      @if (isLoading()) {
-        <div class="py-16 text-center text-sm text-gray-400">Loading audit logs...</div>
+      @if (loading()) {
+        <div class="p-6 space-y-4">
+          @for (i of [1,2,3,4,5]; track i) {
+            <div class="flex items-center gap-4 animate-pulse"><div class="h-4 bg-gray-200 rounded w-32"></div><div class="h-4 bg-gray-200 rounded w-24"></div><div class="h-4 bg-gray-200 rounded w-48"></div><div class="h-4 bg-gray-200 rounded w-16"></div></div>
+          }
+        </div>
       } @else if (logs().length === 0) {
-        <div class="py-16 text-center">
-          <p class="text-sm font-medium text-gray-500">No audit logs found</p>
-          <p class="text-xs text-gray-400 mt-1">Try adjusting your filters.</p>
+        <div class="p-12 text-center">
+          <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4"><i class="bi bi-clock-history text-2xl text-gray-400"></i></div>
+          <h3 class="text-sm font-semibold text-gray-900">No Audit Logs Found</h3>
+          <p class="text-xs text-gray-500 mt-1">Try adjusting your filters</p>
         </div>
       } @else {
         <div class="overflow-x-auto">
@@ -60,22 +82,16 @@
             </thead>
             <tbody class="divide-y divide-gray-50">
               @for (log of logs(); track log.id) {
-                <tr class="hover:bg-gray-50/50 transition-colors">
-                  <td class="px-6 py-4">
-                    <span class="text-xs font-mono font-semibold text-gray-800 bg-gray-100 px-2 py-1 rounded-lg">{{ log.action }}</span>
-                  </td>
+                <tr class="hover:bg-gray-50/50 transition-colors cursor-pointer" (click)="viewDetail(log)">
+                  <td class="px-6 py-4"><span class="text-xs font-mono font-semibold text-gray-800 bg-gray-100 px-2 py-1 rounded-lg">{{ log.action }}</span></td>
                   <td class="px-6 py-4 text-sm text-gray-700">{{ log.actorUsername || '—' }}</td>
                   <td class="px-6 py-4">
                     @if (log.targetType) {
                       <p class="text-xs text-gray-600">{{ log.targetType }}</p>
                       <p class="text-xs text-gray-400 font-mono">{{ log.targetIdentifier || '' }}</p>
-                    } @else {
-                      <span class="text-gray-300">—</span>
-                    }
+                    } @else { <span class="text-gray-300">—</span> }
                   </td>
-                  <td class="px-6 py-4 text-xs text-gray-500 max-w-[240px] truncate" [title]="log.description || ''">
-                    {{ log.description || '—' }}
-                  </td>
+                  <td class="px-6 py-4 text-xs text-gray-500 max-w-[240px] truncate" [title]="log.description || ''">{{ log.description || '—' }}</td>
                   <td class="px-6 py-4 text-xs text-gray-400 font-mono">{{ log.ipAddress || '—' }}</td>
                   <td class="px-6 py-4">
                     <span class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full"
@@ -91,22 +107,60 @@
           </table>
         </div>
 
-        <!-- Pagination -->
-        <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
-          <p class="text-xs text-gray-400">
-            Page {{ currentPage() + 1 }} · {{ logs().length }} of {{ totalElements() }} entries
-          </p>
-          <div class="flex items-center gap-2">
-            <button (click)="prevPage()" [disabled]="currentPage() === 0" class="px-3 py-1.5 text-xs rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 disabled:opacity-40 transition-colors">
-              ← Prev
-            </button>
-            <button (click)="nextPage()" [disabled]="!hasMore" class="px-3 py-1.5 text-xs rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 disabled:opacity-40 transition-colors">
-              Next →
-            </button>
+        @if (totalPages() > 1) {
+          <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
+            <p class="text-sm text-gray-500">Page {{ currentPage() + 1 }} of {{ totalPages() }} · {{ logs().length }} of {{ totalElements() }} entries</p>
+            <div class="flex items-center gap-1">
+              <button (click)="goToPage(currentPage() - 1)" [disabled]="currentPage() === 0" class="px-3 py-1.5 text-sm rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50"><i class="bi bi-chevron-left"></i></button>
+              @for (p of [].constructor(totalPages()); track $index) {
+                @if ($index < 5 || $index === totalPages() - 1 || ($index >= currentPage() - 1 && $index <= currentPage() + 1)) {
+                  <button (click)="goToPage($index)" class="px-3 py-1.5 text-sm rounded-lg border transition-colors"
+                    [class]="currentPage() === $index ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-200 hover:bg-gray-50'">{{ $index + 1 }}</button>
+                }
+              }
+              <button (click)="goToPage(currentPage() + 1)" [disabled]="currentPage() >= totalPages() - 1" class="px-3 py-1.5 text-sm rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50"><i class="bi bi-chevron-right"></i></button>
+            </div>
           </div>
-        </div>
+        }
       }
     </div>
 
+    <!-- Detail Sidebar -->
+    @if (showDetail() && selectedLog()) {
+      <div class="fixed inset-0 z-40" (click)="showDetail.set(false)"><div class="absolute inset-0 bg-black/30 backdrop-blur-sm"></div></div>
+      <div class="fixed top-0 right-0 h-full w-full max-w-md bg-white shadow-2xl z-50 overflow-y-auto">
+        <div class="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between z-10">
+          <h2 class="text-lg font-bold text-gray-900">Audit Log Details</h2>
+          <button (click)="showDetail.set(false)" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <div class="p-6 space-y-4">
+          <div class="flex items-center gap-3">
+            <span class="text-sm font-mono font-bold text-gray-800 bg-gray-100 px-3 py-1.5 rounded-lg">{{ selectedLog()!.action }}</span>
+            <span class="px-2.5 py-1 text-xs font-medium rounded-full" [class]="selectedLog()!.success ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'">
+              {{ selectedLog()!.success ? 'Success' : 'Failed' }}
+            </span>
+          </div>
+          <div class="space-y-3">
+            <div class="flex justify-between p-3 bg-gray-50 rounded-xl"><span class="text-xs text-gray-400">Actor</span><span class="text-sm text-gray-700">{{ selectedLog()!.actorUsername || '—' }}</span></div>
+            @if (selectedLog()!.targetType) {
+              <div class="flex justify-between p-3 bg-gray-50 rounded-xl"><span class="text-xs text-gray-400">Target Type</span><span class="text-sm text-gray-700">{{ selectedLog()!.targetType }}</span></div>
+            }
+            @if (selectedLog()!.targetIdentifier) {
+              <div class="flex justify-between p-3 bg-gray-50 rounded-xl"><span class="text-xs text-gray-400">Target ID</span><span class="text-sm text-gray-700 font-mono">{{ selectedLog()!.targetIdentifier }}</span></div>
+            }
+            <div class="flex justify-between p-3 bg-gray-50 rounded-xl"><span class="text-xs text-gray-400">IP Address</span><span class="text-sm text-gray-700 font-mono">{{ selectedLog()!.ipAddress || '—' }}</span></div>
+            <div class="flex justify-between p-3 bg-gray-50 rounded-xl"><span class="text-xs text-gray-400">Timestamp</span><span class="text-sm text-gray-700">{{ selectedLog()!.timestamp | date:'dd MMM y, HH:mm:ss' }}</span></div>
+          </div>
+          @if (selectedLog()!.description) {
+            <div>
+              <p class="text-xs font-semibold text-gray-700 mb-2">Description</p>
+              <p class="text-sm text-gray-600 p-3 bg-gray-50 rounded-xl">{{ selectedLog()!.description }}</p>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <app-help-sidebar [isOpen]="showHelp()" title="Audit Logs Help" [sections]="helpSections" (closed)="showHelp.set(false)"></app-help-sidebar>
   </div>
 </div>

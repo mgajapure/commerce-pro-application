@@ -2,134 +2,203 @@
   <div class="max-w-[1600px] mx-auto space-y-6">
 
     <!-- Header -->
-    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 class="text-2xl font-bold text-gray-900">Permissions Registry</h1>
-          <p class="text-gray-500 mt-1 text-sm">Fine-grained permission codes, risk levels, and assignment controls.</p>
-        </div>
-        <span class="self-start sm:self-auto px-4 py-2 bg-gray-100 text-gray-700 text-sm font-semibold rounded-xl">
-          {{ totalPermissions() }} permissions
-        </span>
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">Permissions Registry</h1>
+        <p class="text-gray-500 mt-1 text-sm">Fine-grained permission codes, risk levels, and assignment controls</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <span class="px-3 py-1.5 bg-gray-100 text-gray-700 text-sm font-semibold rounded-xl">{{ totalElements() }} total</span>
+        <button (click)="reload()" class="p-2.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors" title="Refresh"><i class="bi bi-arrow-clockwise text-lg"></i></button>
+        <button (click)="showFilters.set(!showFilters())" class="p-2.5 rounded-xl transition-colors" [class]="showFilters() ? 'text-indigo-600 bg-indigo-50' : 'text-gray-400 hover:text-indigo-600 hover:bg-indigo-50'" title="Filters"><i class="bi bi-funnel text-lg"></i></button>
+        <button (click)="showHelp.set(true)" class="p-2.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors" title="Help"><i class="bi bi-question-circle text-lg"></i></button>
+        <button (click)="openCreate()" class="px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 transition-all flex items-center gap-2 shadow-lg shadow-indigo-200">
+          <i class="bi bi-plus-lg"></i> Add Permission
+        </button>
       </div>
     </div>
 
-    <!-- Feedback -->
-    @if (actionMessage()) {
-      <div class="flex items-center gap-3 px-4 py-3 rounded-2xl bg-green-50 border border-green-100 text-green-700 text-sm">
-        <i class="bi bi-check-circle-fill"></i>{{ actionMessage() }}
-      </div>
-    }
-    @if (actionError()) {
-      <div class="flex items-center gap-3 px-4 py-3 rounded-2xl bg-red-50 border border-red-100 text-red-700 text-sm">
-        <i class="bi bi-exclamation-circle-fill"></i>{{ actionError() }}
-      </div>
-    }
-
-    <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
-
-      <!-- Permission list -->
-      <div class="xl:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-
-        <!-- Filters -->
-        <div class="px-6 py-4 border-b border-gray-100 flex flex-col sm:flex-row gap-3">
-          <input class="flex-1 px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400" placeholder="Search by code or name..." [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" />
-          <select class="px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400" [ngModel]="categoryFilter()" (ngModelChange)="categoryFilter.set($event)">
-            <option value="">All categories</option>
-            @for (cat of categories(); track cat) {
-              <option [value]="cat">{{ cat }}</option>
-            }
+    <!-- Filters -->
+    @if (showFilters()) {
+      <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+        <div class="flex flex-col sm:flex-row gap-3">
+          <div class="relative flex-1">
+            <i class="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+            <input class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Search by code or name..."
+              [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)">
+          </div>
+          <select class="px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+            [ngModel]="categoryFilter()" (ngModelChange)="categoryFilter.set($event)">
+            <option value="">All Categories</option>
+            @for (cat of categories(); track cat) { <option [value]="cat">{{ cat }}</option> }
+          </select>
+          <select class="px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+            [ngModel]="riskFilter()" (ngModelChange)="riskFilter.set($event)">
+            <option value="">All Risk Levels</option>
+            <option value="1">Very Low</option>
+            <option value="2">Low</option>
+            <option value="3">Medium</option>
+            <option value="4">High</option>
+            <option value="5">Critical</option>
           </select>
         </div>
+      </div>
+    }
 
-        @if (isLoading()) {
-          <div class="py-12 text-center text-sm text-gray-400">Loading permissions...</div>
-        } @else if (filteredPermissions().length === 0) {
-          <div class="py-12 text-center text-sm text-gray-400">No permissions match your filters.</div>
-        } @else {
-          <div class="overflow-x-auto">
-            <table class="w-full">
-              <thead class="bg-gray-50/50 border-b border-gray-100">
-                <tr>
-                  <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-3">Permission</th>
-                  <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-3">Category</th>
-                  <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-3">Risk</th>
-                  <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-3">Approval</th>
-                  <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-3">Roles</th>
-                  <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-3">Actions</th>
+    <!-- Table -->
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      @if (loading()) {
+        <div class="p-6 space-y-4">
+          @for (i of [1,2,3,4,5]; track i) {
+            <div class="flex items-center gap-4 animate-pulse"><div class="h-4 bg-gray-200 rounded w-48"></div><div class="h-4 bg-gray-200 rounded w-24"></div><div class="h-4 bg-gray-200 rounded w-16"></div></div>
+          }
+        </div>
+      } @else if (filteredPermissions().length === 0) {
+        <div class="p-12 text-center">
+          <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4"><i class="bi bi-shield-lock text-2xl text-gray-400"></i></div>
+          <h3 class="text-sm font-semibold text-gray-900">No Permissions Found</h3>
+          <p class="text-xs text-gray-500 mt-1">Try adjusting your filters</p>
+        </div>
+      } @else {
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead class="bg-gray-50/50 border-b border-gray-100">
+              <tr>
+                <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-3">Permission</th>
+                <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-3">Category</th>
+                <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-3">Risk</th>
+                <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-3">Approval</th>
+                <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-3">Roles</th>
+                <th class="text-right text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-3">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-50">
+              @for (perm of filteredPermissions(); track perm.code) {
+                <tr class="hover:bg-gray-50/50 transition-colors cursor-pointer" (click)="viewDetail(perm)">
+                  <td class="px-6 py-4">
+                    <p class="text-sm font-semibold text-gray-900">{{ perm.name }}</p>
+                    <p class="text-xs text-gray-400 font-mono mt-0.5">{{ perm.code }}</p>
+                  </td>
+                  <td class="px-6 py-4"><span class="text-xs font-medium text-gray-600 bg-gray-100 px-2.5 py-1 rounded-lg">{{ perm.category || '—' }}</span></td>
+                  <td class="px-6 py-4"><span class="text-xs font-medium px-2.5 py-1 rounded-full" [class]="riskClass(perm.riskLevel)">{{ riskLabel(perm.riskLevel) }}</span></td>
+                  <td class="px-6 py-4"><span class="text-xs font-medium px-2.5 py-1 rounded-full" [class]="perm.requiresApproval ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'">{{ perm.requiresApproval ? 'Required' : 'Direct' }}</span></td>
+                  <td class="px-6 py-4 text-sm text-gray-600">{{ perm.roleCount }}</td>
+                  <td class="px-6 py-4 text-right" (click)="$event.stopPropagation()">
+                    <app-dropdown [items]="permActions" icon="bi-three-dots-vertical" [showChevron]="false" align="end"
+                      triggerClass="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                      (itemSelected)="handleAction($event, perm)">
+                    </app-dropdown>
+                  </td>
                 </tr>
-              </thead>
-              <tbody class="divide-y divide-gray-50">
-                @for (permission of filteredPermissions(); track permission.code) {
-                  <tr class="hover:bg-gray-50/50 transition-colors">
-                    <td class="px-6 py-4">
-                      <p class="text-sm font-semibold text-gray-900">{{ permission.name }}</p>
-                      <p class="text-xs text-gray-400 font-mono mt-0.5">{{ permission.code }}</p>
-                    </td>
-                    <td class="px-6 py-4">
-                      <span class="text-xs font-medium text-gray-600 bg-gray-100 px-2 py-1 rounded-lg">{{ permission.category || '—' }}</span>
-                    </td>
-                    <td class="px-6 py-4">
-                      <span class="text-xs font-medium px-2.5 py-1 rounded-full" [class]="riskClass(permission.riskLevel)">
-                        {{ riskLabel(permission.riskLevel) }}
-                      </span>
-                    </td>
-                    <td class="px-6 py-4">
-                      <span class="text-xs font-medium px-2.5 py-1 rounded-full"
-                        [class]="permission.requiresApproval ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'">
-                        {{ permission.requiresApproval ? 'Required' : 'Direct' }}
-                      </span>
-                    </td>
-                    <td class="px-6 py-4 text-sm text-gray-600">{{ permission.roleCount }}</td>
-                    <td class="px-6 py-4">
-                      @if (!permission.system) {
-                        <button (click)="deletePermission(permission)" class="px-2.5 py-1.5 text-xs rounded-lg bg-red-50 hover:bg-red-100 text-red-600 transition-colors">
-                          Delete
-                        </button>
-                      } @else {
-                        <span class="text-xs text-gray-300 px-2.5 py-1.5">System</span>
-                      }
-                    </td>
-                  </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        @if (totalPages() > 1) {
+          <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
+            <p class="text-sm text-gray-500">Page {{ currentPage() + 1 }} of {{ totalPages() }}</p>
+            <div class="flex items-center gap-1">
+              <button (click)="goToPage(currentPage() - 1)" [disabled]="currentPage() === 0" class="px-3 py-1.5 text-sm rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50"><i class="bi bi-chevron-left"></i></button>
+              @for (p of [].constructor(totalPages()); track $index) {
+                @if ($index < 5 || $index === totalPages() - 1 || ($index >= currentPage() - 1 && $index <= currentPage() + 1)) {
+                  <button (click)="goToPage($index)" class="px-3 py-1.5 text-sm rounded-lg border transition-colors"
+                    [class]="currentPage() === $index ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-200 hover:bg-gray-50'">{{ $index + 1 }}</button>
                 }
-              </tbody>
-            </table>
+              }
+              <button (click)="goToPage(currentPage() + 1)" [disabled]="currentPage() >= totalPages() - 1" class="px-3 py-1.5 text-sm rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50"><i class="bi bi-chevron-right"></i></button>
+            </div>
           </div>
         }
-      </div>
+      }
+    </div>
 
-      <!-- Create permission panel -->
-      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-100">
-          <h2 class="text-sm font-semibold text-gray-900">Create Permission</h2>
-          <p class="text-xs text-gray-400 mt-0.5">Add a custom permission to the registry.</p>
+    <!-- Create Modal -->
+    @if (showCreateModal()) {
+      <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-start justify-center pt-[10vh] overflow-y-auto">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 mb-8">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+            <h2 class="text-lg font-bold text-gray-900">Create Permission</h2>
+            <button (click)="showCreateModal.set(false)" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg"><i class="bi bi-x-lg"></i></button>
+          </div>
+          <div class="p-6 space-y-5">
+            <div>
+              <app-tooltip-label label="Permission Code" tooltip="Unique identifier e.g. identity:user:create" [required]="true"></app-tooltip-label>
+              <input type="text" [ngModel]="createForm().code" (ngModelChange)="updateField('code', $event)"
+                class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm font-mono focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="identity:user:create">
+            </div>
+            <div>
+              <app-tooltip-label label="Display Name" tooltip="Human-readable name" [required]="true"></app-tooltip-label>
+              <input type="text" [ngModel]="createForm().name" (ngModelChange)="updateField('name', $event)"
+                class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Create User">
+            </div>
+            <div>
+              <app-tooltip-label label="Category" tooltip="Group permissions by category"></app-tooltip-label>
+              <input type="text" [ngModel]="createForm().category" (ngModelChange)="updateField('category', $event)"
+                class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="IDENTITY">
+            </div>
+            <div>
+              <app-tooltip-label label="Risk Level (1-5)" tooltip="1=Very Low, 5=Critical"></app-tooltip-label>
+              <input type="number" min="1" max="5" [ngModel]="createForm().riskLevel" (ngModelChange)="updateField('riskLevel', +$event)"
+                class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+            </div>
+            <label class="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors cursor-pointer">
+              <span class="text-sm font-medium text-gray-900">Requires Approval</span>
+              <div class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" class="sr-only peer" [checked]="createForm().requiresApproval" (change)="updateField('requiresApproval', !createForm().requiresApproval)">
+                <div class="w-11 h-6 bg-gray-200 peer-focus:ring-2 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+              </div>
+            </label>
+            <button (click)="createPermission()" [disabled]="saving()"
+              class="w-full px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 flex items-center justify-center gap-2 shadow-lg shadow-indigo-200 disabled:opacity-50">
+              @if (saving()) { <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div> }
+              <i class="bi bi-check-lg"></i> Create Permission
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Detail Sidebar -->
+    @if (showDetail() && selectedPermission()) {
+      <div class="fixed inset-0 z-40" (click)="showDetail.set(false)"><div class="absolute inset-0 bg-black/30 backdrop-blur-sm"></div></div>
+      <div class="fixed top-0 right-0 h-full w-full max-w-md bg-white shadow-2xl z-50 overflow-y-auto">
+        <div class="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between z-10">
+          <h2 class="text-lg font-bold text-gray-900">Permission Details</h2>
+          <button (click)="showDetail.set(false)" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg"><i class="bi bi-x-lg"></i></button>
         </div>
         <div class="p-6 space-y-4">
-          <div>
-            <label class="text-xs font-medium text-gray-600">Permission Code</label>
-            <input class="mt-1 w-full px-3 py-2 rounded-xl border border-gray-200 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400" placeholder="identity:user:create" [ngModel]="createPermissionForm().code" (ngModelChange)="updateCreatePermissionField('code', $event)" />
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center"><i class="bi bi-shield-lock text-indigo-600 text-xl"></i></div>
+            <div>
+              <p class="text-lg font-bold text-gray-900">{{ selectedPermission()!.name }}</p>
+              <p class="text-xs text-gray-400 font-mono">{{ selectedPermission()!.code }}</p>
+            </div>
           </div>
-          <div>
-            <label class="text-xs font-medium text-gray-600">Display Name</label>
-            <input class="mt-1 w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400" placeholder="Create User" [ngModel]="createPermissionForm().name" (ngModelChange)="updateCreatePermissionField('name', $event)" />
+          @if (selectedPermission()!.description) {
+            <p class="text-sm text-gray-600">{{ selectedPermission()!.description }}</p>
+          }
+          <div class="space-y-3">
+            <div class="flex justify-between p-3 bg-gray-50 rounded-xl"><span class="text-xs text-gray-400">Category</span><span class="text-sm text-gray-700">{{ selectedPermission()!.category || 'Uncategorized' }}</span></div>
+            <div class="flex justify-between p-3 bg-gray-50 rounded-xl"><span class="text-xs text-gray-400">Risk Level</span><span class="text-sm px-2 py-0.5 rounded-full" [class]="riskClass(selectedPermission()!.riskLevel)">{{ riskLabel(selectedPermission()!.riskLevel) }}</span></div>
+            <div class="flex justify-between p-3 bg-gray-50 rounded-xl"><span class="text-xs text-gray-400">Approval</span><span class="text-sm" [class]="selectedPermission()!.requiresApproval ? 'text-yellow-600' : 'text-green-600'">{{ selectedPermission()!.requiresApproval ? 'Required' : 'Direct' }}</span></div>
+            <div class="flex justify-between p-3 bg-gray-50 rounded-xl"><span class="text-xs text-gray-400">Type</span><span class="text-sm text-gray-700">{{ selectedPermission()!.system ? 'System' : 'Custom' }}</span></div>
+            <div class="flex justify-between p-3 bg-gray-50 rounded-xl"><span class="text-xs text-gray-400">Assigned Roles</span><span class="text-sm font-medium text-gray-700">{{ selectedPermission()!.roleCount }}</span></div>
           </div>
-          <div>
-            <label class="text-xs font-medium text-gray-600">Category</label>
-            <input class="mt-1 w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400" placeholder="IDENTITY" [ngModel]="createPermissionForm().category" (ngModelChange)="updateCreatePermissionField('category', $event)" />
-          </div>
-          <div>
-            <label class="text-xs font-medium text-gray-600">Risk Level <span class="text-gray-400">(1–5)</span></label>
-            <input type="number" min="1" max="5" class="mt-1 w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400" [ngModel]="createPermissionForm().riskLevel" (ngModelChange)="updateCreatePermissionField('riskLevel', +$event)" />
-          </div>
-          <label class="flex items-center gap-2.5 text-sm text-gray-700 cursor-pointer select-none">
-            <input type="checkbox" class="w-4 h-4 rounded accent-indigo-600" [ngModel]="createPermissionForm().requiresApproval" (ngModelChange)="updateCreatePermissionField('requiresApproval', $event)" />
-            Requires approval
-          </label>
-          <button (click)="createPermission()" class="w-full px-4 py-2.5 bg-indigo-600 text-white rounded-xl shadow-sm shadow-indigo-200 hover:bg-indigo-700 active:bg-indigo-800 text-sm font-medium transition-colors">
-            Create Permission
-          </button>
+          @if (selectedPermission()!.applicableScopes?.length) {
+            <div>
+              <p class="text-xs font-semibold text-gray-700 mb-2">Applicable Scopes</p>
+              <div class="flex flex-wrap gap-2">
+                @for (scope of selectedPermission()!.applicableScopes; track scope) {
+                  <span class="px-2.5 py-1 text-xs bg-gray-100 text-gray-600 rounded-lg font-mono">{{ scope }}</span>
+                }
+              </div>
+            </div>
+          }
         </div>
       </div>
-    </div>
+    }
+
+    <app-help-sidebar [isOpen]="showHelp()" title="Permissions Help" [sections]="helpSections" (closed)="showHelp.set(false)"></app-help-sidebar>
   </div>
 </div>

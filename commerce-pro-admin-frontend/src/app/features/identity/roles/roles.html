@@ -2,200 +2,231 @@
   <div class="max-w-[1600px] mx-auto space-y-6">
 
     <!-- Header -->
-    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 class="text-2xl font-bold text-gray-900">Identity Roles</h1>
-          <p class="text-gray-500 mt-1 text-sm">Create, configure, and manage access roles.</p>
-        </div>
-        <div class="flex items-center gap-3">
-          <div class="text-center px-4 py-2 bg-gray-50 rounded-xl border border-gray-100">
-            <p class="text-lg font-bold text-gray-900">{{ totalRoles() }}</p>
-            <p class="text-xs text-gray-500">Total</p>
-          </div>
-          <div class="text-center px-4 py-2 bg-blue-50 rounded-xl border border-blue-100">
-            <p class="text-lg font-bold text-blue-700">{{ systemRoles() }}</p>
-            <p class="text-xs text-blue-500">System</p>
-          </div>
-          <div class="text-center px-4 py-2 bg-indigo-50 rounded-xl border border-indigo-100">
-            <p class="text-lg font-bold text-indigo-700">{{ customRoles() }}</p>
-            <p class="text-xs text-indigo-500">Custom</p>
-          </div>
-        </div>
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">Roles Management</h1>
+        <p class="text-gray-500 mt-1 text-sm">Create, configure, and manage access roles</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <button (click)="reload()" class="p-2.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors" title="Refresh"><i class="bi bi-arrow-clockwise text-lg"></i></button>
+        <button (click)="showFilters.set(!showFilters())" class="p-2.5 rounded-xl transition-colors" [class]="showFilters() ? 'text-indigo-600 bg-indigo-50' : 'text-gray-400 hover:text-indigo-600 hover:bg-indigo-50'" title="Filters"><i class="bi bi-funnel text-lg"></i></button>
+        <button (click)="showHelp.set(true)" class="p-2.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors" title="Help"><i class="bi bi-question-circle text-lg"></i></button>
+        <button (click)="openCreate()" class="px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 transition-all flex items-center gap-2 shadow-lg shadow-indigo-200">
+          <i class="bi bi-plus-lg"></i> Add Role
+        </button>
       </div>
     </div>
 
-    <!-- Feedback -->
-    @if (actionMessage()) {
-      <div class="flex items-center gap-3 px-4 py-3 rounded-2xl bg-green-50 border border-green-100 text-green-700 text-sm">
-        <i class="bi bi-check-circle-fill"></i>{{ actionMessage() }}
+    <!-- Stats -->
+    <div class="grid grid-cols-3 gap-4">
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+        <div class="flex items-center gap-2 mb-2"><div class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center"><i class="bi bi-shield text-gray-600 text-sm"></i></div><p class="text-xs text-gray-500 font-medium uppercase">Total</p></div>
+        <p class="text-2xl font-bold text-gray-900">{{ totalRoles() }}</p>
       </div>
-    }
-    @if (actionError()) {
-      <div class="flex items-center gap-3 px-4 py-3 rounded-2xl bg-red-50 border border-red-100 text-red-700 text-sm">
-        <i class="bi bi-exclamation-circle-fill"></i>{{ actionError() }}
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+        <div class="flex items-center gap-2 mb-2"><div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center"><i class="bi bi-lock text-blue-600 text-sm"></i></div><p class="text-xs text-gray-500 font-medium uppercase">System</p></div>
+        <p class="text-2xl font-bold text-blue-700">{{ systemRoles() }}</p>
       </div>
-    }
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+        <div class="flex items-center gap-2 mb-2"><div class="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center"><i class="bi bi-pencil-square text-indigo-600 text-sm"></i></div><p class="text-xs text-gray-500 font-medium uppercase">Custom</p></div>
+        <p class="text-2xl font-bold text-indigo-700">{{ customRoles() }}</p>
+      </div>
+    </div>
 
-    <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
-
-      <!-- Role table -->
-      <div class="xl:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-          <h2 class="text-sm font-semibold text-gray-900">All Roles</h2>
+    <!-- Filters -->
+    @if (showFilters()) {
+      <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+        <div class="flex flex-col sm:flex-row gap-3">
+          <div class="relative flex-1">
+            <i class="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+            <input class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Search by name or code..."
+              [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)">
+          </div>
+          <select class="px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+            [ngModel]="typeFilter()" (ngModelChange)="typeFilter.set($event)">
+            <option value="">All Types</option>
+            <option value="system">System</option>
+            <option value="custom">Custom</option>
+          </select>
         </div>
-        @if (isLoading()) {
-          <div class="py-12 text-center text-sm text-gray-400">Loading roles...</div>
-        } @else if (roles().length === 0) {
-          <div class="py-12 text-center text-sm text-gray-400">No roles found.</div>
-        } @else {
-          <div class="overflow-x-auto">
-            <table class="w-full">
-              <thead class="bg-gray-50/50 border-b border-gray-100">
-                <tr>
-                  <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-3">Role</th>
-                  <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-3">Type</th>
-                  <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-3">Permissions</th>
-                  <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-3">Users</th>
-                  <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-3">Actions</th>
+      </div>
+    }
+
+    <!-- Roles Table -->
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      @if (loading()) {
+        <div class="p-6 space-y-4">
+          @for (i of [1,2,3,4]; track i) {
+            <div class="flex items-center gap-4 animate-pulse"><div class="h-4 bg-gray-200 rounded w-40"></div><div class="h-4 bg-gray-200 rounded w-20"></div><div class="h-4 bg-gray-200 rounded w-16"></div></div>
+          }
+        </div>
+      } @else if (filteredRoles().length === 0) {
+        <div class="p-12 text-center">
+          <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4"><i class="bi bi-shield text-2xl text-gray-400"></i></div>
+          <h3 class="text-sm font-semibold text-gray-900">No Roles Found</h3>
+          <p class="text-xs text-gray-500 mt-1">Try adjusting your filters or create a new role</p>
+        </div>
+      } @else {
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead class="bg-gray-50/50 border-b border-gray-100">
+              <tr>
+                <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-3">Role</th>
+                <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-3">Type</th>
+                <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-3">Description</th>
+                <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-3">Permissions</th>
+                <th class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-3">Users</th>
+                <th class="text-right text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-3">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-50">
+              @for (role of filteredRoles(); track role.id) {
+                <tr class="hover:bg-gray-50/50 transition-colors">
+                  <td class="px-6 py-4">
+                    <p class="text-sm font-semibold text-gray-900">{{ role.name }}</p>
+                    <p class="text-xs text-gray-400 font-mono mt-0.5">{{ role.code }}</p>
+                  </td>
+                  <td class="px-6 py-4">
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium"
+                      [class]="role.system ? 'bg-blue-100 text-blue-700' : 'bg-violet-100 text-violet-700'">
+                      {{ role.system ? 'System' : 'Custom' }}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 text-sm text-gray-500 max-w-[200px] truncate">{{ role.description || '—' }}</td>
+                  <td class="px-6 py-4">
+                    <span class="text-sm font-medium text-gray-700">{{ role.permissionCount }}</span>
+                  </td>
+                  <td class="px-6 py-4">
+                    <span class="text-sm text-gray-600">{{ role.assignedUserCount }}</span>
+                  </td>
+                  <td class="px-6 py-4 text-right">
+                    <app-dropdown [items]="roleActions" icon="bi-three-dots-vertical" [showChevron]="false" align="end"
+                      triggerClass="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                      (itemSelected)="handleAction($event, role)">
+                    </app-dropdown>
+                  </td>
                 </tr>
-              </thead>
-              <tbody class="divide-y divide-gray-50">
-                @for (role of roles(); track role.id) {
-                  <tr class="hover:bg-gray-50/50 transition-colors" [class.bg-indigo-50]="selectedRole()?.id === role.id">
-                    <td class="px-6 py-4">
-                      <p class="text-sm font-semibold text-gray-900">{{ role.name }}</p>
-                      <p class="text-xs text-gray-400 font-mono mt-0.5">{{ role.code }}</p>
-                    </td>
-                    <td class="px-6 py-4">
-                      <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium"
-                        [class]="role.system ? 'bg-blue-100 text-blue-700' : 'bg-violet-100 text-violet-700'">
-                        {{ role.type || (role.system ? 'SYSTEM' : 'CUSTOM') }}
-                      </span>
-                    </td>
-                    <td class="px-6 py-4 text-sm text-gray-600">{{ role.permissionCount }}</td>
-                    <td class="px-6 py-4 text-sm text-gray-600">{{ role.assignedUserCount }}</td>
-                    <td class="px-6 py-4">
-                      <div class="flex items-center gap-1">
-                        <button (click)="selectRole(role, 'edit')" title="Edit role"
-                          class="px-2.5 py-1.5 text-xs rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 transition-colors">
-                          Edit
-                        </button>
-                        <button (click)="selectRole(role, 'permissions')" title="Manage permissions"
-                          class="px-2.5 py-1.5 text-xs rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-700 transition-colors">
-                          Perms
-                        </button>
-                        @if (!role.system) {
-                          <button (click)="deleteRole(role)" title="Delete role"
-                            class="px-2.5 py-1.5 text-xs rounded-lg bg-red-50 hover:bg-red-100 text-red-600 transition-colors">
-                            Delete
-                          </button>
-                        }
-                      </div>
-                    </td>
-                  </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        @if (totalPages() > 1) {
+          <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
+            <p class="text-sm text-gray-500">Page {{ currentPage() + 1 }} of {{ totalPages() }}</p>
+            <div class="flex items-center gap-1">
+              <button (click)="goToPage(currentPage() - 1)" [disabled]="currentPage() === 0" class="px-3 py-1.5 text-sm rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50"><i class="bi bi-chevron-left"></i></button>
+              @for (p of [].constructor(totalPages()); track $index) {
+                @if ($index < 5 || $index === totalPages() - 1 || ($index >= currentPage() - 1 && $index <= currentPage() + 1)) {
+                  <button (click)="goToPage($index)" class="px-3 py-1.5 text-sm rounded-lg border transition-colors"
+                    [class]="currentPage() === $index ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-200 hover:bg-gray-50'">{{ $index + 1 }}</button>
                 }
-              </tbody>
-            </table>
+              }
+              <button (click)="goToPage(currentPage() + 1)" [disabled]="currentPage() >= totalPages() - 1" class="px-3 py-1.5 text-sm rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50"><i class="bi bi-chevron-right"></i></button>
+            </div>
           </div>
         }
-      </div>
+      }
+    </div>
 
-      <!-- Side panel -->
-      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <!-- Panel tabs -->
-        <div class="flex border-b border-gray-100">
-          <button (click)="showPanel('create')" class="flex-1 py-3 text-xs font-semibold transition-colors"
-            [class]="activePanel() === 'create' ? 'text-indigo-600 bg-indigo-50/70 border-b-2 border-indigo-500' : 'text-gray-500 hover:bg-gray-50'">
-            Create
-          </button>
-          <button (click)="showPanel('edit')" [disabled]="!selectedRole()" class="flex-1 py-3 text-xs font-semibold transition-colors disabled:opacity-40"
-            [class]="activePanel() === 'edit' ? 'text-indigo-600 bg-indigo-50/70 border-b-2 border-indigo-500' : 'text-gray-500 hover:bg-gray-50'">
-            Edit
-          </button>
-          <button (click)="showPanel('permissions')" [disabled]="!selectedRole()" class="flex-1 py-3 text-xs font-semibold transition-colors disabled:opacity-40"
-            [class]="activePanel() === 'permissions' ? 'text-indigo-600 bg-indigo-50/70 border-b-2 border-indigo-500' : 'text-gray-500 hover:bg-gray-50'">
-            Permissions
-          </button>
-        </div>
+    <!-- Create/Edit Modal -->
+    @if (showModal()) {
+      <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-start justify-center pt-[5vh] overflow-y-auto">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 mb-8">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+            <h2 class="text-lg font-bold text-gray-900">{{ editingRole() ? (modalStep() === 2 ? 'Manage Permissions' : 'Edit Role') : 'Create New Role' }}</h2>
+            <button (click)="showModal.set(false)" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg"><i class="bi bi-x-lg"></i></button>
+          </div>
 
-        <!-- Create panel -->
-        @if (activePanel() === 'create') {
-          <div class="p-6 space-y-4">
-            <h2 class="text-sm font-semibold text-gray-900">Create New Role</h2>
-            <div>
-              <label class="text-xs font-medium text-gray-600">Role Code</label>
-              <input class="mt-1 w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400" placeholder="e.g. STORE_MANAGER" [ngModel]="createRoleForm().code" (ngModelChange)="updateCreateRoleField('code', $event)" />
-            </div>
-            <div>
-              <label class="text-xs font-medium text-gray-600">Role Name</label>
-              <input class="mt-1 w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400" placeholder="Store Manager" [ngModel]="createRoleForm().name" (ngModelChange)="updateCreateRoleField('name', $event)" />
-            </div>
-            <div>
-              <label class="text-xs font-medium text-gray-600">Description</label>
-              <textarea class="mt-1 w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 resize-none" rows="3" placeholder="Optional description..." [ngModel]="createRoleForm().description" (ngModelChange)="updateCreateRoleField('description', $event)"></textarea>
-            </div>
-            <button (click)="createRole()" class="w-full px-4 py-2.5 bg-indigo-600 text-white rounded-xl shadow-sm shadow-indigo-200 hover:bg-indigo-700 active:bg-indigo-800 text-sm font-medium transition-colors">
-              Create Role
+          <!-- Steps -->
+          <div class="px-6 py-3 border-b border-gray-100 flex items-center gap-4">
+            <button (click)="modalStep.set(1)" class="flex items-center gap-2 text-sm font-medium" [class]="modalStep() === 1 ? 'text-indigo-600' : 'text-gray-400'">
+              <span class="w-6 h-6 rounded-full flex items-center justify-center text-xs" [class]="modalStep() === 1 ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-500'">1</span> Role Info
+            </button>
+            <div class="flex-1 h-px bg-gray-200"></div>
+            <button (click)="modalStep.set(2)" class="flex items-center gap-2 text-sm font-medium" [class]="modalStep() === 2 ? 'text-indigo-600' : 'text-gray-400'">
+              <span class="w-6 h-6 rounded-full flex items-center justify-center text-xs" [class]="modalStep() === 2 ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-500'">2</span> Permissions
             </button>
           </div>
-        }
 
-        <!-- Edit panel -->
-        @if (activePanel() === 'edit') {
-          <div class="p-6 space-y-4">
-            @if (selectedRole()) {
-              <div class="flex items-center gap-2 mb-2">
-                <h2 class="text-sm font-semibold text-gray-900">Edit Role</h2>
-                <span class="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 font-mono">{{ selectedRole()!.code }}</span>
+          <div class="p-6">
+            @if (modalStep() === 1) {
+              <div class="space-y-5">
+                @if (!editingRole()) {
+                  <div>
+                    <app-tooltip-label label="Role Code" tooltip="Unique code for the role (e.g., STORE_MANAGER)" [required]="true"></app-tooltip-label>
+                    <input type="text" [ngModel]="createForm().code" (ngModelChange)="updateCreateField('code', $event)"
+                      class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm font-mono focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="STORE_MANAGER">
+                  </div>
+                }
+                <div>
+                  <app-tooltip-label label="Role Name" tooltip="Display name for this role" [required]="true"></app-tooltip-label>
+                  <input type="text" [ngModel]="editingRole() ? editForm().name : createForm().name" (ngModelChange)="editingRole() ? updateEditField('name', $event) : updateCreateField('name', $event)"
+                    class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Store Manager">
+                </div>
+                <div>
+                  <app-tooltip-label label="Description" tooltip="Brief description of this role's purpose"></app-tooltip-label>
+                  <textarea rows="3" [ngModel]="editingRole() ? editForm().description : createForm().description" (ngModelChange)="editingRole() ? updateEditField('description', $event) : updateCreateField('description', $event)"
+                    class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none resize-none" placeholder="Manages store operations..."></textarea>
+                </div>
+                <div class="flex justify-end">
+                  <button (click)="modalStep.set(2)" class="px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 flex items-center gap-2">
+                    Next: Permissions <i class="bi bi-arrow-right"></i>
+                  </button>
+                </div>
               </div>
-              <div>
-                <label class="text-xs font-medium text-gray-600">Role Name</label>
-                <input class="mt-1 w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400" [ngModel]="editForm().name" (ngModelChange)="updateEditFormField('name', $event)" />
+            }
+
+            @if (modalStep() === 2) {
+              <div class="space-y-4">
+                <div class="relative">
+                  <i class="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                  <input class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Search permissions..."
+                    [ngModel]="permSearchQuery()" (ngModelChange)="permSearchQuery.set($event)">
+                </div>
+                @if (selectedPermissions().length > 0) {
+                  <p class="text-xs text-indigo-600 font-medium">{{ selectedPermissions().length }} permission(s) selected</p>
+                }
+                <div class="max-h-[400px] overflow-y-auto space-y-2">
+                  @for (perm of filteredPermissions(); track perm.code) {
+                    <label class="flex items-center gap-3 p-3 border rounded-xl cursor-pointer hover:bg-gray-50 transition-colors"
+                      [class.border-indigo-300]="selectedPermissions().includes(perm.code)" [class.bg-indigo-50]="selectedPermissions().includes(perm.code)">
+                      <input type="checkbox" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                        [checked]="selectedPermissions().includes(perm.code)" (change)="togglePermission(perm.code)">
+                      <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-gray-900">{{ perm.name }}</p>
+                        <p class="text-xs text-gray-400 font-mono">{{ perm.code }}</p>
+                      </div>
+                      <span class="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">{{ perm.category || 'General' }}</span>
+                    </label>
+                  }
+                  @if (filteredPermissions().length === 0) {
+                    <p class="text-sm text-gray-400 text-center py-8">No permissions match your search</p>
+                  }
+                </div>
+                <div class="flex items-center justify-between pt-2">
+                  <button (click)="modalStep.set(1)" class="px-4 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 flex items-center gap-2"><i class="bi bi-arrow-left"></i> Back</button>
+                  @if (editingRole() && modalStep() === 2) {
+                    <button (click)="grantPermissions()" [disabled]="saving() || selectedPermissions().length === 0"
+                      class="px-6 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 flex items-center gap-2 shadow-lg shadow-indigo-200 disabled:opacity-50">
+                      @if (saving()) { <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div> }
+                      <i class="bi bi-check-lg"></i> Grant Permissions
+                    </button>
+                  } @else {
+                    <button (click)="saveRole()" [disabled]="saving()"
+                      class="px-6 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 flex items-center gap-2 shadow-lg shadow-indigo-200 disabled:opacity-50">
+                      @if (saving()) { <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div> }
+                      <i class="bi bi-check-lg"></i> {{ editingRole() ? 'Update Role' : 'Create Role' }}
+                    </button>
+                  }
+                </div>
               </div>
-              <div>
-                <label class="text-xs font-medium text-gray-600">Description</label>
-                <textarea class="mt-1 w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 resize-none" rows="3" [ngModel]="editForm().description" (ngModelChange)="updateEditFormField('description', $event)"></textarea>
-              </div>
-              <button (click)="saveEdit()" class="w-full px-4 py-2.5 bg-indigo-600 text-white rounded-xl shadow-sm shadow-indigo-200 hover:bg-indigo-700 text-sm font-medium transition-colors">
-                Save Changes
-              </button>
-            } @else {
-              <p class="text-sm text-gray-400 text-center py-6">Select a role to edit.</p>
             }
           </div>
-        }
-
-        <!-- Permissions panel -->
-        @if (activePanel() === 'permissions') {
-          <div class="p-6 space-y-5">
-            @if (selectedRole()) {
-              <div class="flex items-center justify-between">
-                <h2 class="text-sm font-semibold text-gray-900">{{ selectedRole()!.name }}</h2>
-                <span class="text-xs text-gray-500">{{ selectedRole()!.permissionCount }} permissions</span>
-              </div>
-
-              <div class="space-y-3 p-4 bg-green-50 rounded-xl border border-green-100">
-                <p class="text-xs font-semibold text-green-700">Grant Permissions</p>
-                <input class="w-full px-3 py-2 rounded-xl border border-green-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-green-200 focus:border-green-400" placeholder="identity:user:read, catalog:product:create" [ngModel]="grantCodesInput()" (ngModelChange)="grantCodesInput.set($event)" />
-                <button (click)="grantPermissions()" class="w-full px-3 py-2 bg-green-600 text-white rounded-xl text-xs font-medium hover:bg-green-700 transition-colors">
-                  Grant
-                </button>
-              </div>
-
-              <div class="space-y-3 p-4 bg-red-50 rounded-xl border border-red-100">
-                <p class="text-xs font-semibold text-red-700">Revoke Permissions</p>
-                <input class="w-full px-3 py-2 rounded-xl border border-red-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-red-200 focus:border-red-400" placeholder="identity:user:delete, catalog:product:delete" [ngModel]="revokeCodesInput()" (ngModelChange)="revokeCodesInput.set($event)" />
-                <button (click)="revokePermissions()" class="w-full px-3 py-2 bg-red-600 text-white rounded-xl text-xs font-medium hover:bg-red-700 transition-colors">
-                  Revoke
-                </button>
-              </div>
-            } @else {
-              <p class="text-sm text-gray-400 text-center py-6">Select a role to manage permissions.</p>
-            }
-          </div>
-        }
+        </div>
       </div>
-    </div>
+    }
+
+    <app-help-sidebar [isOpen]="showHelp()" title="Roles Management Help" [sections]="helpSections" (closed)="showHelp.set(false)"></app-help-sidebar>
   </div>
 </div>
