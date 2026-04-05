@@ -73,10 +73,10 @@ export class IdentityRoles implements OnInit, OnDestroy {
   });
 
   roleActions: DropdownItem[] = [
-    { id: 'edit', label: 'Edit Role', icon: 'bi-pencil' },
-    { id: 'permissions', label: 'Manage Permissions', icon: 'bi-shield-check' },
+    { id: 'edit', label: 'Edit Role', icon: 'pencil' },
+    { id: 'permissions', label: 'Manage Permissions', icon: 'shield-check' },
     { id: 'divider1', label: '', divider: true },
-    { id: 'delete', label: 'Delete Role', icon: 'bi-trash', danger: true }
+    { id: 'delete', label: 'Delete Role', icon: 'trash', danger: true }
   ];
 
   ngOnInit() {

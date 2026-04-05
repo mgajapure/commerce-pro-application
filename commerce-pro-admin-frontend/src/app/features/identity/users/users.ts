@@ -81,15 +81,15 @@ export class IdentityUsers implements OnInit, OnDestroy {
   });
 
   userActions: DropdownItem[] = [
-    { id: 'view', label: 'View Details', icon: 'bi-eye' },
-    { id: 'edit', label: 'Edit User', icon: 'bi-pencil' },
+    { id: 'view', label: 'View Details', icon: 'eye' },
+    { id: 'edit', label: 'Edit User', icon: 'pencil' },
     { id: 'divider1', label: '', divider: true },
-    { id: 'reset-pwd', label: 'Reset Password', icon: 'bi-key' },
-    { id: 'unlock', label: 'Unlock Account', icon: 'bi-unlock' },
-    { id: 'toggle', label: 'Toggle Status', icon: 'bi-toggle-on' },
-    { id: 'impersonate', label: 'Impersonate', icon: 'bi-person-badge' },
+    { id: 'reset-pwd', label: 'Reset Password', icon: 'key' },
+    { id: 'unlock', label: 'Unlock Account', icon: 'unlock' },
+    { id: 'toggle', label: 'Toggle Status', icon: 'toggle-on' },
+    { id: 'impersonate', label: 'Impersonate', icon: 'person-badge' },
     { id: 'divider2', label: '', divider: true },
-    { id: 'delete', label: 'Delete User', icon: 'bi-trash', danger: true }
+    { id: 'delete', label: 'Delete User', icon: 'trash', danger: true }
   ];
 
   ngOnInit() {

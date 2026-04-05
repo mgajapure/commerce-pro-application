@@ -28,6 +28,7 @@ public class CreateUserRequest {
     private String firstName;
     private String lastName;
     private String phone;
+    @Builder.Default
     private boolean sendWelcomeEmail = true;
     private List<String> initialRoleCodes;
 }

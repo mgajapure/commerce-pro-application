@@ -71,9 +71,9 @@ export class IdentityPermissions implements OnInit, OnDestroy {
   });
 
   permActions: DropdownItem[] = [
-    { id: 'view', label: 'View Details', icon: 'bi-eye' },
+    { id: 'view', label: 'View Details', icon: 'eye' },
     { id: 'divider1', label: '', divider: true },
-    { id: 'delete', label: 'Delete', icon: 'bi-trash', danger: true }
+    { id: 'delete', label: 'Delete', icon: 'trash', danger: true }
   ];
 
   ngOnInit() { this.loadPermissions(); }

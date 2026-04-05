@@ -84,7 +84,7 @@
                   <td class="px-6 py-4"><span class="text-xs font-medium px-2.5 py-1 rounded-full" [class]="perm.requiresApproval ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'">{{ perm.requiresApproval ? 'Required' : 'Direct' }}</span></td>
                   <td class="px-6 py-4 text-sm text-gray-600">{{ perm.roleCount }}</td>
                   <td class="px-6 py-4 text-right" (click)="$event.stopPropagation()">
-                    <app-dropdown [items]="permActions" icon="bi-three-dots-vertical" [showChevron]="false" align="end"
+                    <app-dropdown [items]="permActions" icon="three-dots-vertical" [showChevron]="false" align="end"
                       triggerClass="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                       (itemSelected)="handleAction($event, perm)">
                     </app-dropdown>

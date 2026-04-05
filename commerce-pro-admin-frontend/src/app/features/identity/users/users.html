@@ -144,7 +144,7 @@
                     {{ user.createdAt ? (user.createdAt | date:'shortDate') : '—' }}
                   </td>
                   <td class="px-6 py-4 text-right" (click)="$event.stopPropagation()">
-                    <app-dropdown [items]="userActions" icon="bi-three-dots-vertical" [showChevron]="false" align="end"
+                    <app-dropdown [items]="userActions" icon="three-dots-vertical" [showChevron]="false" align="end"
                       triggerClass="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                       (itemSelected)="handleAction($event, user)">
                     </app-dropdown>

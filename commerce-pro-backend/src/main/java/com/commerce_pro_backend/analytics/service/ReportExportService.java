@@ -11,20 +11,25 @@ import com.commerce_pro_backend.analytics.service.ReportPdfTemplateRegistry.PdfT
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.lowagie.text.*;
-import com.lowagie.text.pdf.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.openpdf.text.*;
+import org.openpdf.text.Font;
+import org.openpdf.text.Rectangle;
+import org.openpdf.text.pdf.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import jakarta.annotation.PostConstruct;
+
+import java.awt.Color;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.List;
 
 /**
  * Generates report files (CSV, Excel/XLSX, JSON) and writes them to the
@@ -267,11 +272,11 @@ public class ReportExportService {
                                       String generated, int rowCount,
                                       PdfTheme theme, PdfBranding branding) throws DocumentException {
 
-        Font titleFont    = new Font(Font.HELVETICA, 16, Font.BOLD,   BaseColor.WHITE);
-        Font categoryFont = new Font(Font.HELVETICA,  9, Font.NORMAL, new BaseColor(220, 220, 255));
-        Font companyFont  = new Font(Font.HELVETICA, 10, Font.BOLD,   new BaseColor(180, 180, 220));
-        Font labelFont    = new Font(Font.HELVETICA,  8, Font.NORMAL, new BaseColor(100, 100, 130));
-        Font valueFont    = new Font(Font.HELVETICA,  9, Font.BOLD,   new BaseColor(30,  30,  60));
+        Font titleFont    = new Font(Font.HELVETICA, 16, Font.BOLD,   Color.WHITE);
+        Font categoryFont = new Font(Font.HELVETICA,  9, Font.NORMAL, new Color(220, 220, 255));
+        Font companyFont  = new Font(Font.HELVETICA, 10, Font.BOLD,   new Color(180, 180, 220));
+        Font labelFont    = new Font(Font.HELVETICA,  8, Font.NORMAL, new Color(100, 100, 130));
+        Font valueFont    = new Font(Font.HELVETICA,  9, Font.BOLD,   new Color(30,  30,  60));
 
         PdfPTable banner = new PdfPTable(2);
         banner.setWidthPercentage(100);
@@ -324,8 +329,8 @@ public class ReportExportService {
         int   colCnt   = cols.size();
         float fontSize = colCnt > 10 ? 7f : 8f;
 
-        Font headerFont = new Font(Font.HELVETICA, fontSize, Font.BOLD,   BaseColor.WHITE);
-        Font dataFont   = new Font(Font.HELVETICA, fontSize, Font.NORMAL, new BaseColor(30, 30, 30));
+        Font headerFont = new Font(Font.HELVETICA, fontSize, Font.BOLD,   Color.WHITE);
+        Font dataFont   = new Font(Font.HELVETICA, fontSize, Font.NORMAL, new Color(30, 30, 30));
 
         // Compute relative widths from ColumnDef.width()
         float[] widths = new float[colCnt];
@@ -341,7 +346,7 @@ public class ReportExportService {
             PdfPCell hc = new PdfPCell(new Phrase(col.header(), headerFont));
             hc.setBackgroundColor(theme.accentColor());
             hc.setPadding(5);
-            hc.setBorderColor(new BaseColor(255, 255, 255, 80));
+            hc.setBorderColor(new Color(255, 255, 255, 80));
             hc.setHorizontalAlignment(isNumeric(col.type()) ? Element.ALIGN_RIGHT : Element.ALIGN_LEFT);
             table.addCell(hc);
         }
@@ -349,13 +354,13 @@ public class ReportExportService {
         // Data rows
         for (int r = 0; r < dataRows.size(); r++) {
             String[]  row     = dataRows.get(r);
-            BaseColor rowBg   = (r % 2 == 0) ? BaseColor.WHITE : theme.altRowColor();
+            Color rowBg   = (r % 2 == 0) ? Color.WHITE : theme.altRowColor();
             for (int c = 0; c < colCnt; c++) {
                 String val = (c < row.length && row[c] != null) ? row[c] : "";
                 PdfPCell dc = new PdfPCell(new Phrase(val, dataFont));
                 dc.setBackgroundColor(rowBg);
                 dc.setPadding(4);
-                dc.setBorderColor(new BaseColor(220, 220, 220));
+                dc.setBorderColor(new Color(220, 220, 220));
                 dc.setHorizontalAlignment(isNumeric(cols.get(c).type()) ? Element.ALIGN_RIGHT : Element.ALIGN_LEFT);
                 table.addCell(dc);
             }
@@ -380,7 +385,7 @@ public class ReportExportService {
         private final String      reportTitle;
         private final PdfBranding branding;
         private final PdfTheme    theme;
-        private PdfTemplate       totalPagesTpl;
+        private PdfTemplate totalPagesTpl;
 
         ReportPageEvent(String reportTitle, PdfBranding branding, PdfTheme theme) {
             this.reportTitle = reportTitle;
@@ -409,8 +414,8 @@ public class ReportExportService {
             cb.lineTo(right, bottom + 14);
             cb.stroke();
 
-            Font footerFont = new Font(Font.HELVETICA, 7, Font.NORMAL, new BaseColor(100, 100, 100));
-            Font boldFooter = new Font(Font.HELVETICA, 7, Font.BOLD,   new BaseColor(60,  60,  60));
+            Font footerFont = new Font(Font.HELVETICA, 7, Font.NORMAL, new Color(100, 100, 100));
+            Font boldFooter = new Font(Font.HELVETICA, 7, Font.BOLD,   new Color(60,  60,  60));
 
             // Left: confidentiality
             ColumnText.showTextAligned(cb, Element.ALIGN_LEFT,
