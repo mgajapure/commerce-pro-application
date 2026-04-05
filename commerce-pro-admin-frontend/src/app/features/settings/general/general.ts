@@ -1,22 +1,26 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Subject, takeUntil } from 'rxjs';
 import { SettingsService } from '../settings.service';
+import { AlertService } from '../../../shared/services/alert.service';
+import { HelpSidebar, HelpSection } from '../../../shared/components/help-sidebar/help-sidebar';
+import { TooltipLabel } from '../../../shared/components/tooltip-label/tooltip-label';
 
 @Component({
   selector: 'app-general-settings',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, HelpSidebar, TooltipLabel],
   templateUrl: './general.html',
   styles: [`:host { display: block; }`]
 })
-export class GeneralSettings implements OnInit {
+export class GeneralSettings implements OnInit, OnDestroy {
   private settingsService = inject(SettingsService);
+  private alertSvc = inject(AlertService);
+  private destroy$ = new Subject<void>();
 
   loading = signal(true);
   saving = signal(false);
-  success = signal(false);
-  error = signal<string | null>(null);
 
   siteName = signal('');
   tagline = signal('');
@@ -26,34 +30,27 @@ export class GeneralSettings implements OnInit {
   maintenanceMode = signal(false);
   maintenanceMessage = signal('');
 
-  timezones = signal([
-    'UTC', 'America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles',
-    'America/Anchorage', 'Pacific/Honolulu', 'America/Toronto', 'America/Vancouver',
-    'Europe/London', 'Europe/Paris', 'Europe/Berlin', 'Europe/Moscow',
-    'Asia/Tokyo', 'Asia/Shanghai', 'Asia/Kolkata', 'Asia/Dubai',
-    'Australia/Sydney', 'Australia/Melbourne', 'Pacific/Auckland',
-    'America/Sao_Paulo', 'Africa/Johannesburg', 'Africa/Cairo'
-  ]);
+  showHelp = signal(false);
+  helpSections: HelpSection[] = [
+    { title: 'Site Information', content: 'Configure the name and tagline that appear across your storefront and admin panel.' },
+    { title: 'Regional Settings', content: 'Set the timezone, date format, and default language for your platform.' },
+    { title: 'Maintenance Mode', content: 'When enabled, visitors see a maintenance page instead of your store. Admin access is not affected.' }
+  ];
 
-  dateFormats = signal([
-    'MM/DD/YYYY', 'DD/MM/YYYY', 'YYYY-MM-DD', 'DD-MMM-YYYY', 'MMM DD, YYYY'
-  ]);
+  timezones = ['UTC', 'America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles',
+    'Europe/London', 'Europe/Paris', 'Europe/Berlin', 'Asia/Tokyo', 'Asia/Shanghai', 'Asia/Kolkata',
+    'Australia/Sydney', 'Pacific/Auckland', 'America/Sao_Paulo'];
 
-  languages = signal([
-    { code: 'en', name: 'English' },
-    { code: 'es', name: 'Spanish' },
-    { code: 'fr', name: 'French' },
-    { code: 'de', name: 'German' },
-    { code: 'pt', name: 'Portuguese' },
-    { code: 'ja', name: 'Japanese' },
-    { code: 'zh', name: 'Chinese (Simplified)' },
-    { code: 'ko', name: 'Korean' },
-    { code: 'ar', name: 'Arabic' },
-    { code: 'hi', name: 'Hindi' }
-  ]);
+  dateFormats = ['MM/DD/YYYY', 'DD/MM/YYYY', 'YYYY-MM-DD', 'DD-MMM-YYYY', 'MMM DD, YYYY'];
+
+  languages = [
+    { code: 'en', name: 'English' }, { code: 'es', name: 'Spanish' }, { code: 'fr', name: 'French' },
+    { code: 'de', name: 'German' }, { code: 'pt', name: 'Portuguese' }, { code: 'ja', name: 'Japanese' },
+    { code: 'zh', name: 'Chinese' }, { code: 'ko', name: 'Korean' }, { code: 'ar', name: 'Arabic' }, { code: 'hi', name: 'Hindi' }
+  ];
 
   ngOnInit(): void {
-    this.settingsService.getGeneralSettings().subscribe(data => {
+    this.settingsService.getGeneralSettings().pipe(takeUntil(this.destroy$)).subscribe(data => {
       if (data) {
         this.siteName.set(data.siteName ?? '');
         this.tagline.set(data.tagline ?? '');
@@ -67,31 +64,19 @@ export class GeneralSettings implements OnInit {
     });
   }
 
+  ngOnDestroy() { this.destroy$.next(); this.destroy$.complete(); }
+
   save(): void {
     this.saving.set(true);
-    this.success.set(false);
-    this.error.set(null);
-
     const payload = {
-      siteName: this.siteName(),
-      tagline: this.tagline(),
-      timezone: this.timezone(),
-      dateFormat: this.dateFormat(),
-      defaultLanguage: this.defaultLanguage(),
-      maintenanceMode: this.maintenanceMode(),
-      maintenanceMessage: this.maintenanceMessage()
+      siteName: this.siteName(), tagline: this.tagline(), timezone: this.timezone(),
+      dateFormat: this.dateFormat(), defaultLanguage: this.defaultLanguage(),
+      maintenanceMode: this.maintenanceMode(), maintenanceMessage: this.maintenanceMessage()
     };
 
-    this.settingsService.updateGeneralSettings(payload).subscribe({
-      next: () => {
-        this.saving.set(false);
-        this.success.set(true);
-        setTimeout(() => this.success.set(false), 3000);
-      },
-      error: () => {
-        this.saving.set(false);
-        this.error.set('Failed to save settings. Please try again.');
-      }
+    this.settingsService.updateGeneralSettings(payload).pipe(takeUntil(this.destroy$)).subscribe({
+      next: () => { this.saving.set(false); this.alertSvc.success('Settings Saved', 'General settings updated successfully'); },
+      error: () => { this.saving.set(false); this.alertSvc.error('Failed', 'Could not save settings'); }
     });
   }
 }

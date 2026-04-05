@@ -1,79 +1,215 @@
-<div class="p-6 max-w-5xl mx-auto space-y-6">
-  <div class="flex items-center justify-between">
-    <div>
-      <h1 class="text-2xl font-bold text-gray-900">Feature Flags</h1>
-      <p class="text-sm text-gray-500 mt-1">Control feature rollouts and experiments</p>
+<div class="min-h-screen bg-gray-50/50 p-4 sm:p-6 lg:p-8">
+  <div class="max-w-[1600px] mx-auto space-y-6">
+
+    <!-- Header -->
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">Feature Flags</h1>
+        <p class="text-gray-500 mt-1 text-sm">Control feature rollouts and experiments</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <button (click)="showHelp.set(true)" class="p-2.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors" title="Help">
+          <i class="bi bi-question-circle text-lg"></i>
+        </button>
+        <button (click)="openCreate()" class="px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 transition-all flex items-center gap-2 shadow-lg shadow-indigo-200">
+          <i class="bi bi-plus-lg"></i> New Flag
+        </button>
+      </div>
     </div>
-  </div>
 
-  @if (message(); as msg) {
-    <div class="px-4 py-3 rounded-xl text-sm"
-         [class]="msg.type === 'success' ? 'bg-green-50 border border-green-200 text-green-800' : 'bg-red-50 border border-red-200 text-red-800'">
-      {{ msg.text }}
+    <!-- Stats -->
+    <div class="grid grid-cols-3 gap-4">
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center"><i class="bi bi-flag text-blue-600"></i></div>
+          <div>
+            <p class="text-xs text-gray-500 font-medium">Total Flags</p>
+            <p class="text-xl font-bold text-gray-900">{{ flags().length }}</p>
+          </div>
+        </div>
+      </div>
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center"><i class="bi bi-check-circle text-green-600"></i></div>
+          <div>
+            <p class="text-xs text-gray-500 font-medium">Enabled</p>
+            <p class="text-xl font-bold text-gray-900">{{ enabledCount() }}</p>
+          </div>
+        </div>
+      </div>
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center"><i class="bi bi-x-circle text-gray-500"></i></div>
+          <div>
+            <p class="text-xs text-gray-500 font-medium">Disabled</p>
+            <p class="text-xl font-bold text-gray-900">{{ disabledCount() }}</p>
+          </div>
+        </div>
+      </div>
     </div>
-  }
 
-  <!-- Filters -->
-  <div class="flex flex-col sm:flex-row gap-3">
-    <input type="text" placeholder="Search flags..."
-           class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"
-           [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)">
-    <select class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"
-            [ngModel]="filterCategory()" (ngModelChange)="filterCategory.set($event)">
-      <option value="all">All Categories</option>
-      <option value="Features">Features</option>
-      <option value="Experiments">Experiments</option>
-      <option value="Ops">Ops</option>
-    </select>
-  </div>
+    <!-- Filters -->
+    <div class="flex flex-wrap gap-3 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+      <div class="relative flex-1 min-w-[200px]">
+        <i class="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+        <input type="text" placeholder="Search flags..."
+          class="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+          [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event); currentPage.set(1)">
+      </div>
+      <select class="px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+        [ngModel]="filterCategory()" (ngModelChange)="filterCategory.set($event); currentPage.set(1)">
+        <option value="all">All Categories</option>
+        <option value="Features">Features</option>
+        <option value="Experiments">Experiments</option>
+        <option value="Ops">Ops</option>
+      </select>
+    </div>
 
-  @if (isLoading()) {
-    <div class="text-center py-12 text-gray-500">Loading feature flags...</div>
-  } @else {
-    <div class="space-y-4">
-      @for (flag of filteredFlags(); track flag.key) {
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-          <div class="flex items-start justify-between gap-4">
-            <div class="flex-1">
-              <div class="flex items-center gap-3">
-                <h3 class="text-sm font-semibold text-gray-900 font-mono">{{ flag.key }}</h3>
-                <span class="px-2 py-0.5 text-xs rounded-full"
-                      [class]="flag.category === 'Features' ? 'bg-blue-100 text-blue-700' : flag.category === 'Experiments' ? 'bg-purple-100 text-purple-700' : 'bg-orange-100 text-orange-700'">
-                  {{ flag.category }}
-                </span>
-              </div>
-              <p class="text-sm text-gray-500 mt-1">{{ flag.description }}</p>
-
-              <div class="mt-3 flex items-center gap-4">
-                <div class="flex items-center gap-2 flex-1 max-w-xs">
-                  <span class="text-xs text-gray-500 whitespace-nowrap">Rollout:</span>
-                  <input type="range" min="0" max="100" step="5"
-                         class="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
-                         [ngModel]="flag.rolloutPercentage" (ngModelChange)="updatePercentage(flag, $event)">
-                  <span class="text-xs font-medium text-gray-700 w-10 text-right">{{ flag.rolloutPercentage }}%</span>
-                </div>
-
-                @if (flag.targetGroups.length > 0) {
-                  <div class="flex gap-1">
-                    @for (group of flag.targetGroups; track group) {
-                      <span class="px-2 py-0.5 text-xs bg-gray-100 text-gray-600 rounded-full">{{ group }}</span>
-                    }
-                  </div>
-                }
-              </div>
+    <!-- Loading -->
+    @if (isLoading()) {
+      <div class="space-y-4">
+        @for (i of [1,2,3]; track i) {
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 animate-pulse">
+            <div class="flex items-center gap-4">
+              <div class="h-5 bg-gray-200 rounded w-40"></div>
+              <div class="h-5 bg-gray-200 rounded w-16"></div>
+              <div class="flex-1"></div>
+              <div class="h-6 bg-gray-200 rounded-full w-11"></div>
             </div>
+          </div>
+        }
+      </div>
+    } @else {
+      <div class="space-y-4">
+        @for (flag of paginatedFlags(); track flag.key) {
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition-shadow">
+            <div class="flex items-start justify-between gap-4">
+              <div class="flex-1">
+                <div class="flex items-center gap-3">
+                  <h3 class="text-sm font-semibold text-gray-900 font-mono">{{ flag.key }}</h3>
+                  <span class="px-2 py-0.5 text-xs rounded-full {{ getCategoryColor(flag.category) }}">{{ flag.category }}</span>
+                  <button (click)="openEdit(flag)" class="p-1 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="Edit">
+                    <i class="bi bi-pencil text-xs"></i>
+                  </button>
+                </div>
+                <p class="text-sm text-gray-500 mt-1">{{ flag.description }}</p>
 
-            <label class="relative inline-flex items-center cursor-pointer shrink-0">
-              <input type="checkbox" class="sr-only peer" [checked]="flag.enabled" (change)="toggleFlag(flag)">
-              <div class="w-11 h-6 bg-gray-200 peer-focus:ring-2 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
-            </label>
+                <div class="mt-3 flex items-center gap-4">
+                  <div class="flex items-center gap-2 flex-1 max-w-xs">
+                    <span class="text-xs text-gray-500 whitespace-nowrap">Rollout:</span>
+                    <input type="range" min="0" max="100" step="5"
+                      class="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                      [ngModel]="flag.rolloutPercentage" (ngModelChange)="updatePercentage(flag, $event)">
+                    <span class="text-xs font-semibold text-gray-700 w-10 text-right">{{ flag.rolloutPercentage }}%</span>
+                  </div>
+                  @if (flag.targetGroups.length > 0) {
+                    <div class="flex gap-1">
+                      @for (group of flag.targetGroups; track group) {
+                        <span class="px-2 py-0.5 text-xs bg-gray-100 text-gray-600 rounded-full">{{ group }}</span>
+                      }
+                    </div>
+                  }
+                </div>
+              </div>
+
+              <label class="relative inline-flex items-center cursor-pointer shrink-0">
+                <input type="checkbox" class="sr-only peer" [checked]="flag.enabled" (change)="toggleFlag(flag)">
+                <div class="w-11 h-6 bg-gray-200 peer-focus:ring-2 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+              </label>
+            </div>
+          </div>
+        }
+
+        @if (filteredFlags().length === 0) {
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-100 px-6 py-16 text-center">
+            <div class="flex flex-col items-center gap-3">
+              <div class="w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center">
+                <i class="bi bi-flag text-gray-400 text-2xl"></i>
+              </div>
+              <p class="text-gray-500 text-sm font-medium">No feature flags found</p>
+              <p class="text-gray-400 text-xs">Create a flag to control feature rollouts</p>
+              <button (click)="openCreate()" class="mt-2 px-4 py-2 bg-indigo-600 text-white text-sm rounded-xl hover:bg-indigo-700">
+                <i class="bi bi-plus-lg mr-1"></i> New Flag
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Pagination -->
+      @if (totalPages() > 1) {
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 px-6 py-4 flex items-center justify-between">
+          <p class="text-sm text-gray-500">Showing {{ (currentPage()-1)*itemsPerPage()+1 }} to {{ currentPage()*itemsPerPage() > filteredFlags().length ? filteredFlags().length : currentPage()*itemsPerPage() }} of {{ filteredFlags().length }}</p>
+          <div class="flex items-center gap-1">
+            <button (click)="previousPage()" [disabled]="currentPage() === 1" class="px-3 py-1.5 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50"><i class="bi bi-chevron-left"></i></button>
+            @for (page of visiblePages(); track page) {
+              @if (page === '...') { <span class="px-2 text-gray-400">...</span> }
+              @else { <button (click)="goToPage(+page)" class="px-3 py-1.5 text-sm rounded-lg" [class]="currentPage() === page ? 'bg-indigo-600 text-white' : 'border border-gray-200 hover:bg-gray-50'">{{ page }}</button> }
+            }
+            <button (click)="nextPage()" [disabled]="currentPage() === totalPages()" class="px-3 py-1.5 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50"><i class="bi bi-chevron-right"></i></button>
           </div>
         </div>
       }
+    }
 
-      @if (filteredFlags().length === 0) {
-        <div class="text-center py-12 text-gray-500">No feature flags match your filters</div>
-      }
-    </div>
-  }
+    <!-- Create/Edit Modal -->
+    @if (showModal()) {
+      <div class="fixed inset-0 z-50 flex justify-end">
+        <div class="absolute inset-0 bg-black/30 backdrop-blur-sm" (click)="showModal.set(false)"></div>
+        <div class="relative w-full max-w-lg bg-white shadow-xl flex flex-col">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+            <h2 class="text-lg font-bold text-gray-900">{{ editingFlag() ? 'Edit Flag' : 'New Feature Flag' }}</h2>
+            <button (click)="showModal.set(false)" class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl"><i class="bi bi-x-lg"></i></button>
+          </div>
+          <div class="flex-1 overflow-y-auto p-6 space-y-5">
+            <div>
+              <app-tooltip-label label="Flag Key" tooltip="Unique identifier for this flag (e.g. new-checkout-flow)" [required]="true"></app-tooltip-label>
+              <input type="text" class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm font-mono focus:ring-2 focus:ring-indigo-500 outline-none"
+                [ngModel]="formKey()" (ngModelChange)="formKey.set($event)" placeholder="my-feature-flag" [disabled]="!!editingFlag()">
+            </div>
+            <div>
+              <app-tooltip-label label="Description" tooltip="Human-readable description of what this flag controls"></app-tooltip-label>
+              <input type="text" class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                [ngModel]="formDescription()" (ngModelChange)="formDescription.set($event)" placeholder="What does this flag do?">
+            </div>
+            <div>
+              <app-tooltip-label label="Category" tooltip="Group flags by purpose"></app-tooltip-label>
+              <select class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+                [ngModel]="formCategory()" (ngModelChange)="formCategory.set($event)">
+                <option value="Features">Features</option>
+                <option value="Experiments">Experiments</option>
+                <option value="Ops">Ops</option>
+              </select>
+            </div>
+            <div>
+              <app-tooltip-label label="Rollout Percentage" tooltip="Percentage of users who will see this feature"></app-tooltip-label>
+              <div class="flex items-center gap-3">
+                <input type="range" min="0" max="100" step="5" class="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                  [ngModel]="formRollout()" (ngModelChange)="formRollout.set($event)">
+                <span class="text-sm font-semibold text-gray-700 w-12 text-right">{{ formRollout() }}%</span>
+              </div>
+            </div>
+            <div>
+              <app-tooltip-label label="Target Groups" tooltip="Comma-separated list of user groups (e.g. beta-testers, premium)"></app-tooltip-label>
+              <input type="text" class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                [ngModel]="formTargetGroups()" (ngModelChange)="formTargetGroups.set($event)" placeholder="beta-testers, premium">
+            </div>
+            <label class="flex items-center gap-2.5 p-3 bg-gray-50 rounded-xl">
+              <input type="checkbox" class="rounded border-gray-300 text-indigo-600" [ngModel]="formEnabled()" (ngModelChange)="formEnabled.set($event)">
+              <span class="text-sm text-gray-700 font-medium">Enabled</span>
+            </label>
+          </div>
+          <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-end gap-3">
+            <button (click)="showModal.set(false)" class="px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50">Cancel</button>
+            <button (click)="saveFlag()" [disabled]="isSaving()" class="px-4 py-2.5 text-sm font-medium text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-2">
+              @if (isSaving()) { <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div> }
+              {{ editingFlag() ? 'Update' : 'Create' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
+    <app-help-sidebar [isOpen]="showHelp()" title="Feature Flags Help" [sections]="helpSections" (closed)="showHelp.set(false)"></app-help-sidebar>
+  </div>
 </div>

@@ -1,22 +1,26 @@
-import { Component, signal, inject, OnInit } from '@angular/core';
+import { Component, signal, inject, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Subject, takeUntil } from 'rxjs';
 import { SecurityService, GdprSettings } from '../security.service';
+import { AlertService } from '../../../shared/services/alert.service';
+import { HelpSidebar, HelpSection } from '../../../shared/components/help-sidebar/help-sidebar';
+import { TooltipLabel } from '../../../shared/components/tooltip-label/tooltip-label';
 
 @Component({
   selector: 'app-gdpr-privacy',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, HelpSidebar, TooltipLabel],
   templateUrl: './gdpr.html',
   styles: [':host { display: block; }']
 })
-export class GdprPrivacy implements OnInit {
+export class GdprPrivacy implements OnInit, OnDestroy {
   private svc = inject(SecurityService);
+  private alertSvc = inject(AlertService);
+  private destroy$ = new Subject<void>();
 
   loading = signal(true);
   saving = signal(false);
-  success = signal('');
-  error = signal('');
 
   settings = signal<GdprSettings>({
     dataRetention: { retentionDays: 365, autoAnonymize: false },
@@ -25,12 +29,22 @@ export class GdprPrivacy implements OnInit {
     cookieSettings: { analytics: true, marketing: false, functional: true }
   });
 
+  showHelp = signal(false);
+  helpSections: HelpSection[] = [
+    { title: 'Data Retention', content: 'Configure how long personal data is stored. Auto-anonymize replaces personal data with anonymous identifiers after the retention period.' },
+    { title: 'Consent Management', content: 'Manage cookie consent requirements. When enabled, users must explicitly consent before cookies are set.' },
+    { title: 'Data Subject Rights', content: 'GDPR grants individuals the right to export and delete their data. Configure processing timeframes to meet compliance requirements.' },
+    { title: 'Cookie Settings', content: 'Control which types of cookies are enabled by default. Users can override these in cookie consent dialogs.' }
+  ];
+
   ngOnInit() {
-    this.svc.getGdprSettings().subscribe(s => {
+    this.svc.getGdprSettings().pipe(takeUntil(this.destroy$)).subscribe(s => {
       this.settings.set(s);
       this.loading.set(false);
     });
   }
+
+  ngOnDestroy() { this.destroy$.next(); this.destroy$.complete(); }
 
   updateRetention(field: string, value: any) {
     this.settings.update(s => ({ ...s, dataRetention: { ...s.dataRetention, [field]: value } }));
@@ -50,12 +64,10 @@ export class GdprPrivacy implements OnInit {
 
   save() {
     this.saving.set(true);
-    this.success.set('');
-    this.error.set('');
-    this.svc.updateGdprSettings(this.settings()).subscribe(res => {
+    this.svc.updateGdprSettings(this.settings()).pipe(takeUntil(this.destroy$)).subscribe(res => {
       this.saving.set(false);
-      if (res) this.success.set('GDPR settings saved successfully.');
-      else this.error.set('Failed to save GDPR settings.');
+      if (res) this.alertSvc.success('GDPR Settings Saved');
+      else this.alertSvc.error('Failed', 'Could not save GDPR settings');
     });
   }
 }

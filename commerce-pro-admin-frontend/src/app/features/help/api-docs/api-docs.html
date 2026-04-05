@@ -1,53 +1,75 @@
-<div class="p-6 max-w-4xl mx-auto space-y-6">
-  <div>
-    <h1 class="text-2xl font-bold text-gray-900">API Documentation</h1>
-    <p class="text-sm text-gray-500 mt-1">REST API reference for Commerce Pro</p>
-  </div>
+<div class="min-h-screen bg-gray-50/50 p-4 sm:p-6 lg:p-8">
+  <div class="max-w-[1600px] mx-auto space-y-6">
 
-  <!-- Base URL -->
-  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-    <h2 class="text-sm font-medium text-gray-700 mb-2">Base URL</h2>
-    <div class="flex items-center gap-2">
-      <code class="flex-1 px-3 py-2 bg-gray-50 border rounded-lg text-sm font-mono text-gray-800">{{ baseUrl }}</code>
-      <button (click)="copyBaseUrl()" class="px-3 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700">
-        {{ copiedUrl() ? 'Copied!' : 'Copy' }}
-      </button>
-    </div>
-    <div class="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-      <p class="text-sm text-amber-800"><strong>Authentication:</strong> Include <code class="bg-amber-100 px-1 rounded">Authorization: Bearer &lt;token&gt;</code> header with all requests (except login).</p>
-    </div>
-  </div>
-
-  <!-- API Sections -->
-  <div class="space-y-3">
-    @for (api of apis; track api.id) {
-      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <button (click)="toggleApi(api.id)"
-                class="w-full flex items-center justify-between px-6 py-4 hover:bg-gray-50 transition-colors">
-          <h2 class="text-base font-semibold text-gray-900">{{ api.name }}</h2>
-          <span class="text-xs text-gray-400">{{ api.endpoints.length }} endpoints</span>
-        </button>
-
-        @if (expandedApi() === api.id) {
-          <div class="border-t border-gray-100">
-            @for (ep of api.endpoints; track ep.path) {
-              <div class="px-6 py-4 border-b border-gray-50 last:border-b-0">
-                <div class="flex items-center gap-3">
-                  <span class="px-2 py-0.5 text-xs font-bold rounded" [class]="methodClass(ep.method)">{{ ep.method }}</span>
-                  <code class="text-sm font-mono text-gray-700">{{ ep.path }}</code>
-                </div>
-                <p class="text-sm text-gray-500 mt-1">{{ ep.description }}</p>
-                @if (ep.body) {
-                  <div class="mt-2">
-                    <p class="text-xs text-gray-400 mb-1">Request body:</p>
-                    <pre class="px-3 py-2 bg-gray-50 rounded-lg text-xs font-mono text-gray-700 overflow-x-auto">{{ ep.body }}</pre>
-                  </div>
-                }
-              </div>
-            }
-          </div>
-        }
+    <!-- Header -->
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">API Documentation</h1>
+        <p class="text-gray-500 mt-1 text-sm">REST API reference for Commerce Pro</p>
       </div>
-    }
+      <button (click)="showHelp.set(true)" class="p-2.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors" title="Help"><i class="bi bi-question-circle text-lg"></i></button>
+    </div>
+
+    <!-- Base URL -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+      <h2 class="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2"><i class="bi bi-link-45deg text-indigo-500"></i> Base URL</h2>
+      <div class="flex items-center gap-2">
+        <code class="flex-1 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-mono text-gray-800">{{ baseUrl }}</code>
+        <button (click)="copyBaseUrl()"
+          class="px-4 py-3 text-sm font-medium rounded-xl transition-all flex items-center gap-2"
+          [class]="copiedUrl() ? 'bg-green-600 text-white' : 'bg-indigo-600 text-white hover:bg-indigo-700'">
+          <i class="bi" [class]="copiedUrl() ? 'bi-check-lg' : 'bi-clipboard'"></i>
+          {{ copiedUrl() ? 'Copied!' : 'Copy' }}
+        </button>
+      </div>
+      <div class="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-3">
+        <i class="bi bi-shield-lock text-amber-600 mt-0.5"></i>
+        <p class="text-sm text-amber-800"><strong>Authentication:</strong> Include <code class="bg-amber-100 px-1.5 py-0.5 rounded text-xs">Authorization: Bearer &lt;token&gt;</code> header with all requests (except login).</p>
+      </div>
+    </div>
+
+    <!-- API Sections -->
+    <div class="space-y-3">
+      @for (api of apis; track api.id) {
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <button (click)="toggleApi(api.id)"
+            class="w-full flex items-center justify-between px-6 py-4 hover:bg-gray-50 transition-colors">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 bg-indigo-100 rounded-lg flex items-center justify-center">
+                <i class="bi {{ api.icon }} text-indigo-600"></i>
+              </div>
+              <div class="text-left">
+                <h2 class="text-base font-semibold text-gray-900">{{ api.name }}</h2>
+                <p class="text-xs text-gray-500">{{ api.endpoints.length }} endpoints</p>
+              </div>
+            </div>
+            <i class="bi text-gray-400 text-lg transition-transform duration-200"
+              [class]="expandedApi() === api.id ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+          </button>
+
+          @if (expandedApi() === api.id) {
+            <div class="border-t border-gray-100">
+              @for (ep of api.endpoints; track ep.path + ep.method) {
+                <div class="px-6 py-4 border-b border-gray-50 last:border-b-0 hover:bg-gray-50/50 transition-colors">
+                  <div class="flex items-center gap-3">
+                    <span class="px-2.5 py-1 text-xs font-bold rounded-lg" [class]="methodClass(ep.method)">{{ ep.method }}</span>
+                    <code class="text-sm font-mono text-gray-700">{{ ep.path }}</code>
+                  </div>
+                  <p class="text-sm text-gray-500 mt-1.5 ml-[68px]">{{ ep.description }}</p>
+                  @if (ep.body) {
+                    <div class="mt-2 ml-[68px]">
+                      <p class="text-xs text-gray-400 mb-1 font-medium uppercase">Request Body</p>
+                      <pre class="px-4 py-3 bg-gray-900 rounded-xl text-xs font-mono text-green-400 overflow-x-auto">{{ ep.body }}</pre>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+    <app-help-sidebar [isOpen]="showHelp()" title="API Documentation Help" [sections]="helpSections" (closed)="showHelp.set(false)"></app-help-sidebar>
   </div>
 </div>

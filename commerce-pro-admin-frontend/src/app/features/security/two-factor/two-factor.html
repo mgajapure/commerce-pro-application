@@ -1,129 +1,126 @@
-@if (isLoading()) {
-  <div class="flex items-center justify-center py-20">
-    <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600"></div>
-  </div>
-} @else {
-  <div class="space-y-6">
+<div class="min-h-screen bg-gray-50/50 p-4 sm:p-6 lg:p-8">
+  <div class="max-w-[1600px] mx-auto space-y-6">
+
     <!-- Header -->
-    <div class="flex items-center justify-between">
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
       <div>
         <h1 class="text-2xl font-bold text-gray-900">Two-Factor Authentication</h1>
-        <p class="mt-1 text-sm text-gray-500">Manage MFA enforcement policies and allowed authentication methods.</p>
+        <p class="text-gray-500 mt-1 text-sm">Configure MFA policies and monitor adoption</p>
       </div>
-      <button
-        (click)="save()"
-        [disabled]="isSaving()"
-        class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-        @if (isSaving()) {
-          <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-          </svg>
-          Saving...
-        } @else {
-          Save Policy
-        }
-      </button>
-    </div>
-
-    <!-- Messages -->
-    @if (successMessage()) {
-      <div class="rounded-lg bg-green-50 border border-green-200 p-4">
-        <div class="flex">
-          <svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-          </svg>
-          <p class="ml-3 text-sm font-medium text-green-800">{{ successMessage() }}</p>
-        </div>
-      </div>
-    }
-    @if (errorMessage()) {
-      <div class="rounded-lg bg-red-50 border border-red-200 p-4">
-        <div class="flex">
-          <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
-          </svg>
-          <p class="ml-3 text-sm font-medium text-red-800">{{ errorMessage() }}</p>
-        </div>
-      </div>
-    }
-
-    <!-- MFA Stats -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <div class="bg-white rounded-lg shadow p-6">
-        <p class="text-sm font-medium text-gray-500">Total Users</p>
-        <p class="mt-1 text-3xl font-bold text-gray-900">{{ totalUsers() }}</p>
-      </div>
-      <div class="bg-white rounded-lg shadow p-6">
-        <p class="text-sm font-medium text-gray-500">MFA Enabled</p>
-        <p class="mt-1 text-3xl font-bold text-green-600">{{ mfaEnabledUsers() }}</p>
-      </div>
-      <div class="bg-white rounded-lg shadow p-6">
-        <p class="text-sm font-medium text-gray-500">Adoption Rate</p>
-        <div class="mt-1 flex items-end gap-2">
-          <p class="text-3xl font-bold text-indigo-600">{{ mfaPercentage() }}%</p>
-        </div>
-        <div class="mt-2 w-full bg-gray-200 rounded-full h-2">
-          <div class="bg-indigo-600 h-2 rounded-full transition-all" [style.width.%]="mfaPercentage()"></div>
-        </div>
+      <div class="flex items-center gap-3">
+        <button (click)="showHelp.set(true)" class="p-2.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors" title="Help">
+          <i class="bi bi-question-circle text-lg"></i>
+        </button>
+        <button (click)="save()" [disabled]="isSaving()"
+          class="px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 transition-all flex items-center gap-2 shadow-lg shadow-indigo-200 disabled:opacity-50">
+          @if (isSaving()) { <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div> }
+          <i class="bi bi-check-lg"></i> Save Policy
+        </button>
       </div>
     </div>
 
-    <!-- Enforcement Policy -->
-    <div class="bg-white rounded-lg shadow p-6">
-      <h2 class="text-lg font-semibold text-gray-900 mb-4">Enforcement Policy</h2>
-      <div class="space-y-6">
-        <label class="flex items-center justify-between">
-          <div>
-            <span class="text-sm font-medium text-gray-700">Require MFA for All Admins</span>
-            <p class="text-xs text-gray-500 mt-0.5">All administrator accounts must configure MFA to access the system.</p>
-          </div>
-          <button (click)="requireForAllAdmins.set(!requireForAllAdmins())" type="button"
-            [class]="requireForAllAdmins() ? 'bg-indigo-600' : 'bg-gray-200'"
-            class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out">
-            <span [class]="requireForAllAdmins() ? 'translate-x-5' : 'translate-x-0'"
-              class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"></span>
-          </button>
-        </label>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Grace Period (days)</label>
-          <input type="number" [ngModel]="gracePeriodDays()" (ngModelChange)="gracePeriodDays.set($event)"
-            min="0" max="90"
-            class="w-full max-w-xs rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" />
-          <p class="mt-1 text-xs text-gray-500">Number of days users have to set up MFA after the policy is enforced.</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Allowed Methods -->
-    <div class="bg-white rounded-lg shadow p-6">
-      <h2 class="text-lg font-semibold text-gray-900 mb-4">Allowed Authentication Methods</h2>
+    @if (isLoading()) {
       <div class="space-y-4">
-        <label class="flex items-center gap-3">
-          <input type="checkbox" [ngModel]="allowTotp()" (ngModelChange)="allowTotp.set($event)"
-            class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
-          <div>
-            <span class="text-sm font-medium text-gray-700">TOTP (Authenticator App)</span>
-            <p class="text-xs text-gray-500">Google Authenticator, Authy, or similar apps.</p>
+        @for (i of [1,2,3]; track i) {
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 animate-pulse">
+            <div class="h-5 bg-gray-200 rounded w-40 mb-4"></div>
+            <div class="h-10 bg-gray-200 rounded-xl"></div>
           </div>
-        </label>
-        <label class="flex items-center gap-3">
-          <input type="checkbox" [ngModel]="allowSms()" (ngModelChange)="allowSms.set($event)"
-            class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
-          <div>
-            <span class="text-sm font-medium text-gray-700">SMS</span>
-            <p class="text-xs text-gray-500">Verification codes sent via text message.</p>
-          </div>
-        </label>
-        <label class="flex items-center gap-3">
-          <input type="checkbox" [ngModel]="allowEmail()" (ngModelChange)="allowEmail.set($event)"
-            class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
-          <div>
-            <span class="text-sm font-medium text-gray-700">Email</span>
-            <p class="text-xs text-gray-500">Verification codes sent via email.</p>
-          </div>
-        </label>
+        }
       </div>
-    </div>
+    } @else {
+      <!-- MFA Adoption Stats -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center"><i class="bi bi-people text-blue-600"></i></div>
+            <div>
+              <p class="text-xs text-gray-500 font-medium">Total Users</p>
+              <p class="text-xl font-bold text-gray-900">{{ totalUsers() }}</p>
+            </div>
+          </div>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center"><i class="bi bi-shield-check text-green-600"></i></div>
+            <div>
+              <p class="text-xs text-gray-500 font-medium">MFA Enabled</p>
+              <p class="text-xl font-bold text-gray-900">{{ mfaEnabledUsers() }}</p>
+            </div>
+          </div>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center"><i class="bi bi-percent text-indigo-600"></i></div>
+            <div>
+              <p class="text-xs text-gray-500 font-medium">Adoption Rate</p>
+              <p class="text-xl font-bold text-gray-900">{{ mfaPercentage() }}%</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Adoption Progress -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <h2 class="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
+          <i class="bi bi-graph-up text-indigo-500"></i> MFA Adoption
+        </h2>
+        <div class="w-full bg-gray-200 rounded-full h-3">
+          <div class="h-3 rounded-full transition-all duration-500"
+            [class]="mfaPercentage() >= 80 ? 'bg-green-500' : mfaPercentage() >= 50 ? 'bg-yellow-500' : 'bg-red-500'"
+            [style.width.%]="mfaPercentage()"></div>
+        </div>
+        <p class="text-sm text-gray-500 mt-2">{{ mfaEnabledUsers() }} of {{ totalUsers() }} users have MFA enabled</p>
+      </div>
+
+      <!-- Enforcement Policy -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <h2 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+          <i class="bi bi-shield-lock text-indigo-500"></i> Enforcement Policy
+        </h2>
+        <div class="space-y-4">
+          <label class="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors cursor-pointer">
+            <div>
+              <span class="text-sm font-medium text-gray-900">Require MFA for All Admins</span>
+              <p class="text-xs text-gray-500 mt-0.5">When enabled, all admin users must enable MFA to access the system</p>
+            </div>
+            <div class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" class="sr-only peer" [checked]="requireForAllAdmins()" (change)="requireForAllAdmins.set(!requireForAllAdmins())">
+              <div class="w-11 h-6 bg-gray-200 peer-focus:ring-2 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+            </div>
+          </label>
+          <div>
+            <app-tooltip-label label="Grace Period (days)" tooltip="Number of days users have to set up MFA after enforcement is enabled"></app-tooltip-label>
+            <input type="number" [ngModel]="gracePeriodDays()" (ngModelChange)="gracePeriodDays.set($event)" min="1" max="90"
+              class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+          </div>
+        </div>
+      </div>
+
+      <!-- Allowed Methods -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <h2 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+          <i class="bi bi-phone text-indigo-500"></i> Allowed Methods
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          @for (method of [
+            { label: 'TOTP (Authenticator App)', desc: 'Google Authenticator, Authy, etc.', icon: 'bi-phone', signal: allowTotp, value: allowTotp() },
+            { label: 'SMS', desc: 'One-time codes via text message', icon: 'bi-chat-dots', signal: allowSms, value: allowSms() },
+            { label: 'Email', desc: 'One-time codes via email', icon: 'bi-envelope', signal: allowEmail, value: allowEmail() }
+          ]; track method.label) {
+            <label class="flex items-start gap-3 p-4 border rounded-xl cursor-pointer hover:bg-gray-50 transition-colors"
+              [class.border-indigo-300]="method.value" [class.bg-indigo-50]="method.value">
+              <input type="checkbox" class="rounded border-gray-300 text-indigo-600 mt-0.5" [checked]="method.value" (change)="method.signal.set(!method.value)">
+              <div>
+                <p class="text-sm font-medium text-gray-900 flex items-center gap-2"><i class="bi {{ method.icon }} text-gray-400"></i> {{ method.label }}</p>
+                <p class="text-xs text-gray-500 mt-0.5">{{ method.desc }}</p>
+              </div>
+            </label>
+          }
+        </div>
+      </div>
+    }
+
+    <app-help-sidebar [isOpen]="showHelp()" title="MFA Help" [sections]="helpSections" (closed)="showHelp.set(false)"></app-help-sidebar>
   </div>
-}
+</div>

@@ -1,22 +1,26 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Subject, takeUntil } from 'rxjs';
 import { SettingsService } from '../settings.service';
+import { AlertService } from '../../../shared/services/alert.service';
+import { HelpSidebar, HelpSection } from '../../../shared/components/help-sidebar/help-sidebar';
+import { TooltipLabel } from '../../../shared/components/tooltip-label/tooltip-label';
 
 @Component({
   selector: 'app-notification-settings',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, HelpSidebar, TooltipLabel],
   templateUrl: './notifications.html',
   styles: [`:host { display: block; }`]
 })
-export class NotificationSettings implements OnInit {
+export class NotificationSettings implements OnInit, OnDestroy {
   private svc = inject(SettingsService);
+  private alertSvc = inject(AlertService);
+  private destroy$ = new Subject<void>();
 
   loading = signal(true);
   saving = signal(false);
-  success = signal(false);
-  error = signal<string | null>(null);
 
   emailEnabled = signal(true);
   emailFrom = signal('');
@@ -36,15 +40,23 @@ export class NotificationSettings implements OnInit {
     welcomeEmail: true
   });
 
+  showHelp = signal(false);
+  helpSections: HelpSection[] = [
+    { title: 'Email Notifications', content: 'Configure SMTP settings and sender information for transactional emails.' },
+    { title: 'SMS Notifications', content: 'Enable SMS notifications with providers like Twilio, Nexmo, or AWS SNS.' },
+    { title: 'Push Notifications', content: 'Enable browser and mobile push notifications for real-time alerts.' },
+    { title: 'Templates', content: 'Toggle which notification templates are active for automatic sending.' }
+  ];
+
   templateList = [
-    { key: 'orderConfirmation', label: 'Order Confirmation' },
-    { key: 'shippingUpdate', label: 'Shipping Update' },
-    { key: 'passwordReset', label: 'Password Reset' },
-    { key: 'welcomeEmail', label: 'Welcome Email' },
+    { key: 'orderConfirmation', label: 'Order Confirmation', icon: 'bi-bag-check' },
+    { key: 'shippingUpdate', label: 'Shipping Update', icon: 'bi-truck' },
+    { key: 'passwordReset', label: 'Password Reset', icon: 'bi-key' },
+    { key: 'welcomeEmail', label: 'Welcome Email', icon: 'bi-envelope-heart' },
   ];
 
   ngOnInit() {
-    this.svc.getNotificationSettings().subscribe(data => {
+    this.svc.getNotificationSettings().pipe(takeUntil(this.destroy$)).subscribe(data => {
       if (data) {
         this.emailEnabled.set(data.emailEnabled ?? true);
         this.emailFrom.set(data.emailFrom ?? '');
@@ -61,31 +73,25 @@ export class NotificationSettings implements OnInit {
     });
   }
 
+  ngOnDestroy() { this.destroy$.next(); this.destroy$.complete(); }
+
   toggleTemplate(key: string) {
     this.templates.update(t => ({ ...t, [key]: !t[key] }));
   }
 
   save() {
     this.saving.set(true);
-    this.success.set(false);
-    this.error.set(null);
-
     const payload = {
-      emailEnabled: this.emailEnabled(),
-      emailFrom: this.emailFrom(),
-      emailFromName: this.emailFromName(),
-      smtpHost: this.smtpHost(),
-      smtpPort: this.smtpPort(),
-      smtpUseTls: this.smtpUseTls(),
-      smsEnabled: this.smsEnabled(),
-      smsProvider: this.smsProvider(),
-      pushEnabled: this.pushEnabled(),
-      templates: this.templates()
+      emailEnabled: this.emailEnabled(), emailFrom: this.emailFrom(),
+      emailFromName: this.emailFromName(), smtpHost: this.smtpHost(),
+      smtpPort: this.smtpPort(), smtpUseTls: this.smtpUseTls(),
+      smsEnabled: this.smsEnabled(), smsProvider: this.smsProvider(),
+      pushEnabled: this.pushEnabled(), templates: this.templates()
     };
 
-    this.svc.updateNotificationSettings(payload).subscribe({
-      next: () => { this.saving.set(false); this.success.set(true); setTimeout(() => this.success.set(false), 3000); },
-      error: () => { this.saving.set(false); this.error.set('Failed to save notification settings.'); }
+    this.svc.updateNotificationSettings(payload).pipe(takeUntil(this.destroy$)).subscribe({
+      next: () => { this.saving.set(false); this.alertSvc.success('Settings Saved', 'Notification settings updated successfully'); },
+      error: () => { this.saving.set(false); this.alertSvc.error('Failed', 'Could not save notification settings'); }
     });
   }
 }
